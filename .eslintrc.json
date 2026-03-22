@@ -1,6 +1,12 @@
 {
   "root": true,
-  "ignorePatterns": ["**/*"],
+  "ignorePatterns": [
+    "node_modules",
+    "dist",
+    "build",
+    ".nx",
+    "coverage"
+  ],
   "plugins": ["@nx"],
   "overrides": [
     {
@@ -9,8 +15,6 @@
         "@nx/enforce-module-boundaries": [
           "error",
           {
-            "enforceBuildableLibDependencyCheck": true,
-            "allow": [],
             "depConstraints": [
               {
                 "sourceTag": "scope:web",

@@ -8,9 +8,12 @@
     "dev:web": "nx serve web",
     "dev:api": "nx serve api",
     "dev:worker": "nx serve worker",
+    "dev:desktop": "nx serve desktop",
     "build:web": "nx build web",
     "build:api": "nx build api",
     "build:worker": "nx build worker",
+    "build:desktop": "nx build desktop",
+    "package:desktop": "nx package desktop",
     "build:all": "nx run-many --target=build --all",
     "test": "nx run-many --target=test --all",
     "lint": "nx run-many --target=lint --all",
@@ -47,6 +50,7 @@
     "nx": "^22.0.0",
     "prettier": "^3.2.0",
     "ts-jest": "^29.1.0",
+    "ts-node": "^10.9.2",
     "typescript": "^5.4.0"
   }
 }
