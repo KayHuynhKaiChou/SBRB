@@ -1,4 +1,4 @@
-import type { WidgetPosition } from '@sbrb/shared-types';
+import type { IIWidgetPosition } from '@sbrb/shared-types';
 import {
   CANVAS_DEFAULT_WIDTH,
   CANVAS_DEFAULT_HEIGHT,
@@ -15,7 +15,7 @@ import { snapPosition } from './snap.util';
  * SRS 4.4.5, 5.2
  */
 export function validatePosition(
-  position: WidgetPosition,
+  position: IWidgetPosition,
   canvasWidth: number = CANVAS_DEFAULT_WIDTH,
   canvasHeight: number = CANVAS_DEFAULT_HEIGHT,
 ): string[] {
@@ -36,18 +36,18 @@ export function validatePosition(
  * SRS 4.5: Widget created at first empty position
  */
 export function findFirstEmptyPosition(
-  existingWidgets: Array<{ id: string; position: WidgetPosition }>,
+  existingWidgets: Array<{ id: string; position: IWidgetPosition }>,
   widgetSize: { w: number; h: number },
   canvasWidth: number = CANVAS_DEFAULT_WIDTH,
   gridSize: number = 20,
-): WidgetPosition {
+): IWidgetPosition {
   let x = 20;
   let y = 20;
 
   // Scan rows, then columns
   for (let row = 0; row < 50; row++) {
     for (let col = 0; col < 10; col++) {
-      const candidate: WidgetPosition = {
+      const candidate: IWidgetPosition = {
         x: snapPosition({ x, y: 20 + row * gridSize, w: widgetSize.w, h: widgetSize.h }, gridSize).x,
         y: snapPosition({ x: 20, y, w: widgetSize.w, h: widgetSize.h }, gridSize).y,
         w: widgetSize.w,

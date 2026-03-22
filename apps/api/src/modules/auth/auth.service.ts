@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { Response } from 'express';
-import { AuthLoginService, AuthTokens } from './auth-login.service';
+import { AuthLoginService, IAuthTokens } from './auth-login.service';
 import { AuthPasswordService } from './auth-password.service';
 import { AuthRegisterService } from './auth-register.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
-import { GoogleProfile } from './google.strategy';
+import { IGoogleProfile } from './google.strategy';
 
 /**
  * Facade service — delegates to focused sub-services.
@@ -32,15 +32,15 @@ export class AuthService {
     return this.registerService.resendVerification(email);
   }
 
-  login(dto: LoginDto, ip: string, userAgent: string, res: Response): Promise<AuthTokens> {
+  login(dto: LoginDto, ip: string, userAgent: string, res: Response): Promise<IAuthTokens> {
     return this.loginService.login(dto, ip, userAgent, res);
   }
 
-  loginWithGoogle(profile: GoogleProfile, ip: string, ua: string, res: Response): Promise<AuthTokens> {
+  loginWithGoogle(profile: IGoogleProfile, ip: string, ua: string, res: Response): Promise<IAuthTokens> {
     return this.loginService.loginWithGoogle(profile, ip, ua, res);
   }
 
-  refresh(rawToken: string, ip: string, userAgent: string, res: Response): Promise<AuthTokens> {
+  refresh(rawToken: string, ip: string, userAgent: string, res: Response): Promise<IAuthTokens> {
     return this.loginService.refresh(rawToken, ip, userAgent, res);
   }
 

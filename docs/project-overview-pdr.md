@@ -4,9 +4,9 @@
 
 **Name:** SBRB — Small Business Report Board
 
-**Version:** 2.2 (Free-form Canvas Edition)
+**Version:** 2.3 (Phase 2A-2B Complete)
 
-**Status:** Phase 1 Scaffold Complete, Phase 2 Development Initiated
+**Status:** Phase 1 ✅ Complete, Phase 2A (Auth) ✅ Complete, Phase 2B (Business) ✅ Complete, Phase 2C (Tabs) Next
 
 **Description:** Free-form canvas dashboard builder for SMEs. Enables businesses to create pixel-based dashboards with draggable widgets showing data visualizations (charts, tables, KPIs). No grid constraints—widgets placed at absolute coordinates (x, y) with collision detection.
 
@@ -79,15 +79,19 @@
 - 95% test coverage on shared utils, 80% on modules
 - User adoption: 50+ active SME tenants in Year 1
 
-## Phase Breakdown
+## Phase Breakdown & Progress
 
-| Phase | Scope | Duration | Milestone |
-|-------|-------|----------|-----------|
-| 1 | NX scaffold, project setup, CI/CD skeleton | COMPLETE | Repo ready, Docker Compose works |
-| 2 | Auth, Business, Tab, Widget CRUD, Canvas MVP | 8 weeks | Demo: drag widget, import, chart |
-| 3 | Export (PNG/PDF), Analytics, Datasheet editor | 6 weeks | Full feature parity web ↔ desktop |
-| 4 | Notifications, Audit log, Invite flow (email) | 4 weeks | Enterprise-ready permissions |
-| 5 | Electron desktop, offline sync, local SQLite | 10 weeks | Ship .exe and .dmg releases |
+| Phase | Scope | Status | Milestone |
+|-------|-------|--------|-----------|
+| 1 | NX scaffold, project setup, CI/CD skeleton | ✅ COMPLETE (2026-03-22) | Repo ready, Docker Compose works |
+| 2A | Auth (JWT+OAuth, email verify, rate limit) | ✅ COMPLETE (2026-03-22) | 80+ tests passing |
+| 2B | Business & multi-tenancy (roles, invites) | ✅ COMPLETE (2026-03-22) | 78+ tests passing (202 total) |
+| 2C | Tab CRUD, reorder, duplicate | → NEXT UP | Target: 2026-05-03 |
+| 2D | Canvas, widget drag+drop, collision detection | → PENDING | Target: 2026-05-17 |
+| 2E | Data import (Excel/CSV), BullMQ processing | → PENDING | Target: 2026-05-31 |
+| 3 | Export (PNG/PDF), analytics, datasheet editor | → PENDING | Target: 2026-07-15 |
+| 4 | Notifications, Audit log dashboard, email | → PENDING | Target: 2026-08-26 |
+| 5 | Electron desktop, offline sync, SQLite | → PENDING | Target: 2026-10-28 |
 
 ## Dependencies & Integrations
 
@@ -116,4 +120,39 @@
 
 ---
 
-**Document Version:** 2.2 | **Last Updated:** 2026-03-22 | **Author:** Documentation Team
+---
+
+## Implementation Progress Summary
+
+**Phase 2A-2B Status (Completed 2026-03-22):**
+
+✅ **Auth Module (80+ tests)**
+- Email/password registration with email verification
+- JWT login (15m access token, 30d refresh HttpOnly)
+- Google OAuth integration
+- Password reset via email
+- Rate limiting on auth endpoints (Redis-backed)
+- Session management
+
+✅ **User Module**
+- User CRUD operations
+- Profile management
+
+✅ **Business Module (78+ tests)**
+- Business creation (Owner-only)
+- Email-based user invitations
+- Role-based access control (Owner, Manager, Staff, Viewer)
+- Member management (add/remove/role-update)
+- Row-level security by businessId
+
+✅ **Supporting Modules**
+- Mail service (Gmail SMTP, Handlebars templates)
+- Audit service (mutation tracking)
+
+**Test Coverage:** 202 total tests, 0 failures, all phases passing
+
+**Next Phase (2C):** Tab management (create, rename, delete, reorder, duplicate)
+
+---
+
+**Document Version:** 2.3 | **Last Updated:** 2026-03-22 | **Author:** Documentation Team

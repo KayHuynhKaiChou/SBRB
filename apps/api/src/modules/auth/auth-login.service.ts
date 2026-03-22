@@ -15,8 +15,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { LoginDto } from './dto/login.dto';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { User } from './entities/user.entity';
-import { GoogleProfile } from './google.strategy';
-import { JwtPayload } from './jwt.strategy';
+import { IGoogleProfile } from './google.strategy';
+import { IJwtPayload } from './jwt.strategy';
 import { RedisRateLimitService } from './redis-rate-limit.service';
 
 const BCRYPT_ROUNDS = 12;
@@ -26,7 +26,7 @@ const ATTEMPT_TTL = 15 * 60; // 15 min
 const REFRESH_TTL_DAYS = 30;
 const COOKIE_NAME = 'refresh_token';
 
-export interface AuthTokens {
+export interface IAuthTokens {
   accessToken: string;
 }
 
@@ -46,7 +46,7 @@ export class AuthLoginService {
     ip: string,
     userAgent: string,
     res: Response,
-  ): Promise<AuthTokens> {
+  ): Promise<IAuthTokens> {
     const user = await this.userRepo.findOne({ where: { email: dto.email } });
     if (!user) throw new UnauthorizedException('Invalid credentials');
     if (!user.emailVerified) throw new ForbiddenException('Email not verified');
@@ -69,11 +69,11 @@ export class AuthLoginService {
   }
 
   async loginWithGoogle(
-    profile: GoogleProfile,
+    profile: IGoogleProfile,
     ip: string,
     userAgent: string,
     res: Response,
-  ): Promise<AuthTokens> {
+  ): Promise<IAuthTokens> {
     let user = await this.userRepo.findOne({ where: { email: profile.email } });
     if (!user) {
       user = this.userRepo.create({
@@ -89,7 +89,7 @@ export class AuthLoginService {
     return this.issueTokens(user, ip, userAgent, res);
   }
 
-  async refresh(rawToken: string, ip: string, userAgent: string, res: Response): Promise<AuthTokens> {
+  async refresh(rawToken: string, ip: string, userAgent: string, res: Response): Promise<IAuthTokens> {
     // Find by hash is not efficient — iterate is required since we hash differently each time.
     // Use a deterministic approach: store the raw token hashed with a fixed approach.
     // We use bcrypt.compare against stored hash.
@@ -130,8 +130,8 @@ export class AuthLoginService {
     res.clearCookie(COOKIE_NAME);
   }
 
-  async issueTokens(user: User, ip: string, userAgent: string, res: Response): Promise<AuthTokens> {
-    const payload: JwtPayload = { sub: user.id, email: user.email };
+  async issueTokens(user: User, ip: string, userAgent: string, res: Response): Promise<IAuthTokens> {
+    const payload: IJwtPayload = { sub: user.id, email: user.email };
     const accessToken = this.jwtService.sign(payload);
 
     const rawRefresh = uuidv4();

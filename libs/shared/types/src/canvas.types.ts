@@ -4,7 +4,7 @@
  */
 
 /** Widget bounding box */
-export interface WidgetPosition {
+export interface IWidgetPosition {
   x: number; // Pixel from canvas left
   y: number; // Pixel from canvas top
   w: number; // Width: 800–1600px (SRS 4.4.5)
@@ -12,7 +12,7 @@ export interface WidgetPosition {
 }
 
 /** Canvas dimensions */
-export interface CanvasSize {
+export interface ICanvasSize {
   width: number;  // Default: 3200px
   height: number; // Default: 4800px
 }
@@ -21,13 +21,13 @@ export interface CanvasSize {
 export type ZoomLevel = 50 | 75 | 100 | 125;
 
 /** Snap grid config */
-export interface SnapConfig {
+export interface ISnapConfig {
   enabled: boolean;
   gridSize: number; // Default: 20px
 }
 
 /** Collision check result */
-export interface CollisionResult {
+export interface ICollisionResult {
   hasCollision: boolean;
   conflictingWidgetIds: string[];
 }

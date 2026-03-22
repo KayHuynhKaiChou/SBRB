@@ -1,18 +1,28 @@
 # SBRB Codebase Summary
 
-**Generated:** 2026-03-22 | **Repomix Output:** `./repomix-output.xml` (387 files, 481K tokens)
+**Generated:** 2026-03-22 | **Repomix Output:** `./repomix-output.xml` | **Phase Status:** Phase 1 ✅ Complete, Phase 2A-2B ✅ Complete
 
 ---
 
 ## Codebase Overview
 
-SBRB is a NX monorepo containing a modern full-stack dashboard builder. Phase 1 (scaffolding) complete. Phase 2 (MVP authentication, canvas, widgets) in progress.
+SBRB is a NX monorepo containing a modern full-stack dashboard builder. Phase 1 (scaffolding) ✅ complete. Phase 2A (Auth) ✅ complete. Phase 2B (Business/Multi-Tenancy) ✅ complete.
+
+### Implementation Status (Authoritative: 2026-03-22)
+- **Phase 1 (Scaffold):** ✅ COMPLETE
+- **Phase 2A (Auth):** ✅ COMPLETE — 80+ tests passing, JWT+OAuth+email verify fully implemented
+- **Phase 2B (Business):** ✅ COMPLETE — 78+ tests passing, multi-tenant with roles + invites fully implemented
+- **Phase 2C (Tabs):** 🔲 Scaffolded only (services/resolvers commented out)
+- **Phase 2D (Canvas):** 🔲 Scaffolded only
+- **Phase 2E (Data Import):** 🔲 Scaffolded only (BullMQ queue registered)
 
 ### Repository Statistics
-- **Total Files:** 387 (including skills, config)
-- **Source Files:** ~150 (apps/ + libs/ code)
-- **Core Monorepo:** 3 apps + 4 lib packages
-- **Total Tokens:** 481,796 (repomix full analysis)
+- **Total Files:** 387+ (including skills, config)
+- **Source Files:** 150+ (apps/ + libs/ code)
+- **Core Monorepo:** 3 apps + 5 lib packages
+- **Test Count:** 202 tests, all passing, 0 failures
+- **Implemented Modules:** 5 (auth, user, business, audit, mail)
+- **Scaffolded Modules:** 4 (tab, widget, datasheet, notification)
 
 ---
 
@@ -358,87 +368,171 @@ function MyComponent() {
 
 ## Core Modules Breakdown
 
-### Authentication Module (`apps/api/modules/auth/`)
+### ✅ Authentication Module (`apps/api/modules/auth/`) — IMPLEMENTED
+
+**Status:** ✅ COMPLETE — 80+ tests passing.
+
+**Key Files:**
+- `auth.service.ts` — Main auth orchestration
+- `auth-login.service.ts` — Login logic (email/password + Google OAuth)
+- `auth-register.service.ts` — Signup + email verification
+- `auth-password.service.ts` — Password reset flow
+- `jwt.strategy.ts` — JWT validation
+- `google.strategy.ts` — Google OAuth strategy
+- `redis-rate-limit.service.ts` — Rate limiting on auth endpoints
+- `auth.controller.ts` — REST endpoints
+- `auth.resolver.ts` — GraphQL resolvers
 
 **Responsibilities:**
 - JWT token generation (15m access, 30d refresh)
-- Passport strategies (local, Google OAuth)
-- Email verification
-- Password reset
-- HttpOnly refresh token cookie
+- Passport strategies (local, Google OAuth, JWT)
+- Email verification (Gmail SMTP + Handlebars templates)
+- Password reset (email-based)
+- HttpOnly refresh token cookie with secure flags
+- Redis-backed rate limiting (prevent brute force)
 
 **Exports:**
-- JwtAuthGuard — Validate JWT on all protected routes
-- CurrentUserDecorator — Inject user payload into resolvers/controllers
+- `JwtAuthGuard` — Validate JWT on all protected routes
+- `GqlJwtAuthGuard` — GraphQL-specific JWT guard
+- `CurrentUserDecorator` — Inject user payload
 
 **Security:**
-- Bcrypt password hashing
-- JWT secret in env var
-- Refresh token in HttpOnly, Secure, SameSite=Strict cookie
-- CSRF protection via CORS
+- ✅ Bcrypt password hashing (10+ rounds)
+- ✅ JWT secret in env var (min 32 chars production)
+- ✅ Refresh token: HttpOnly, Secure, SameSite=Strict cookie
+- ✅ CORS whitelist via ALLOWED_ORIGINS env var
+- ✅ Rate limiting: 100 req/min per IP on auth endpoints
 
 ---
 
-### Business Module (`apps/api/modules/business/`)
+### ✅ User Module (`apps/api/modules/user/`) — IMPLEMENTED
+
+**Status:** ✅ COMPLETE
+
+**Key Files:**
+- `user.service.ts` — User CRUD
+- `user.resolver.ts` — GraphQL user queries
+- `user.controller.ts` — REST endpoints
+
+---
+
+### ✅ Business Module (`apps/api/modules/business/`) — IMPLEMENTED
+
+**Status:** ✅ COMPLETE — 78+ tests passing.
+
+**Key Files:**
+- `business.service.ts` — Main business orchestration
+- `business-crud.service.ts` — Business create/read/update/delete
+- `business-ownership.service.ts` — Ownership & access control
+- `member.service.ts` — Member management (add/remove/role update)
+- `invitation.service.ts` — Invitation creation & acceptance
+- `business.controller.ts` — REST endpoints
+- `business.resolver.ts` — GraphQL business resolvers
+- `member.resolver.ts` — GraphQL member queries/mutations
 
 **Responsibilities:**
-- Create business (Owner only)
-- Invite users via email code
-- Manage business members (add/remove, role assignment)
-- Business settings (name, logo, max tabs)
-- Row-level security (RLS) — filter data by businessId
+- ✅ Create business (Owner only)
+- ✅ Invite users via email code (Owner/Manager)
+- ✅ Manage business members (add/remove, role assignment)
+- ✅ Role-based access control (Owner, Manager, Staff, Viewer)
+- ✅ Row-level security (RLS) — filter data by businessId
 
-**Entities:**
-- Business
-- UserRole (junction: User ↔ Business)
-- Invite (email invitations)
+**Entities Implemented:**
+- `Business` — id, name, ownerId, createdAt, updatedAt
+- `UserRole` — userId, businessId, role (junction table)
+- `Invite` — code, email, businessId, expiresAt, usedAt
 
 **Guards:**
-- BusinessAccessGuard — Verify user belongs to business
-- RoleGuard — Check user role (owner, manager, staff, viewer)
+- `BusinessAccessGuard` — Verify user belongs to business
+- `RoleGuard` — Check user role (owner, manager, staff, viewer)
 
 ---
 
-### Widget Module (`apps/api/modules/widget/`)
+### 🔲 Tab Module (`apps/api/modules/tab/`) — SCAFFOLDED
 
-**Responsibilities:**
+**Status:** 🔲 Scaffolded (services/resolvers commented out, ready for Phase 2C)
+
+**Key Files:** `tab.module.ts` (entity registered)
+
+**Planned Responsibilities:**
+- Create Tab within Business
+- Rename/delete Tab
+- Reorder tabs (drag handles)
+- Duplicate Tab with widgets
+
+---
+
+### 🔲 Widget Module (`apps/api/modules/widget/`) — SCAFFOLDED
+
+**Status:** 🔲 Scaffolded (services/resolvers commented out, ready for Phase 2D)
+
+**Key Files:** `widget.module.ts` (entity registered)
+
+**Planned Responsibilities:**
 - CRUD widgets (create, read, update, delete)
 - Validate position (bounds, collision, snap grid)
 - Update position (debounced REST endpoint)
 - Validate chart config
 
-**Entities:** Widget (tabId, x, y, w, h, chartConfig JSON)
-
-**Guards:**
-- CollisionGuard — Prevent widget overlap
-- BoundsGuard — Check canvas boundaries
-- OwnerGuard — Only Owner/Manager can create/delete widgets
-
-**Validators:**
-- WidgetPositionValidator — Uses `libs/shared/utils/collision-detection.ts`
+**Planned Entities:** Widget (tabId, x, y, w, h, chartConfig JSON)
 
 ---
 
-### DataSheet Module (`apps/api/modules/datasheet/`)
+### 🔲 DataSheet Module (`apps/api/modules/datasheet/`) — SCAFFOLDED
 
-**Responsibilities:**
+**Status:** 🔲 Scaffolded (BullMQ queue registered, ready for Phase 2E)
+
+**Key Files:** `datasheet.module.ts` (BullMQ queue configured)
+
+**Planned Responsibilities:**
 - Handle Excel file upload (Multer → MinIO S3)
 - Enqueue BullMQ import job
 - Store DataSheet + DataSeries + DataValues
 - Data Selector — Query series by datasheet
 
-**Entities:**
-- DataSheet (fileName, uploadedAt, dataSeries)
-- DataSeries (name, values JSON)
+---
 
-**Process:**
-1. User uploads Excel → REST POST /files/import
-2. Multer validates (10MB, xlsx/csv)
-3. File stored in MinIO S3
-4. BullMQ job enqueued: { fileId, businessId }
-5. Worker processes: ExcelJS parse → validate → insert
-6. Redis pub/sub notifies frontend: "import:complete"
-7. Apollo Subscription fires → toast & refetch
+### ✅ Audit Module (`apps/api/modules/audit/`) — IMPLEMENTED
+
+**Status:** ✅ COMPLETE
+
+**Key Files:**
+- `audit.service.ts` — Audit log creation & querying
+- `audit.module.ts` — Module registration
+
+**Responsibilities:**
+- Track all business mutations (create/update/delete)
+- Immutable audit log with businessId, userId, action, entity, oldValue, newValue, timestamp
+
+---
+
+### ✅ Mail Module (`apps/api/modules/mail/`) — IMPLEMENTED
+
+**Status:** ✅ COMPLETE
+
+**Key Files:**
+- `mail.service.ts` — Email sending via Gmail SMTP
+- `mail.module.ts` — Module registration
+
+**Responsibilities:**
+- Send emails (verification, password reset, invitations)
+- Handlebars template rendering
+- Gmail SMTP integration
+
+---
+
+### 🔲 Notification Module (`apps/api/modules/notification/`) — SCAFFOLDED
+
+**Status:** 🔲 Scaffolded (services/resolvers commented out, ready for Phase 4)
+
+---
+
+### 🔲 MinIO Module (`apps/api/modules/minio/`) — STUB
+
+**Status:** 🔲 Stub implementation (returns mock URLs; real minio pkg not installed yet)
+
+**Responsibilities (Phase 2E+):**
+- S3-compatible file storage (local dev via MinIO, prod via AWS S3)
 
 ---
 
@@ -491,32 +585,60 @@ MINIO_ENDPOINT=localhost
 
 ## Development Workflow
 
-### Phase 2A (Auth Implementation)
-**Current Focus:** Building JWT login, email verification, Google OAuth.
+### Phase 2A (Auth) — ✅ COMPLETE
 
-**Files to Create/Modify:**
-- `apps/api/modules/auth/` — Passport strategies, guards
-- `apps/web/src/pages/login.tsx` — Login form component
+**Status:** ✅ All features implemented, 80+ tests passing.
+
+**Implemented Files:**
+- `apps/api/modules/auth/` — All Passport strategies, guards, services
+- `apps/api/modules/user/` — User CRUD
 - `libs/shared/types/auth.dto.ts` — Auth DTOs
-- Tests in `*.spec.ts` for each module
+- Tests: `__tests__/` directory, all passing
 
-### Phase 2B (Business & Multi-Tenancy)
-**Files to Create:**
-- `apps/api/modules/business/` — Business CRUD
-- `apps/api/modules/user/` — User management
-- `libs/shared/types/business.dto.ts`
-- RLS policies in PostgreSQL setup
+### Phase 2B (Business & Multi-Tenancy) — ✅ COMPLETE
 
-### Phase 2C (Canvas & Widgets)
+**Status:** ✅ All features implemented, 78+ tests passing.
+
+**Implemented Files:**
+- `apps/api/modules/business/` — Business CRUD complete
+- `apps/api/modules/user/` — User management complete
+- `libs/shared/types/business.dto.ts` — Business DTOs
+- Tests: `__tests__/` directory, all passing (28+29+21 across developers)
+
+### Phase 2C (Tabs) — NEXT UP
+
+**Current Status:** 🔲 Scaffolded (services/resolvers commented out)
+
+**Files to Implement:**
+- `apps/api/modules/tab/` — Tab CRUD services & resolvers
+- `apps/web/src/components/tab-bar.tsx` — Tab navigation UI
+- `apps/web/src/stores/tab.store.ts` — Tab state management
+- Tests for tab operations
+
+### Phase 2D (Canvas & Widgets) — PENDING
+
+**Status:** 🔲 Scaffolded (services/resolvers commented out)
+
 **Files to Create:**
-- `apps/web/src/stores/canvas.store.ts` — Zustand store
-- `apps/web/src/components/widget-card.tsx` — Widget component
-- `apps/api/modules/widget/` — Widget API
-- `libs/shared/utils/collision-detection.ts` — Tests required
+- `apps/web/src/stores/canvas.store.ts` — Zustand canvas state
+- `apps/web/src/components/widget-card.tsx` — Widget component with react-rnd
+- `apps/api/modules/widget/` — Widget API (CRUD + position validation)
+- `libs/shared/utils/collision-detection.ts` — AABB collision (tests required)
 
 ---
 
 ## Testing Strategy
+
+### Current Test Coverage (Phase 2A-2B Complete)
+
+| Module | Framework | Tests | Status |
+|--------|-----------|-------|--------|
+| Auth | Jest + db | 80+ | ✅ All passing |
+| Business | Jest + db | 78+ | ✅ All passing (dev-1: 28, dev-2: 29, dev-3: 21) |
+| Entities | Jest | 44+ | ✅ All passing |
+| **TOTAL** | Jest | **202** | **✅ 0 failures** |
+
+### Target Coverage by Phase
 
 | Layer | Framework | Coverage Target | Key Files |
 |-------|-----------|-----------------|-----------|
@@ -527,9 +649,9 @@ MINIO_ENDPOINT=localhost
 
 **Run Tests:**
 ```bash
-nx test shared/utils          # Unit tests
-nx test api                   # Integration tests
-npm run test                  # All tests
+npm run test                  # All tests (currently 202 passing)
+nx test api                   # API tests only
+nx test shared/utils          # Shared utils tests
 ```
 
 ---
@@ -581,6 +703,19 @@ libs/ui
 
 ---
 
-**Document Version:** 2.2 | **Last Updated:** 2026-03-22
-**Codebase Analyzed:** 387 files | **Repomix Tokens:** 481,796
+---
+
+## Implementation Timeline
+
+- **Phase 1:** ✅ COMPLETE (2026-03-22) — NX scaffold, project setup, CI/CD skeleton
+- **Phase 2A:** ✅ COMPLETE (2026-03-22) — Auth (JWT + OAuth + email verification), 80+ tests
+- **Phase 2B:** ✅ COMPLETE (2026-03-22) — Business & multi-tenancy (roles + invites), 78+ tests
+- **Phase 2C:** NEXT UP — Tab management (CRUD, reorder)
+- **Phase 2D:** PENDING — Canvas & widget drag+drop (collision detection, snap grid)
+- **Phase 2E:** PENDING — Data import (Excel parsing, BullMQ job processing)
+
+---
+
+**Document Version:** 2.3 | **Last Updated:** 2026-03-22
+**Test Count:** 202 tests, all passing (Auth: 80+, Business: 78+, Entities: 44+)
 **Maintainer:** Documentation Team

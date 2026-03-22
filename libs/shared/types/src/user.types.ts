@@ -1,6 +1,6 @@
 /** User & auth types */
 
-export interface UserDto {
+export interface IUserDto {
   id: string;
   email: string;
   name: string;
@@ -9,19 +9,19 @@ export interface UserDto {
   createdAt: string;
 }
 
-export interface JwtPayload {
+export interface IJwtPayload {
   sub: string; // userId
   email: string;
   iat?: number;
   exp?: number;
 }
 
-export interface AuthTokens {
+export interface IAuthTokens {
   accessToken: string;
   // Refresh token stored in HttpOnly cookie — NOT in response body
 }
 
-export interface SessionDto {
+export interface ISessionDto {
   id: string;
   userAgent: string;
   ip: string;

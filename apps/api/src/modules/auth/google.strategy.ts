@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Profile, Strategy, VerifyCallback } from 'passport-google-oauth20';
 
-export interface GoogleProfile {
+export interface IGoogleProfile {
   googleId: string;
   email: string;
   fullName: string;
@@ -32,7 +32,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     done: VerifyCallback,
   ): void {
     const email = profile.emails?.[0]?.value ?? '';
-    const googleProfile: GoogleProfile = {
+    const googleProfile: IGoogleProfile = {
       googleId: profile.id,
       email,
       fullName: profile.displayName ?? email,

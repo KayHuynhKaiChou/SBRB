@@ -55,10 +55,11 @@ libs/i18n                 # Translations (vi, en)
 ```
 
 ### Current Status
-- **Phase 1 (Scaffold):** ✓ COMPLETE
-- **Phase 2 (MVP Auth + Canvas):** IN PROGRESS
-  - Phase 2A (Auth): Starting week of 2026-03-25
-  - Target completion: 2026-05-18
+- **Phase 1 (Scaffold):** ✅ COMPLETE (2026-03-22)
+- **Phase 2A (Auth):** ✅ COMPLETE (2026-03-22) — 80+ tests, JWT+OAuth fully implemented
+- **Phase 2B (Business):** ✅ COMPLETE (2026-03-22) — 78+ tests, multi-tenant with invites
+- **Phase 2C (Tabs):** NEXT UP (ready to start)
+- **Target:** Phase 2 complete by 2026-05-31
 
 ### Development Commands
 ```bash

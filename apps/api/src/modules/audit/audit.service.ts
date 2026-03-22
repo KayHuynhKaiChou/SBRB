@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AuditLog } from './entities/audit-log.entity';
 
-export interface AuditLogParams {
+export interface IAuditLogParams {
   businessId: string;
   actorId: string;
   action: string;
@@ -23,7 +23,7 @@ export class AuditService {
     private readonly repo: Repository<AuditLog>,
   ) {}
 
-  async log(params: AuditLogParams): Promise<void> {
+  async log(params: IAuditLogParams): Promise<void> {
     const entry = this.repo.create({
       businessId: params.businessId,
       actorId: params.actorId,

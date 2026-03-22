@@ -369,7 +369,25 @@ try {
 }
 ```
 
-## Testing Standards
+## Testing Standards & Current Coverage
+
+### Test Execution Results (2026-03-22)
+
+**Total Tests Passing:** 202 | **Failures:** 0
+
+| Module | Tests | Status |
+|--------|-------|--------|
+| Auth | 80+ | ✅ All passing |
+| Business | 78+ | ✅ All passing (dev-1: 28, dev-2: 29, dev-3: 21) |
+| Entities | 44+ | ✅ All passing |
+| **Total** | **202** | **✅ 0 failures** |
+
+**Run Tests:**
+```bash
+npm run test                  # All modules (202 tests)
+nx test api                   # API only
+nx test shared/utils          # Shared utils only
+```
 
 ### Unit Test Example
 
@@ -398,6 +416,21 @@ describe('WidgetService', () => {
   });
 });
 ```
+
+### Service Splitting Pattern (Established Standard)
+
+The business module demonstrates the established service-splitting pattern to keep files under 200 LOC:
+
+```
+business/
+├── business.service.ts (facade/orchestration)
+├── business-crud.service.ts (create/read/update/delete)
+├── business-ownership.service.ts (ownership & access control)
+├── member.service.ts (member management)
+└── invitation.service.ts (invitation handling)
+```
+
+**Rationale:** Each service has single responsibility; web of dependencies is managed via NestJS DI. Follow this pattern for all future modules.
 
 ## Git & Commit Standards
 
@@ -438,4 +471,19 @@ docs: update architecture diagram for Phase 2
 
 ---
 
-**Document Version:** 2.2 | **Last Updated:** 2026-03-22 | **Maintainer:** Dev Team
+## Service Splitting Established Practice
+
+From Phase 2B (Business module), the following service-splitting pattern is now the standard for all modules:
+
+1. **Main Service** (e.g., `business.service.ts`) — Facade/orchestration, delegates to sub-services
+2. **CRUD Service** (e.g., `business-crud.service.ts`) — Create, read, update, delete operations
+3. **Feature Services** (e.g., `business-ownership.service.ts`, `member.service.ts`) — Domain-specific logic
+4. **Helper Services** (e.g., `invitation.service.ts`) — Supporting operations
+
+**Benefit:** Keeps all files under 200 LOC, improves testability, follows single responsibility principle.
+
+**Required for Phase 2C+:** All new modules must follow this pattern.
+
+---
+
+**Document Version:** 2.3 | **Last Updated:** 2026-03-22 | **Maintainer:** Dev Team

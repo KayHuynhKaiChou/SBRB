@@ -2,7 +2,7 @@
  * Global type augmentation for window.electronAPI exposed by preload.ts.
  * Available in renderer process only.
  */
-interface ElectronAPI {
+interface IElectronAPI {
   isOnline: () => Promise<boolean>;
   queryOffline: (operation: string, variables?: Record<string, unknown>) => Promise<unknown>;
   syncToCloud: () => Promise<{ synced: number; errors: number }>;
@@ -13,5 +13,5 @@ interface ElectronAPI {
 }
 
 interface Window {
-  electronAPI?: ElectronAPI;
+  electronAPI?: IElectronAPI;
 }

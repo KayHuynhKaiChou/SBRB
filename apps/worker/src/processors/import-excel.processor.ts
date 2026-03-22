@@ -3,7 +3,7 @@ import { Logger } from '@nestjs/common';
 import { Job } from 'bull';
 import { IMPORT_QUEUE } from './queue.constants';
 
-export interface ImportJobData {
+export interface IImportJobData {
   batchId: string;
   businessId: string;
   datasheetId: string;
@@ -28,7 +28,7 @@ export class ImportExcelProcessor {
   private readonly logger = new Logger(ImportExcelProcessor.name);
 
   @Process('import')
-  async handleImport(job: Job<ImportJobData>) {
+  async handleImport(job: Job<IImportJobData>) {
     this.logger.log(`Processing import job ${job.id} — batch: ${job.data.batchId}`);
     // TODO: Implement when DatasheetModule entities are ready
     // 1. Download from MinIO

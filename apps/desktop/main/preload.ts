@@ -5,7 +5,7 @@
  */
 import { contextBridge, ipcRenderer } from 'electron';
 
-export interface ElectronAPI {
+export interface IElectronAPI {
   /** Check if the app has internet connectivity */
   isOnline: () => Promise<boolean>;
   /** Execute a GraphQL operation against the local embedded NestJS API (offline mode) */
@@ -21,7 +21,7 @@ export interface ElectronAPI {
   installUpdate: () => void;
 }
 
-const api: ElectronAPI = {
+const api: IElectronAPI = {
   isOnline: () => ipcRenderer.invoke('check-network'),
   queryOffline: (operation, variables) =>
     ipcRenderer.invoke('gql-offline', { operation, variables }),

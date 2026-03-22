@@ -7,7 +7,7 @@
  * This is a STUB — full implementation in Phase 2 (offline feature).
  */
 
-export interface EmbeddedApiInstance {
+export interface IEmbeddedApiInstance {
   /** Execute a GraphQL operation against the local NestJS + SQLite stack */
   handleGraphQL: (operation: string, variables: Record<string, unknown>) => Promise<unknown>;
   /** Sync local SQLite changes to cloud API (last-write-wins via updated_at) */
@@ -16,14 +16,14 @@ export interface EmbeddedApiInstance {
   shutdown: () => Promise<void>;
 }
 
-let instance: EmbeddedApiInstance | null = null;
+let instance: IEmbeddedApiInstance | null = null;
 let booting = false;
 
 /**
  * Lazily start the embedded NestJS API.
  * Returns null if already booting or if startup fails.
  */
-export async function getEmbeddedApi(): Promise<EmbeddedApiInstance | null> {
+export async function getEmbeddedApi(): Promise<IEmbeddedApiInstance | null> {
   if (instance) return instance;
   if (booting) return null;
 

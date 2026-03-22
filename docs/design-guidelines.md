@@ -287,4 +287,15 @@ Not in Phase 2. Planned for Phase 3 (with light/dark toggle).
 
 ---
 
+## Component Library
+
+**Primary UI Library:** Ant Design 5 (confirmed in stack, version 5.x)
+
+- Button, Input, Modal, Select, DatePicker, Table components available
+- WCAG AA compliant components by default
+- Tailwind CSS overrides for custom styling (primary red #D72A44)
+- Used in both web (React 18) and future desktop (Electron) apps via `libs/ui/`
+
+---
+
 **Document Version:** 2.2 | **Last Updated:** 2026-03-22 | **Design Lead:** UI/UX Team

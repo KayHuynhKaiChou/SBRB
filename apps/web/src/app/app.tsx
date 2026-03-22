@@ -1,10 +1,14 @@
 import React, { Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Spin } from 'antd';
+import { ProtectedRoute } from '../components/auth/protected-route';
 
-// Lazy-loaded pages (to be implemented)
+// Lazy-loaded pages
 const LoginPage = React.lazy(() => import('../pages/auth/login-page'));
 const RegisterPage = React.lazy(() => import('../pages/auth/register-page'));
+const VerifyEmailPage = React.lazy(() => import('../pages/auth/verify-email-page'));
+const ForgotPasswordPage = React.lazy(() => import('../pages/auth/forgot-password-page'));
+const ResetPasswordPage = React.lazy(() => import('../pages/auth/reset-password-page'));
 const OnboardingPage = React.lazy(() => import('../pages/onboarding/onboarding-page'));
 const DashboardPage = React.lazy(() => import('../pages/dashboard/dashboard-page'));
 const NotFoundPage = React.lazy(() => import('../pages/not-found-page'));
@@ -19,10 +23,31 @@ export default function App() {
   return (
     <Suspense fallback={<AppLoading />}>
       <Routes>
+        {/* Public auth routes */}
         <Route path="/auth/login" element={<LoginPage />} />
         <Route path="/auth/register" element={<RegisterPage />} />
-        <Route path="/onboarding" element={<OnboardingPage />} />
-        <Route path="/dashboard/:businessId" element={<DashboardPage />} />
+        <Route path="/auth/verify-email/:token" element={<VerifyEmailPage />} />
+        <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/auth/reset-password/:token" element={<ResetPasswordPage />} />
+
+        {/* Protected routes */}
+        <Route
+          path="/onboarding"
+          element={
+            <ProtectedRoute>
+              <OnboardingPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/:businessId"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+
         <Route path="/" element={<Navigate to="/auth/login" replace />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

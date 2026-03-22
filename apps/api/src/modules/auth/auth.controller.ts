@@ -19,8 +19,8 @@ import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { GoogleProfile } from './google.strategy';
-import { JwtPayload } from './jwt.strategy';
+import { IGoogleProfile } from './google.strategy';
+import { IJwtPayload } from './jwt.strategy';
 
 /** REST auth endpoints — SRS 4.1 */
 @Controller('auth')
@@ -44,7 +44,7 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   logout(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: IJwtPayload,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
@@ -98,7 +98,7 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleCallback(
-    @Req() req: Request & { user: GoogleProfile },
+    @Req() req: Request & { user: IGoogleProfile },
     @Res() res: Response,
   ) {
     const tokens = await this.authService.loginWithGoogle(

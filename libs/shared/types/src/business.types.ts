@@ -2,7 +2,7 @@
 
 export type BusinessRole = 'owner' | 'manager' | 'staff' | 'viewer';
 
-export interface BusinessDto {
+export interface IBusinessDto {
   id: string;
   name: string;
   logoUrl?: string;
@@ -10,7 +10,7 @@ export interface BusinessDto {
   createdAt: string;
 }
 
-export interface BusinessMemberDto {
+export interface IBusinessMemberDto {
   id: string;
   businessId: string;
   userId: string;
@@ -23,14 +23,14 @@ export interface BusinessMemberDto {
 }
 
 /** Business switcher item (header dropdown) */
-export interface BusinessSwitcherItem {
+export interface IBusinessSwitcherItem {
   businessId: string;
   businessName: string;
   logoUrl?: string;
   myRole: BusinessRole;
 }
 
-export interface TabDto {
+export interface ITabDto {
   id: string;
   businessId: string;
   name: string;        // ≤30 chars

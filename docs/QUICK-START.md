@@ -12,7 +12,7 @@
 
 **Tech:** React 18 + NestJS 10 + PostgreSQL + Redis, NX monorepo, TypeScript strict.
 
-**Status:** Phase 1 ✓, Phase 2 IN PROGRESS (auth + canvas MVP by May 18).
+**Status:** Phase 1 ✅ COMPLETE | Phase 2A (Auth) ✅ COMPLETE | Phase 2B (Business) ✅ COMPLETE | Phase 2C (Tabs) NEXT
 
 ---
 
@@ -316,15 +316,21 @@ describe('hasCollision', () => {
 
 ---
 
-## Phase 2 Milestones
+## Phase 2 Status & Milestones
 
 ```
-Mar 25 — Phase 2A: Auth (JWT, OAuth, email verify)
-Apr 5  — Phase 2B: Business & multi-tenancy
-Apr 19 — Phase 2C: Tab management
-May 3  — Phase 2D: Canvas & widget DnD ← Critical
-May 18 — Phase 2E: Excel import → PHASE 2 COMPLETE
+✅ Mar 22 — Phase 2A COMPLETE: Auth (JWT, OAuth, email verify) — 80+ tests
+✅ Mar 22 — Phase 2B COMPLETE: Business & multi-tenancy — 78+ tests
+→  May 3  — Phase 2C: Tab management (NEXT UP)
+→  May 17 — Phase 2D: Canvas & widget DnD ← Critical
+→  May 31 — Phase 2E: Excel import → PHASE 2 COMPLETE
 ```
+
+### Test Results Summary
+- **Auth module:** 80+ tests ✅ all passing
+- **Business module:** 78+ tests ✅ all passing (28 dev-1 + 29 dev-2 + 21 dev-3)
+- **Entities:** 44+ tests ✅ all passing
+- **TOTAL:** 202 tests, 0 failures
 
 ---
 
@@ -334,6 +340,39 @@ May 18 — Phase 2E: Excel import → PHASE 2 COMPLETE
 - **Frontend Lead:** UI/UX, React patterns
 - **Backend Lead:** NestJS, database, API design
 - **Documentation:** This guide, CLAUDE.md, docs/
+
+---
+
+---
+
+## What's Implemented Now (Phase 2A-2B)
+
+✅ **User Authentication**
+- Email/password signup with verification
+- Google OAuth login
+- Password reset via email
+- JWT tokens (15m access, 30d refresh HttpOnly)
+- Rate limiting on auth endpoints
+
+✅ **Multi-Tenant Business Management**
+- Create business (Owner)
+- Invite users via email code
+- Role-based access (Owner, Manager, Staff, Viewer)
+- Member management (add/remove/role update)
+- Row-level security by businessId
+
+✅ **Testing & Quality**
+- 202 tests, all passing, 0 failures
+- Auth: 80+ tests
+- Business: 78+ tests
+- Entities: 44+ tests
+
+🔲 **Not Yet Implemented (Phase 2C+)**
+- Tab management (NEXT UP)
+- Widget drag+drop & canvas (Phase 2D)
+- Excel import & data sheets (Phase 2E)
+- Notifications & audit logs (Phase 4)
+- Desktop/Electron (Phase 5)
 
 ---
 

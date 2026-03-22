@@ -4,7 +4,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { SessionType } from '../auth/dto/session.type';
 import { UserType } from '../auth/dto/user.type';
-import { JwtPayload } from '../auth/jwt.strategy';
+import { IJwtPayload } from '../auth/jwt.strategy';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UserService } from './user.service';
 
@@ -15,14 +15,14 @@ export class UserResolver {
   constructor(private readonly userService: UserService) {}
 
   @Query(() => UserType)
-  async me(@CurrentUser() user: JwtPayload): Promise<UserType> {
+  async me(@CurrentUser() user: IJwtPayload): Promise<UserType> {
     const u = await this.userService.findById(user.sub);
     return u as unknown as UserType;
   }
 
   @Mutation(() => UserType)
   async updateMe(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: IJwtPayload,
     @Args('input') input: UpdateProfileDto,
   ): Promise<UserType> {
     const u = await this.userService.updateProfile(user.sub, input);
@@ -30,14 +30,14 @@ export class UserResolver {
   }
 
   @Query(() => [SessionType])
-  async mySessions(@CurrentUser() user: JwtPayload): Promise<SessionType[]> {
+  async mySessions(@CurrentUser() user: IJwtPayload): Promise<SessionType[]> {
     const sessions = await this.userService.getSessions(user.sub);
     return sessions as unknown as SessionType[];
   }
 
   @Mutation(() => Boolean)
   async deleteSession(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: IJwtPayload,
     @Args('id', { type: () => ID }) id: string,
   ): Promise<boolean> {
     await this.userService.deleteSession(user.sub, id);
@@ -45,7 +45,7 @@ export class UserResolver {
   }
 
   @Mutation(() => Boolean)
-  async deleteAccount(@CurrentUser() user: JwtPayload): Promise<boolean> {
+  async deleteAccount(@CurrentUser() user: IJwtPayload): Promise<boolean> {
     await this.userService.deleteAccount(user.sub);
     return true;
   }

@@ -10,7 +10,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { JwtPayload } from './jwt.strategy';
+import { IJwtPayload } from './jwt.strategy';
 
 /** GraphQL mutations — SRS 4.1 auth flows */
 @Resolver()
@@ -40,7 +40,7 @@ export class AuthResolver {
 
   @Mutation(() => Boolean)
   async logout(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: IJwtPayload,
     @Context() ctx: { req: Request; res: Response },
   ): Promise<boolean> {
     const token = ctx.req.cookies?.['refresh_token'];
@@ -82,7 +82,7 @@ export class AuthResolver {
 
   @Mutation(() => Boolean)
   async changePassword(
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: IJwtPayload,
     @Args('input') input: ChangePasswordDto,
   ): Promise<boolean> {
     await this.authService.changePassword(user.sub, input);

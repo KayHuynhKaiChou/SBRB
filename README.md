@@ -2,15 +2,23 @@
 
 Free-form canvas dashboard builder for SMEs. Place charts anywhere on a pixel canvas, drag & resize freely with collision detection.
 
+## Status
+
+- **Phase 1:** ✅ COMPLETE
+- **Phase 2A (Auth):** ✅ COMPLETE — 80+ tests, JWT+OAuth fully implemented
+- **Phase 2B (Business):** ✅ COMPLETE — 78+ tests, multi-tenant with roles + invites
+- **Phase 2C (Tabs):** → NEXT UP
+- **Test Coverage:** 202 tests, all passing, 0 failures
+
 ## Stack
 
 | Layer | Tech |
 |-------|------|
 | Frontend | ReactJS 18, TypeScript, Vite, Ant Design 5, Tailwind CSS, Zustand, Apollo Client, react-rnd, Chart.js |
-| Backend | NestJS 10, TypeORM, PostgreSQL (Supabase), Apollo Server, GraphQL |
+| Backend | NestJS 10, TypeORM, PostgreSQL (Supabase), Apollo Server 4, GraphQL |
 | Queue | BullMQ 5, Redis Cloud |
 | Storage | MinIO (local dev) → AWS S3 (production) |
-| Auth | JWT (HttpOnly cookie) + Google OAuth |
+| Auth | JWT (HttpOnly cookie) + Google OAuth + Email verification |
 | Monorepo | NX 22 |
 
 ## Structure

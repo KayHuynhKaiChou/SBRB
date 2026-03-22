@@ -1,10 +1,10 @@
-import type { WidgetPosition } from './canvas.types';
+import type { IWidgetPosition } from './canvas.types';
 
 /** Supported chart types — SRS 4.6.2 */
 export type ChartType = 'bar' | 'line' | 'area' | 'doughnut';
 
 /** Chart display configuration */
-export interface ChartConfig {
+export interface IChartConfig {
   type: ChartType;
   colorIndex: number;     // Index into CHART_COLORS (0–19)
   showLabels: boolean;    // Show value labels on chart
@@ -15,30 +15,30 @@ export interface ChartConfig {
 }
 
 /** Widget data linking */
-export interface WidgetDataLink {
+export interface IWidgetDataLink {
   datasheetId: string;
   selectedSeriesIds: string[];    // DataSeries IDs to display
   selectedPeriods: string[] | null; // null = show all periods
 }
 
 /** Full widget DTO (shared FE/BE) */
-export interface WidgetDto {
+export interface IWidgetDto {
   id: string;
   tabId: string;
   businessId: string;
   name: string;
   metricName: string;
   unit: string;
-  position: WidgetPosition;
-  chartConfig: ChartConfig;
-  dataLink: WidgetDataLink | null;
+  position: IWidgetPosition;
+  chartConfig: IChartConfig;
+  dataLink: IWidgetDataLink | null;
   isRestricted: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
 /** Widget position update request (SRS 8.3) */
-export interface WidgetPositionUpdateDto {
+export interface IWidgetPositionUpdateDto {
   x: number;
   y: number;
   w: number;
@@ -46,7 +46,7 @@ export interface WidgetPositionUpdateDto {
 }
 
 /** Server response for collision (SRS 8.3) */
-export interface CollisionConflictDto {
+export interface ICollisionConflictDto {
   error: 'COLLISION';
   conflictingWidgets: Array<{
     id: string;

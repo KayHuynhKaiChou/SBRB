@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { JwtPayload } from '../auth/jwt.strategy';
+import { IJwtPayload } from '../auth/jwt.strategy';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UserService } from './user.service';
 
@@ -22,29 +22,29 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get('me')
-  me(@CurrentUser() user: JwtPayload) {
+  me(@CurrentUser() user: IJwtPayload) {
     return this.userService.findById(user.sub);
   }
 
   @Patch('me')
-  updateMe(@CurrentUser() user: JwtPayload, @Body() dto: UpdateProfileDto) {
+  updateMe(@CurrentUser() user: IJwtPayload, @Body() dto: UpdateProfileDto) {
     return this.userService.updateProfile(user.sub, dto);
   }
 
   @Delete('me')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteMe(@CurrentUser() user: JwtPayload) {
+  async deleteMe(@CurrentUser() user: IJwtPayload) {
     await this.userService.deleteAccount(user.sub);
   }
 
   @Get('me/sessions')
-  getSessions(@CurrentUser() user: JwtPayload) {
+  getSessions(@CurrentUser() user: IJwtPayload) {
     return this.userService.getSessions(user.sub);
   }
 
   @Delete('me/sessions/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async deleteSession(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+  async deleteSession(@CurrentUser() user: IJwtPayload, @Param('id') id: string) {
     await this.userService.deleteSession(user.sub, id);
   }
 }

@@ -2,7 +2,7 @@ import { UseGuards } from '@nestjs/common';
 import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
-import { JwtPayload } from '../auth/jwt.strategy';
+import { IJwtPayload } from '../auth/jwt.strategy';
 import { InvitationService } from './invitation.service';
 import { MemberService } from './member.service';
 import { AssignWidgetsDto } from './dto/assign-widgets.dto';
@@ -38,7 +38,7 @@ export class MemberResolver {
   async inviteMember(
     @Args('businessId', { type: () => ID }) businessId: string,
     @Args('input') input: InviteMemberDto,
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: IJwtPayload,
   ): Promise<InvitationType> {
     return this.invitationService.invite(businessId, user.sub, input) as unknown as InvitationType;
   }
@@ -47,7 +47,7 @@ export class MemberResolver {
   async cancelInvitation(
     @Args('businessId', { type: () => ID }) businessId: string,
     @Args('invitationId', { type: () => ID }) invitationId: string,
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: IJwtPayload,
   ): Promise<boolean> {
     return this.invitationService.cancelInvitation(businessId, invitationId, user.sub);
   }
@@ -55,7 +55,7 @@ export class MemberResolver {
   @Mutation(() => MemberType)
   async acceptInvitation(
     @Args('token') token: string,
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: IJwtPayload,
   ): Promise<MemberType> {
     return this.invitationService.acceptInvitation(token, user.sub) as unknown as MemberType;
   }
@@ -63,7 +63,7 @@ export class MemberResolver {
   @Mutation(() => Boolean)
   async declineInvitation(
     @Args('token') token: string,
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: IJwtPayload,
   ): Promise<boolean> {
     return this.invitationService.declineInvitation(token, user.sub);
   }
@@ -73,7 +73,7 @@ export class MemberResolver {
     @Args('businessId', { type: () => ID }) businessId: string,
     @Args('targetUserId', { type: () => ID }) targetUserId: string,
     @Args('input') input: UpdateMemberRoleDto,
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: IJwtPayload,
   ): Promise<MemberType> {
     return this.memberService.changeMemberRole(
       businessId,
@@ -87,7 +87,7 @@ export class MemberResolver {
   async removeMember(
     @Args('businessId', { type: () => ID }) businessId: string,
     @Args('targetUserId', { type: () => ID }) targetUserId: string,
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: IJwtPayload,
   ): Promise<boolean> {
     return this.memberService.removeMember(businessId, user.sub, targetUserId);
   }
@@ -97,7 +97,7 @@ export class MemberResolver {
     @Args('businessId', { type: () => ID }) businessId: string,
     @Args('targetUserId', { type: () => ID }) targetUserId: string,
     @Args('input') input: AssignWidgetsDto,
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser() user: IJwtPayload,
   ): Promise<MemberType> {
     return this.memberService.assignWidgets(
       businessId,

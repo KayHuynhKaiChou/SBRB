@@ -1,16 +1,77 @@
 import React from 'react';
+import { Form, Input, Button, Divider, Typography, Space } from 'antd';
+import { Link } from 'react-router-dom';
+import { AuthLayout } from '../../components/auth/auth-layout';
+import { GoogleOAuthButton } from '../../components/auth/google-oauth-button';
+import { useAuth } from '../../hooks/use-auth';
 
-// TODO: Implement login page
-// - Email/password form (SRS 4.1.3)
-// - Google OAuth button
-// - Remember me / Forgot password link
+interface LoginFormValues {
+  email: string;
+  password: string;
+}
+
 export default function LoginPage() {
+  const { login, loginLoading } = useAuth();
+  const [form] = Form.useForm<LoginFormValues>();
+
+  const onFinish = async (values: LoginFormValues) => {
+    try {
+      await login(values);
+    } catch {
+      form.setFields([
+        { name: 'password', errors: ['Email hoặc mật khẩu không đúng'] },
+      ]);
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-50">
-      <div className="text-center">
-        <h1 className="text-2xl font-semibold text-neutral-900">SBRB</h1>
-        <p className="text-neutral-500 mt-2">Login page — to be implemented</p>
-      </div>
-    </div>
+    <AuthLayout title="Đăng nhập" subtitle="Chào mừng trở lại">
+      <Form form={form} layout="vertical" onFinish={onFinish} size="large">
+        <Form.Item
+          name="email"
+          label="Email"
+          rules={[
+            { required: true, message: 'Vui lòng nhập email' },
+            { type: 'email', message: 'Email không hợp lệ' },
+          ]}
+        >
+          <Input placeholder="you@example.com" autoComplete="email" />
+        </Form.Item>
+
+        <Form.Item
+          name="password"
+          label="Mật khẩu"
+          rules={[{ required: true, message: 'Vui lòng nhập mật khẩu' }]}
+        >
+          <Input.Password placeholder="••••••••" autoComplete="current-password" />
+        </Form.Item>
+
+        <div style={{ textAlign: 'right', marginBottom: 16 }}>
+          <Link to="/auth/forgot-password">Quên mật khẩu?</Link>
+        </div>
+
+        <Form.Item>
+          <Button
+            type="primary"
+            htmlType="submit"
+            block
+            loading={loginLoading}
+          >
+            Đăng nhập
+          </Button>
+        </Form.Item>
+
+        <Divider>hoặc</Divider>
+
+        <GoogleOAuthButton />
+
+        <div style={{ textAlign: 'center', marginTop: 16 }}>
+          <Space>
+            <Typography.Text type="secondary">Chưa có tài khoản?</Typography.Text>
+            <Link to="/auth/register">Đăng ký ngay</Link>
+          </Space>
+        </div>
+      </Form>
+    </AuthLayout>
   );
 }

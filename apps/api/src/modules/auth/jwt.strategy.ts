@@ -4,7 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
-export interface JwtPayload {
+export interface IJwtPayload {
   sub: string;
   email: string;
   businessId?: string;
@@ -24,7 +24,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  validate(payload: JwtPayload): JwtPayload {
+  validate(payload: IJwtPayload): IJwtPayload {
     if (!payload?.sub) throw new UnauthorizedException();
     return payload;
   }

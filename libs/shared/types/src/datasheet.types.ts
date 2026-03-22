@@ -7,7 +7,7 @@ export type PeriodType = 'monthly' | 'quarterly' | 'yearly' | 'weekly' | 'custom
 export type ImportStatus = 'processing' | 'ready' | 'error';
 
 /** A single row in a DataSheet (one series = one metric over time) */
-export interface DataSeriesDto {
+export interface IDataSeriesDto {
   id: string;
   datasheetId: string;
   name: string; // Row label (e.g., "Doanh thu cửa hàng A")
@@ -15,7 +15,7 @@ export interface DataSeriesDto {
   values: Record<string, number | null>;
 }
 
-export interface DataSheetDto {
+export interface IDataSheetDto {
   id: string;
   businessId: string;
   name: string;
@@ -28,7 +28,7 @@ export interface DataSheetDto {
   sizeBytes: number;
 }
 
-export interface ImportBatchDto {
+export interface IImportBatchDto {
   id: string;
   datasheetId: string;
   businessId: string;

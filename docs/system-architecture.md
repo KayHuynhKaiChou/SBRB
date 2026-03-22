@@ -338,4 +338,29 @@ DataSeries {
 
 ---
 
-**Document Version:** 2.2 | **Last Updated:** 2026-03-22 | **Architecture Owner:** Tech Lead
+## Module Implementation Status (2026-03-22)
+
+| Module | Status | Key Files | Tests |
+|--------|--------|-----------|-------|
+| auth | ✅ IMPLEMENTED | auth.service.ts, jwt.strategy.ts, google.strategy.ts, redis-rate-limit.service.ts | 80+ ✅ |
+| user | ✅ IMPLEMENTED | user.service.ts, user.resolver.ts | Incl. in auth |
+| business | ✅ IMPLEMENTED | business.service.ts, business-crud.service.ts, business-ownership.service.ts, member.service.ts, invitation.service.ts | 78+ ✅ |
+| audit | ✅ IMPLEMENTED | audit.service.ts | Incl. in business |
+| mail | ✅ IMPLEMENTED | mail.service.ts (Gmail SMTP + Handlebars) | Incl. in auth |
+| minio | 🔲 STUB | minio.service.ts (mock URLs only; real pkg not installed yet) | N/A |
+| tab | 🔲 SCAFFOLDED | tab.module.ts (services/resolvers commented out) | — |
+| widget | 🔲 SCAFFOLDED | widget.module.ts (services/resolvers commented out) | — |
+| datasheet | 🔲 SCAFFOLDED | datasheet.module.ts (BullMQ queue registered) | — |
+| notification | 🔲 SCAFFOLDED | notification.module.ts (services/resolvers commented out) | — |
+
+## Rate Limiting (IMPLEMENTED)
+
+✅ **Implemented in auth module** via `redis-rate-limit.service.ts`:
+- 100 req/min per IP on auth endpoints
+- Redis-backed rate limiter (used by login, register, password reset)
+- Prevents brute force attacks
+- Configurable limits per endpoint
+
+---
+
+**Document Version:** 2.3 | **Last Updated:** 2026-03-22 | **Architecture Owner:** Tech Lead

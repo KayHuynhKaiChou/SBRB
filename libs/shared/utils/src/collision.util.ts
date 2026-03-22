@@ -1,11 +1,11 @@
-import type { WidgetPosition } from '@sbrb/shared-types';
+import type { IIWidgetPosition } from '@sbrb/shared-types';
 
 /**
  * Check if two bounding boxes overlap (collision detection)
  * Used by: Zustand store (client-side realtime) + NestJS guard (server-side validation)
  * SRS 4.4.4
  */
-export function doBoxesOverlap(a: WidgetPosition, b: WidgetPosition): boolean {
+export function doBoxesOverlap(a: IWidgetPosition, b: IWidgetPosition): boolean {
   return (
     a.x < b.x + b.w &&
     a.x + a.w > b.x &&
@@ -19,8 +19,8 @@ export function doBoxesOverlap(a: WidgetPosition, b: WidgetPosition): boolean {
  * @returns IDs of conflicting widgets (empty = no collision)
  */
 export function detectCollision(
-  newPosition: WidgetPosition,
-  otherWidgets: Array<{ id: string; position: WidgetPosition }>,
+  newPosition: IWidgetPosition,
+  otherWidgets: Array<{ id: string; position: IWidgetPosition }>,
   excludeWidgetId?: string,
 ): string[] {
   return otherWidgets
