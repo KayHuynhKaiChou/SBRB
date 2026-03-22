@@ -1,4 +1,7 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Widget } from './entities/widget.entity';
+import { AlertThreshold } from './entities/alert-threshold.entity';
 
 /**
  * Widget module — SRS 4.4 / 4.5 / 4.6 / 8.1 / 8.3
@@ -11,7 +14,7 @@ import { Module } from '@nestjs/common';
  * GraphQL: Widget queries/mutations, AlertThreshold CRUD
  */
 @Module({
-  imports: [],
+  imports: [TypeOrmModule.forFeature([Widget, AlertThreshold])],
   // providers: [WidgetService, WidgetResolver, AlertThresholdService],
   // controllers: [WidgetController],
   // exports: [WidgetService],

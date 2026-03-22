@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Tab } from './entities/tab.entity';
 
 /**
  * Tab module — SRS 4.3
@@ -6,7 +8,7 @@ import { Module } from '@nestjs/common';
  * Max 20 tabs per business
  */
 @Module({
-  imports: [],
+  imports: [TypeOrmModule.forFeature([Tab])],
   // providers: [TabService, TabResolver],
   // exports: [TabService],
 })

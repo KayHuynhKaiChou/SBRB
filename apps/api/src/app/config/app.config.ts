@@ -18,10 +18,12 @@ export const appConfig = registerAs('app', () => ({
   minioSecretKey: process.env.MINIO_SECRET_KEY || 'minioadmin',
   minioBucket: process.env.MINIO_BUCKET || 'sbrb',
   minioPublicUrl: process.env.MINIO_PUBLIC_URL || 'http://localhost:9000',
-  // Email
-  emailProvider: process.env.EMAIL_PROVIDER || 'sendgrid',
-  sendgridApiKey: process.env.SENDGRID_API_KEY,
-  emailFrom: process.env.EMAIL_FROM || 'noreply@sbrb.app',
+  // Email (Gmail SMTP via nodemailer)
+  mailHost: process.env.MAIL_HOST || 'smtp.gmail.com',
+  mailPort: parseInt(process.env.MAIL_PORT || '587', 10),
+  mailUsername: process.env.MAIL_USERNAME,
+  mailPassword: process.env.MAIL_PASSWORD,
+  mailFrom: process.env.MAIL_FROM || 'noreply@sbrb.app',
   // Rate limiting
   rateLimitPublic: parseInt(process.env.RATE_LIMIT_PUBLIC || '100', 10),
   rateLimitAuth: parseInt(process.env.RATE_LIMIT_AUTH || '500', 10),

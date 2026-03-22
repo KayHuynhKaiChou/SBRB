@@ -1,16 +1,24 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-// TODO: Import entities and services when implemented
-// import { UserEntity } from './entities/user.entity';
-// import { RefreshTokenEntity } from './entities/refresh-token.entity';
-// import { AuthService } from './auth.service';
-// import { AuthResolver } from './auth.resolver';
-// import { AuthController } from './auth.controller';
-// import { JwtStrategy } from './strategies/jwt.strategy';
-// import { GoogleStrategy } from './strategies/google.strategy';
+import Redis from 'ioredis';
+import { MailModule } from '../mail/mail.module';
+import { AuthController } from './auth.controller';
+import { AuthLoginService } from './auth-login.service';
+import { AuthPasswordService } from './auth-password.service';
+import { AuthRegisterService } from './auth-register.service';
+import { AuthResolver } from './auth.resolver';
+import { AuthService } from './auth.service';
+import { EmailVerification } from './entities/email-verification.entity';
+import { PasswordReset } from './entities/password-reset.entity';
+import { RefreshToken } from './entities/refresh-token.entity';
+import { Session } from './entities/session.entity';
+import { User } from './entities/user.entity';
+import { GoogleStrategy } from './google.strategy';
+import { JwtStrategy } from './jwt.strategy';
+import { REDIS_CLIENT, RedisRateLimitService } from './redis-rate-limit.service';
 
 /**
  * Auth module — SRS 4.1
@@ -20,6 +28,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 @Module({
   imports: [
     ConfigModule,
+    MailModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -31,10 +40,29 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         },
       }),
     }),
-    // TypeOrmModule.forFeature([UserEntity, RefreshTokenEntity]),
+    TypeOrmModule.forFeature([User, RefreshToken, Session, EmailVerification, PasswordReset]),
   ],
-  // providers: [AuthService, AuthResolver, JwtStrategy, GoogleStrategy],
-  // controllers: [AuthController],
-  // exports: [AuthService, JwtModule],
+  providers: [
+    {
+      provide: REDIS_CLIENT,
+      inject: [ConfigService],
+      useFactory: (config: ConfigService): Redis => new Redis({
+        host: config.get<string>('REDIS_HOST', 'localhost'),
+        port: config.get<number>('REDIS_PORT', 6379),
+        password: config.get<string>('REDIS_PASSWORD'),
+        tls: config.get('REDIS_TLS', 'false') === 'true' ? {} : undefined,
+      }),
+    },
+    RedisRateLimitService,
+    AuthRegisterService,
+    AuthLoginService,
+    AuthPasswordService,
+    AuthService,
+    AuthResolver,
+    JwtStrategy,
+    GoogleStrategy,
+  ],
+  controllers: [AuthController],
+  exports: [AuthService, JwtModule],
 })
 export class AuthModule {}

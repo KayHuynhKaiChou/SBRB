@@ -1,4 +1,18 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Business } from './entities/business.entity';
+import { BusinessMember } from './entities/business-member.entity';
+import { BusinessInvitation } from './entities/business-invitation.entity';
+import { BusinessCrudService } from './business-crud.service';
+import { BusinessOwnershipService } from './business-ownership.service';
+import { BusinessService } from './business.service';
+import { BusinessResolver } from './business.resolver';
+import { BusinessController } from './business.controller';
+import { MemberService } from './member.service';
+import { MemberResolver } from './member.resolver';
+import { InvitationService } from './invitation.service';
+import { MinioModule } from '../minio/minio.module';
+import { AuditModule } from '../audit/audit.module';
 
 /**
  * Business module — SRS 4.2
@@ -6,9 +20,21 @@ import { Module } from '@nestjs/common';
  * widget assignment for Staff, business switcher data
  */
 @Module({
-  imports: [],
-  // providers: [BusinessService, BusinessResolver, MemberService],
-  // controllers: [BusinessController, MemberController],
-  // exports: [BusinessService],
+  imports: [
+    TypeOrmModule.forFeature([Business, BusinessMember, BusinessInvitation]),
+    MinioModule,
+    AuditModule,
+  ],
+  providers: [
+    BusinessCrudService,
+    BusinessOwnershipService,
+    BusinessService,
+    BusinessResolver,
+    MemberService,
+    MemberResolver,
+    InvitationService,
+  ],
+  controllers: [BusinessController],
+  exports: [BusinessService, BusinessCrudService, BusinessOwnershipService, MemberService, InvitationService],
 })
 export class BusinessModule {}

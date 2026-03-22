@@ -1,4 +1,7 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuditLog } from './entities/audit-log.entity';
+import { AuditService } from './audit.service';
 
 /**
  * Audit module — SRS 4.11
@@ -7,9 +10,8 @@ import { Module } from '@nestjs/common';
  * REST: GET /businesses/:id/audit-logs
  */
 @Module({
-  imports: [],
-  // providers: [AuditService],
-  // controllers: [AuditController],
-  // exports: [AuditService],
+  imports: [TypeOrmModule.forFeature([AuditLog])],
+  providers: [AuditService],
+  exports: [AuditService],
 })
 export class AuditModule {}

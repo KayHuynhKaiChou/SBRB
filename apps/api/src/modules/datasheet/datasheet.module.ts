@@ -1,6 +1,10 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bull';
 import { IMPORT_QUEUE } from '../../common/constants/queue.constants';
+import { DataSheet } from './entities/data-sheet.entity';
+import { DataSeries } from './entities/data-series.entity';
+import { ImportBatch } from './entities/import-batch.entity';
 
 /**
  * Datasheet module — SRS 4.7 / 4.8 / 4.12
@@ -15,6 +19,7 @@ import { IMPORT_QUEUE } from '../../common/constants/queue.constants';
  */
 @Module({
   imports: [
+    TypeOrmModule.forFeature([DataSheet, DataSeries, ImportBatch]),
     BullModule.registerQueue({ name: IMPORT_QUEUE }),
   ],
   // providers: [DatasheetService, DatasheetResolver, ImportHistoryService],

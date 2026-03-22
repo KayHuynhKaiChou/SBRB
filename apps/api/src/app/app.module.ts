@@ -14,6 +14,8 @@ import { WidgetModule } from '../modules/widget/widget.module';
 import { DatasheetModule } from '../modules/datasheet/datasheet.module';
 import { NotificationModule } from '../modules/notification/notification.module';
 import { AuditModule } from '../modules/audit/audit.module';
+import { MailModule } from '../modules/mail/mail.module';
+import { UserModule } from '../modules/user/user.module';
 
 @Module({
   imports: [
@@ -70,7 +72,9 @@ import { AuditModule } from '../modules/audit/audit.module';
     }),
 
     // Feature modules
+    MailModule,
     AuthModule,
+    UserModule,
     BusinessModule,
     TabModule,
     WidgetModule,

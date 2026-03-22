@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Notification } from './entities/notification.entity';
 
 /**
  * Notification module — SRS 4.9
@@ -7,7 +9,7 @@ import { Module } from '@nestjs/common';
  * GraphQL: subscription for realtime new notification
  */
 @Module({
-  imports: [],
+  imports: [TypeOrmModule.forFeature([Notification])],
   // providers: [NotificationService, NotificationResolver],
   // exports: [NotificationService],
 })
