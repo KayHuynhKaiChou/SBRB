@@ -1,0 +1,53 @@
+appId: com.sbrb.desktop
+productName: SBRB
+copyright: Copyright © 2024 SBRB Team
+
+# Entry point — compiled main process
+main: dist/apps/desktop/main/main.js
+
+directories:
+  output: dist/apps/desktop/release
+  buildResources: apps/desktop/build-resources
+
+# Files to include in the package
+files:
+  - dist/apps/desktop/main/**/*
+  - dist/apps/desktop/renderer/**/*
+  - node_modules/**/*
+  - package.json
+
+# Windows — .exe installer
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: apps/desktop/build-resources/icon.ico
+
+# macOS — .dmg
+mac:
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+  icon: apps/desktop/build-resources/icon.icns
+  category: public.app-category.business
+
+# Linux — .AppImage
+linux:
+  target:
+    - target: AppImage
+      arch: [x64]
+  icon: apps/desktop/build-resources/icon.png
+  category: Office
+
+# NSIS installer options (Windows)
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+
+# Auto-update — points to S3 bucket (configure in production)
+publish:
+  provider: s3
+  bucket: sbrb-releases
+  region: ap-southeast-1

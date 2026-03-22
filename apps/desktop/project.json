@@ -1,0 +1,68 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "desktop",
+  "projectType": "application",
+  "root": "apps/desktop",
+  "sourceRoot": "apps/desktop",
+  "tags": ["scope:desktop", "type:app"],
+  "targets": {
+    "build:main": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsc -p apps/desktop/tsconfig.main.json",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "build:renderer": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "vite build apps/desktop/renderer/vite.config.ts",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build:main", "build:renderer"],
+      "options": {
+        "command": "echo Desktop build complete",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "vite serve apps/desktop/renderer --config apps/desktop/renderer/vite.config.ts --port 3001",
+          "wait-on http://localhost:3001 && tsc -p apps/desktop/tsconfig.main.json && electron ."
+        ],
+        "parallel": true,
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "package": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build"],
+      "options": {
+        "command": "electron-builder --config apps/desktop/electron-builder.yml",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "options": {
+        "lintFilePatterns": ["apps/desktop/**/*.ts", "apps/desktop/**/*.tsx"]
+      }
+    },
+    "type-check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "tsc --noEmit -p apps/desktop/tsconfig.main.json",
+          "tsc --noEmit -p apps/desktop/renderer/tsconfig.json"
+        ],
+        "parallel": false,
+        "cwd": "{workspaceRoot}"
+      }
+    }
+  }
+}
