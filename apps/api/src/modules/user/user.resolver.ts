@@ -1,0 +1,52 @@
+import { UseGuards } from '@nestjs/common';
+import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { SessionType } from '../auth/dto/session.type';
+import { UserType } from '../auth/dto/user.type';
+import { JwtPayload } from '../auth/jwt.strategy';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UserService } from './user.service';
+
+/** GraphQL user queries and mutations */
+@Resolver(() => UserType)
+@UseGuards(JwtAuthGuard)
+export class UserResolver {
+  constructor(private readonly userService: UserService) {}
+
+  @Query(() => UserType)
+  async me(@CurrentUser() user: JwtPayload): Promise<UserType> {
+    const u = await this.userService.findById(user.sub);
+    return u as unknown as UserType;
+  }
+
+  @Mutation(() => UserType)
+  async updateMe(
+    @CurrentUser() user: JwtPayload,
+    @Args('input') input: UpdateProfileDto,
+  ): Promise<UserType> {
+    const u = await this.userService.updateProfile(user.sub, input);
+    return u as unknown as UserType;
+  }
+
+  @Query(() => [SessionType])
+  async mySessions(@CurrentUser() user: JwtPayload): Promise<SessionType[]> {
+    const sessions = await this.userService.getSessions(user.sub);
+    return sessions as unknown as SessionType[];
+  }
+
+  @Mutation(() => Boolean)
+  async deleteSession(
+    @CurrentUser() user: JwtPayload,
+    @Args('id', { type: () => ID }) id: string,
+  ): Promise<boolean> {
+    await this.userService.deleteSession(user.sub, id);
+    return true;
+  }
+
+  @Mutation(() => Boolean)
+  async deleteAccount(@CurrentUser() user: JwtPayload): Promise<boolean> {
+    await this.userService.deleteAccount(user.sub);
+    return true;
+  }
+}
