@@ -1,0 +1,21 @@
+{
+  "app_name": "SBRB",
+  "loading": "Loading...",
+  "save": "Save",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "edit": "Edit",
+  "confirm": "Confirm",
+  "close": "Close",
+  "search": "Search",
+  "filter": "Filter",
+  "sort": "Sort",
+  "reset_filter": "Reset filter",
+  "actions": "Actions",
+  "created_at": "Created",
+  "updated_at": "Updated",
+  "error_generic": "Something went wrong. Please try again.",
+  "success_saved": "Saved",
+  "confirm_delete_title": "Confirm delete",
+  "confirm_delete_msg": "This action cannot be undone."
+}

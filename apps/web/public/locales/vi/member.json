@@ -1,0 +1,20 @@
+{
+  "members_title": "Thành viên",
+  "invite_btn": "Mời thành viên",
+  "invite_email_label": "Email",
+  "invite_role_label": "Vai trò",
+  "role_owner": "Owner",
+  "role_manager": "Manager",
+  "role_staff": "Staff",
+  "role_viewer": "Viewer",
+  "active_tab": "Đang hoạt động",
+  "invited_tab": "Đã mời",
+  "showing_count": "Hiển thị {{shown}} / {{total}} thành viên",
+  "assigned_widgets_tab": "Widgets được giao",
+  "assign_widget_hint": "Chọn Widget Staff này có thể nhập dữ liệu",
+  "remove_member": "Xoá thành viên",
+  "remove_member_confirm": "Xoá {{name}} khỏi Business?",
+  "change_role": "Đổi vai trò",
+  "transfer_ownership": "Transfer Ownership",
+  "transfer_ownership_confirm": "Chuyển quyền sở hữu cho {{name}}? Bạn sẽ trở thành Manager."
+}

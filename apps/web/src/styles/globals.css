@@ -1,0 +1,50 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* SBRB Global Styles */
+:root {
+  --brand-primary: #D72A44;
+  --brand-primary-hover: #B71E36;
+  --snap-grid: 20px;
+  --canvas-width: 3200px;
+  --canvas-height: 4800px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #FAFAFA;
+  color: #171717;
+}
+
+/* Canvas scrollbar styling */
+.canvas-container {
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #D4D4D4 transparent;
+}
+
+.canvas-container::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.canvas-container::-webkit-scrollbar-thumb {
+  background-color: #D4D4D4;
+  border-radius: 3px;
+}
+
+/* Ant Design overrides */
+.ant-notification-notice {
+  border-radius: 8px;
+}

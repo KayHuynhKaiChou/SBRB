@@ -1,0 +1,21 @@
+{
+  "app_name": "SBRB",
+  "loading": "Đang tải...",
+  "save": "Lưu",
+  "cancel": "Huỷ",
+  "delete": "Xoá",
+  "edit": "Chỉnh sửa",
+  "confirm": "Xác nhận",
+  "close": "Đóng",
+  "search": "Tìm kiếm",
+  "filter": "Lọc",
+  "sort": "Sắp xếp",
+  "reset_filter": "Xoá bộ lọc",
+  "actions": "Thao tác",
+  "created_at": "Ngày tạo",
+  "updated_at": "Cập nhật",
+  "error_generic": "Đã có lỗi xảy ra. Vui lòng thử lại.",
+  "success_saved": "Đã lưu",
+  "confirm_delete_title": "Xác nhận xoá",
+  "confirm_delete_msg": "Hành động này không thể hoàn tác."
+}
