@@ -2,8 +2,11 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BullModule } from '@nestjs/bull';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { join } from 'path';
 import { IMPORT_QUEUE } from '../processors/queue.constants';
+import { ImportExcelProcessor } from '../processors/import-excel.processor';
+import { DataSheet } from '@sbrb/api-entities/datasheet/data-sheet.entity';
+import { DataSeries } from '@sbrb/api-entities/datasheet/data-series.entity';
+import { ImportBatch } from '@sbrb/api-entities/datasheet/import-batch.entity';
 
 /**
  * Worker module — processes BullMQ jobs
@@ -25,7 +28,7 @@ import { IMPORT_QUEUE } from '../processors/queue.constants';
         ssl: config.get('NODE_ENV') === 'production'
           ? { rejectUnauthorized: false }
           : false,
-        entities: [join(__dirname, '..', '**', '*.entity.{ts,js}')],
+        entities: [DataSheet, DataSeries, ImportBatch],
         synchronize: false, // Worker never auto-migrates
       }),
     }),
@@ -42,9 +45,8 @@ import { IMPORT_QUEUE } from '../processors/queue.constants';
       }),
     }),
     BullModule.registerQueue({ name: IMPORT_QUEUE }),
-    // TODO: Import processor modules when implemented
-    // ImportProcessorModule,
-    // AlertCheckProcessorModule,
+    TypeOrmModule.forFeature([DataSheet, DataSeries, ImportBatch]),
   ],
+  providers: [ImportExcelProcessor],
 })
 export class WorkerModule {}

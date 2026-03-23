@@ -6,10 +6,13 @@
     "declaration": false,
     "strict": true,
     "outDir": "../../dist/apps/worker",
-    "rootDir": "src",
-    "types": ["node"]
+    "types": ["node"],
+    "strictPropertyInitialization": false
   },
   "files": [],
   "include": [],
-  "references": [{ "path": "./tsconfig.app.json" }]
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.spec.json" }
+  ]
 }

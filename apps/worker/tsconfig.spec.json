@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/out-tsc",
+    "module": "CommonJS",
+    "types": ["jest", "node"],
+    "strictPropertyInitialization": false
+  },
+  "include": [
+    "jest.config.ts",
+    "src/**/*.spec.ts",
+    "src/**/*.test.ts",
+    "src/**/*.d.ts",
+    "../../apps/api/src/modules/datasheet/entities/*.ts",
+    "../../apps/api/src/modules/auth/entities/*.ts",
+    "../../apps/api/src/modules/business/entities/*.ts",
+    "../../apps/api/src/modules/widget/entities/*.ts"
+  ]
+}
