@@ -1,4 +1,4 @@
-import type { IIWidgetPosition } from '@sbrb/shared-types';
+import type { IWidgetPosition } from '@sbrb/shared-types';
 import {
   CANVAS_DEFAULT_WIDTH,
   CANVAS_DEFAULT_HEIGHT,

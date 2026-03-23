@@ -1,4 +1,4 @@
-import type { IIWidgetPosition } from '@sbrb/shared-types';
+import type { IWidgetPosition } from '@sbrb/shared-types';
 
 /**
  * Check if two bounding boxes overlap (collision detection)
