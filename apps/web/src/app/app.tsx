@@ -11,6 +11,7 @@ const ForgotPasswordPage = React.lazy(() => import('../pages/auth/forgot-passwor
 const ResetPasswordPage = React.lazy(() => import('../pages/auth/reset-password-page'));
 const OnboardingPage = React.lazy(() => import('../pages/onboarding/onboarding-page'));
 const DashboardPage = React.lazy(() => import('../pages/dashboard/dashboard-page'));
+const DataSheetListPage = React.lazy(() => import('../pages/datasheet/datasheet-list-page'));
 const NotFoundPage = React.lazy(() => import('../pages/not-found-page'));
 
 const AppLoading = () => (
@@ -26,7 +27,7 @@ export default function App() {
         {/* Public auth routes */}
         <Route path="/auth/login" element={<LoginPage />} />
         <Route path="/auth/register" element={<RegisterPage />} />
-        <Route path="/auth/verify-email/:token" element={<VerifyEmailPage />} />
+        <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
         <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/auth/reset-password/:token" element={<ResetPasswordPage />} />
 
@@ -44,6 +45,15 @@ export default function App() {
           element={
             <ProtectedRoute>
               <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/data-sheets"
+          element={
+            <ProtectedRoute>
+              <DataSheetListPage />
             </ProtectedRoute>
           }
         />

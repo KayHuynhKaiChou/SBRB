@@ -57,7 +57,12 @@ export function CanvasControls({ onAddWidget }: ICanvasControlsProps) {
             type={zoom === level ? 'primary' : 'text'}
             size="small"
             onClick={() => setZoom(level)}
-            style={{ minWidth: 40, fontWeight: zoom === level ? 600 : 400 }}
+            style={{
+              minWidth: 40,
+              fontWeight: zoom === level ? 600 : 400,
+              background: zoom === level ? '#D72A44' : undefined,
+              borderColor: zoom === level ? '#D72A44' : undefined,
+            }}
           >
             {level}%
           </Button>
@@ -78,7 +83,13 @@ export function CanvasControls({ onAddWidget }: ICanvasControlsProps) {
       <Button
         type="primary"
         onClick={onAddWidget}
-        style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+        style={{
+          borderRadius: 8,
+          boxShadow: '0 2px 8px rgba(215,42,68,0.35)',
+          background: '#D72A44',
+          borderColor: '#D72A44',
+          fontWeight: 600,
+        }}
       >
         + Widget
       </Button>

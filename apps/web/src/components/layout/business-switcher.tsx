@@ -1,11 +1,9 @@
 import React from 'react';
-import { Dropdown, Space, Typography } from 'antd';
-import { ShopOutlined, PlusOutlined, DownOutlined } from '@ant-design/icons';
+import { Dropdown } from 'antd';
+import { PlusOutlined, DownOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/auth.store';
-
-const { Text } = Typography;
 
 export function BusinessSwitcher() {
   const navigate = useNavigate();
@@ -24,13 +22,35 @@ export function BusinessSwitcher() {
 
   return (
     <Dropdown menu={{ items: menuItems }} placement="bottomLeft" trigger={['click']}>
-      <Space style={{ cursor: 'pointer' }}>
-        <ShopOutlined style={{ color: '#1677ff' }} />
-        <Text style={{ maxWidth: 160 }} ellipsis>
+      <div
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 4,
+          cursor: 'pointer',
+          padding: '3px 8px',
+          borderRadius: 6,
+          maxWidth: 180,
+          transition: 'background 0.15s',
+        }}
+        onMouseEnter={e => (e.currentTarget.style.background = '#f5f5f5')}
+        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+      >
+        <span
+          style={{
+            fontSize: 13,
+            fontWeight: 500,
+            color: '#333',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            maxWidth: 140,
+          }}
+        >
           {businessName}
-        </Text>
-        <DownOutlined style={{ fontSize: 10, color: '#8c8c8c' }} />
-      </Space>
+        </span>
+        <DownOutlined style={{ fontSize: 9, color: '#aaa', flexShrink: 0 }} />
+      </div>
     </Dropdown>
   );
 }

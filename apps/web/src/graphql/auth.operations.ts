@@ -1,22 +1,28 @@
 import { gql } from '@apollo/client';
 
 export const LOGIN_MUTATION = gql`
-  mutation Login($input: LoginInput!) {
+  mutation Login($input: LoginDto!) {
     login(input: $input) {
       accessToken
-      user {
-        id
-        email
-        name
-        avatarUrl
-        isEmailVerified
-      }
+    }
+  }
+`;
+
+export const ME_QUERY = gql`
+  query Me {
+    me {
+      id
+      email
+      fullName
+      avatarUrl
+      emailVerified
+      createdAt
     }
   }
 `;
 
 export const REGISTER_MUTATION = gql`
-  mutation Register($input: RegisterInput!) {
+  mutation Register($input: RegisterDto!) {
     register(input: $input) {
       message
     }
@@ -42,11 +48,20 @@ export const VERIFY_EMAIL_MUTATION = gql`
 `;
 
 export const CREATE_BUSINESS_MUTATION = gql`
-  mutation CreateBusiness($input: CreateBusinessInput!) {
+  mutation CreateBusiness($input: CreateBusinessDto!) {
     createBusiness(input: $input) {
       id
       name
       currency
+    }
+  }
+`;
+
+export const MY_BUSINESSES_QUERY = gql`
+  query MyBusinesses {
+    myBusinesses {
+      id
+      name
     }
   }
 `;

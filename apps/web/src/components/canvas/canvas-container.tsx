@@ -15,6 +15,7 @@ interface ICanvasContainerProps {
   onAddWidget: () => void;
   onEditWidget: (id: string) => void;
   onDeleteWidget: (id: string) => void;
+  onOpenDataSelector?: (widgetId: string) => void;
 }
 
 export function CanvasContainer({
@@ -22,6 +23,7 @@ export function CanvasContainer({
   onAddWidget,
   onEditWidget,
   onDeleteWidget,
+  onOpenDataSelector,
 }: ICanvasContainerProps) {
   const { widgets, snapEnabled, handleDragStop, handleResizeStop } = useCanvas(tabId);
   const { zoom } = useCanvasStore();
@@ -32,7 +34,7 @@ export function CanvasContainer({
         position: 'relative',
         flex: 1,
         overflow: 'auto',
-        background: '#f5f5f5',
+        background: '#EEF2FF',
       }}
     >
       {/* Scrollable canvas area */}
@@ -55,9 +57,9 @@ export function CanvasContainer({
             position: 'absolute',
             top: 0,
             left: 0,
-            background: '#fff',
+            background: '#EEF2FF',
             backgroundImage: snapEnabled
-              ? 'radial-gradient(circle, #d9d9d9 1px, transparent 1px)'
+              ? 'radial-gradient(circle, #c5cef0 1px, transparent 1px)'
               : 'none',
             backgroundSize: '20px 20px',
           }}
@@ -71,6 +73,7 @@ export function CanvasContainer({
               onDelete={onDeleteWidget}
               onDragStop={handleDragStop}
               onResizeStop={handleResizeStop}
+              onOpenDataSelector={onOpenDataSelector}
             />
           ))}
 
