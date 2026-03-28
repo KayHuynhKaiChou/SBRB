@@ -23,6 +23,8 @@ import {
   CheckOutlined,
   CloseOutlined,
 } from '@ant-design/icons';
+import { IconButton } from '@sbrb/ui';
+import { useTranslation } from 'react-i18next';
 import { message } from 'antd';
 import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/auth.store';
@@ -47,6 +49,7 @@ const STATUS_CONFIG: Record<string, { color: string; label: string }> = {
 
 export default function DataSheetListPage() {
   const { currentBusinessId } = useAuthStore();
+  const { t } = useTranslation(['datasheet', 'common']);
   const [search, setSearch] = useState('');
   const [importOpen, setImportOpen] = useState(false);
   const [reimportTarget, setReimportTarget] = useState<IDataSheetDto | null>(null);
@@ -67,7 +70,7 @@ export default function DataSheetListPage() {
 
   const handleDelete = async (id: string) => {
     await deleteDataSheet(id);
-    message.success('Đã xoá bộ dữ liệu');
+    message.success(t('datasheet:deleted_success'));
     await refetch();
   };
 
@@ -80,7 +83,7 @@ export default function DataSheetListPage() {
     if (!renameValue.trim()) return;
     try {
       await renameDataSheet(id, renameValue.trim());
-      message.success('Đã đổi tên');
+      message.success(t('datasheet:renamed_success'));
       setRenamingId(null);
       await refetch();
     } catch {
@@ -110,16 +113,16 @@ export default function DataSheetListPage() {
                 autoFocus
                 style={{ width: 180 }}
               />
-              <Button
-                size="small"
-                type="text"
+              <IconButton
                 icon={<CheckOutlined />}
+                tooltip={t('common:confirm')}
+                size="small"
                 onClick={() => handleConfirmRename(record.id)}
               />
-              <Button
-                size="small"
-                type="text"
+              <IconButton
                 icon={<CloseOutlined />}
+                tooltip={t('common:cancel')}
+                size="small"
                 onClick={handleCancelRename}
               />
             </Space>
@@ -164,31 +167,29 @@ export default function DataSheetListPage() {
       width: 120,
       render: (_: unknown, record: IDataSheetDto) => (
         <Space size={4}>
-          <Tooltip title="Đổi tên">
-            <Button
-              size="small"
-              type="text"
-              icon={<EditOutlined />}
-              onClick={() => handleStartRename(record)}
-            />
-          </Tooltip>
-          <Tooltip title="Reimport">
-            <Button
-              size="small"
-              type="text"
-              icon={<ReloadOutlined />}
-              onClick={() => setReimportTarget(record)}
-            />
-          </Tooltip>
+          <IconButton
+            icon={<EditOutlined />}
+            tooltip={t('datasheet:rename_tooltip')}
+            size="small"
+            onClick={() => handleStartRename(record)}
+          />
+          <IconButton
+            icon={<ReloadOutlined />}
+            tooltip={t('datasheet:reimport_tooltip')}
+            size="small"
+            onClick={() => setReimportTarget(record)}
+          />
           <Popconfirm
-            title="Xoá bộ dữ liệu này?"
+            title={t('common:confirm_delete_title')}
             onConfirm={() => handleDelete(record.id)}
-            okText="Xoá"
-            cancelText="Huỷ"
+            okText={t('common:delete')}
+            cancelText={t('common:cancel')}
           >
-            <Tooltip title="Xoá">
-              <Button size="small" type="text" danger icon={<DeleteOutlined />} />
-            </Tooltip>
+            <IconButton
+              icon={<DeleteOutlined />}
+              tooltip={t('common:delete')}
+              size="small"
+            />
           </Popconfirm>
         </Space>
       ),
@@ -202,7 +203,7 @@ export default function DataSheetListPage() {
     <div style={{ padding: '24px', height: '100%', overflowY: 'auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <Title level={4} style={{ margin: 0 }}>
-          Quản lý dữ liệu
+          {t('datasheet:manage_title')}
         </Title>
         <Space>
           <Button
@@ -210,21 +211,21 @@ export default function DataSheetListPage() {
             loading={templateLoading}
             onClick={downloadTemplate}
           >
-            Tải mẫu Excel
+            {t('datasheet:download_template')}
           </Button>
           <Button
             type="primary"
             icon={<PlusOutlined />}
             onClick={() => setImportOpen(true)}
           >
-            Import mới
+            {t('datasheet:import_title')}
           </Button>
         </Space>
       </div>
 
       <Input
         prefix={<SearchOutlined />}
-        placeholder="Tìm kiếm bộ dữ liệu..."
+        placeholder={t('datasheet:search_placeholder')}
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         style={{ marginBottom: 12, width: 300 }}
@@ -245,7 +246,7 @@ export default function DataSheetListPage() {
         locale={{
           emptyText: (
             <Empty
-              description="Chưa có dữ liệu nào. Hãy import file Excel."
+              description={t('datasheet:no_data_empty')}
               image={Empty.PRESENTED_IMAGE_SIMPLE}
             />
           ),

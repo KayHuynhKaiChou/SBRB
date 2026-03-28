@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { Modal, Steps, Upload, Alert, Button, Input, Progress, Typography, Space } from 'antd';
-import { InboxOutlined } from '@ant-design/icons';
+import { Modal, Steps, Upload, Alert, Input, Progress, Typography, Space } from 'antd';
+import { CloseOutlined, CheckOutlined, ArrowLeftOutlined, ArrowRightOutlined, InboxOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
+import { ModalActions } from '../../components/common/modal-actions';
 import { message } from 'antd';
 import type { UploadFile } from 'antd';
 import { useImportDataSheet } from '../../hooks/use-datasheet';
+import { validateUploadFile } from '../../utils/file-upload-validator';
 
 const { Dragger } = Upload;
 const { Text } = Typography;
-
-const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 
 interface IImportDialogProps {
   open: boolean;
@@ -18,6 +19,7 @@ interface IImportDialogProps {
 }
 
 export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDialogProps) {
+  const { t } = useTranslation(['datasheet', 'common']);
   const [step, setStep] = useState(0);
   const [file, setFile] = useState<File | null>(null);
   const [importName, setImportName] = useState('');
@@ -36,12 +38,9 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
   };
 
   const handleBeforeUpload = (f: File) => {
-    if (f.size > MAX_SIZE_BYTES) {
-      setError('File vượt quá 10 MB');
-      return Upload.LIST_IGNORE;
-    }
-    if (!f.name.match(/\.(xlsx|csv)$/i)) {
-      setError('Chỉ hỗ trợ file .xlsx hoặc .csv');
+    const { valid, error } = validateUploadFile(f);
+    if (!valid) {
+      setError(error!);
       return Upload.LIST_IGNORE;
     }
     setFile(f);
@@ -52,7 +51,7 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
 
   const handleNext = () => {
     if (step === 0 && !file) {
-      setError('Vui lòng chọn file');
+      setError(t('datasheet:select_file_error'));
       return;
     }
     setError(null);
@@ -61,7 +60,7 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
 
   const handleStartImport = async () => {
     if (!file || !importName.trim()) {
-      setError('Vui lòng nhập tên cho bộ dữ liệu');
+      setError(t('datasheet:dataset_name_error'));
       return;
     }
     setImporting(true);
@@ -79,7 +78,7 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
   // Watch progress completion
   React.useEffect(() => {
     if (progress?.status === 'done' || progress?.percent === 100) {
-      message.success('Import hoàn thành');
+      message.success(t('datasheet:import_complete'));
       setImporting(false);
       onSuccess();
       handleClose();
@@ -91,9 +90,9 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
   }, [progress]);
 
   const stepItems = [
-    { title: 'Chọn file' },
-    { title: 'Xem trước' },
-    { title: 'Đặt tên và import' },
+    { title: t('datasheet:step_select_file') },
+    { title: t('datasheet:step_preview') },
+    { title: t('datasheet:step_name_import') },
   ];
 
   const renderStepContent = () => {
@@ -118,11 +117,11 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
         return (
           <div style={{ padding: '16px 0' }}>
             <Space direction="vertical" style={{ width: '100%' }}>
-              <Text strong>Thông tin file:</Text>
-              <Text>Tên file: {file?.name}</Text>
-              <Text>Kích thước: {file ? (file.size / 1024).toFixed(1) + ' KB' : '-'}</Text>
+              <Text strong>{t('datasheet:file_info')}:</Text>
+              <Text>{t('datasheet:file_name')}: {file?.name}</Text>
+              <Text>{t('datasheet:file_size')}: {file ? (file.size / 1024).toFixed(1) + ' KB' : '-'}</Text>
               <Text type="secondary">
-                Server sẽ phân tích chi tiết nội dung file khi import.
+                {t('datasheet:server_analyze_hint')}
               </Text>
             </Space>
           </div>
@@ -131,11 +130,11 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
         return (
           <div style={{ padding: '16px 0' }}>
             <Space direction="vertical" style={{ width: '100%' }}>
-              <Text strong>Tên bộ dữ liệu:</Text>
+              <Text strong>{t('datasheet:dataset_name_label')}:</Text>
               <Input
                 value={importName}
                 onChange={(e) => setImportName(e.target.value)}
-                placeholder="Nhập tên bộ dữ liệu"
+                placeholder={t('datasheet:dataset_name_placeholder')}
                 disabled={importing || isUploading}
               />
               {(importing || isUploading) && progress && (
@@ -154,37 +153,35 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
 
   const renderFooter = () => {
     if (step === 0) {
-      return [
-        <Button key="cancel" onClick={handleClose}>Huỷ</Button>,
-        <Button key="next" type="primary" onClick={handleNext} disabled={!file}>Tiếp theo</Button>,
-      ];
+      return (
+        <ModalActions actions={[
+          { icon: <ArrowRightOutlined />, tooltip: t('common:next'), onClick: handleNext, disabled: !file },
+          { icon: <CloseOutlined />, tooltip: t('common:cancel'), onClick: handleClose },
+        ]} />
+      );
     }
     if (step === 1) {
-      return [
-        <Button key="back" onClick={() => setStep(0)}>Quay lại</Button>,
-        <Button key="next" type="primary" onClick={handleNext}>Tiếp theo</Button>,
-      ];
+      return (
+        <ModalActions actions={[
+          { icon: <ArrowRightOutlined />, tooltip: t('common:next'), onClick: handleNext },
+          { icon: <ArrowLeftOutlined />, tooltip: t('common:back'), onClick: () => setStep(0) },
+        ]} />
+      );
     }
-    return [
-      <Button key="back" onClick={() => setStep(1)} disabled={importing || isUploading}>Quay lại</Button>,
-      <Button
-        key="import"
-        type="primary"
-        loading={importing || isUploading}
-        onClick={handleStartImport}
-        disabled={!importName.trim()}
-      >
-        Bắt đầu import
-      </Button>,
-    ];
+    return (
+      <ModalActions actions={[
+        { icon: <CheckOutlined />, tooltip: t('common:start_import'), onClick: handleStartImport, disabled: !importName.trim() || importing || isUploading },
+        { icon: <ArrowLeftOutlined />, tooltip: t('common:back'), onClick: () => setStep(1), disabled: importing || isUploading },
+      ]} />
+    );
   };
 
   return (
     <Modal
       open={open}
-      title="Import dữ liệu mới"
+      title={t('datasheet:import_title')}
       onCancel={importing || isUploading ? undefined : handleClose}
-      closable={!(importing || isUploading)}
+      closable={false}
       footer={renderFooter()}
       width={520}
     >

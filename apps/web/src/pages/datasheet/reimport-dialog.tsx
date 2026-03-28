@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { Modal, Upload, Alert, Button, Progress, Space, Typography, message } from 'antd';
-import { InboxOutlined } from '@ant-design/icons';
+import { Modal, Upload, Alert, Progress, Space, Typography, message } from 'antd';
+import { CloseOutlined, CheckOutlined, InboxOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
+import { ModalActions } from '../../components/common/modal-actions';
 import type { UploadFile } from 'antd';
-import { useAuthStore } from '../../store/auth.store';
+import { apiClient } from '../../services/api-client';
+import { validateUploadFile } from '../../utils/file-upload-validator';
 
 const { Dragger } = Upload;
 const { Text } = Typography;
-const MAX_SIZE_BYTES = 10 * 1024 * 1024;
 
 interface IReimportDialogProps {
   open: boolean;
@@ -23,6 +25,7 @@ export function ReimportDialog({
   onClose,
   onSuccess,
 }: IReimportDialogProps) {
+  const { t } = useTranslation(['datasheet', 'common']);
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -31,17 +34,15 @@ export function ReimportDialog({
   const handleClose = () => {
     setFile(null);
     setError(null);
+    setLoading(false);
     setProgress(null);
     onClose();
   };
 
   const handleBeforeUpload = (f: File) => {
-    if (f.size > MAX_SIZE_BYTES) {
-      setError('File vượt quá 10 MB');
-      return Upload.LIST_IGNORE;
-    }
-    if (!f.name.match(/\.(xlsx|csv)$/i)) {
-      setError('Chỉ hỗ trợ file .xlsx hoặc .csv');
+    const { valid, error } = validateUploadFile(f);
+    if (!valid) {
+      setError(error!);
       return Upload.LIST_IGNORE;
     }
     setFile(f);
@@ -55,24 +56,13 @@ export function ReimportDialog({
     setError(null);
     setProgress(0);
 
-    const accessToken = useAuthStore.getState().accessToken;
     const formData = new FormData();
     formData.append('file', file);
 
     try {
-      const res = await fetch(`/api/v1/data-sheets/${datasheetId}/reimport`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${accessToken}` },
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ message: 'Reimport thất bại' }));
-        throw new Error(err.message ?? 'Reimport thất bại');
-      }
-
+      await apiClient.upload(`/api/v1/data-sheets/${datasheetId}/reimport`, formData);
       setProgress(100);
-      message.success('Đã bắt đầu reimport');
+      message.success(t('datasheet:reimport_started'));
       onSuccess();
       handleClose();
     } catch (err) {
@@ -85,28 +75,22 @@ export function ReimportDialog({
   return (
     <Modal
       open={open}
-      title={`Reimport: ${datasheetName}`}
+      title={`${t('common:reimport')}: ${datasheetName}`}
       onCancel={loading ? undefined : handleClose}
-      closable={!loading}
-      footer={[
-        <Button key="cancel" onClick={handleClose} disabled={loading}>
-          Huỷ
-        </Button>,
-        <Button
-          key="confirm"
-          type="primary"
-          loading={loading}
-          disabled={!file}
-          onClick={handleConfirm}
-        >
-          Reimport
-        </Button>,
-      ]}
+      closable={false}
+      footer={
+        <ModalActions
+          actions={[
+            { icon: <CheckOutlined />, tooltip: t('common:reimport'), onClick: handleConfirm, disabled: !file || loading },
+            { icon: <CloseOutlined />, tooltip: t('common:cancel'), onClick: handleClose, disabled: loading },
+          ]}
+        />
+      }
       width={480}
     >
       <Space direction="vertical" style={{ width: '100%' }} size="middle">
         <Text type="secondary">
-          Chọn file mới để thay thế dữ liệu cũ của bộ <strong>{datasheetName}</strong>.
+          {t('datasheet:reimport_description')} <strong>{datasheetName}</strong>.
         </Text>
 
         {error && (

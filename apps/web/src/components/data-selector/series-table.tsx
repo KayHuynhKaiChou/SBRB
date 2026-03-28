@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Table, Input, Checkbox, Button, Space, Empty } from 'antd';
 import { SearchOutlined, SortAscendingOutlined } from '@ant-design/icons';
 import { useQuery } from '@apollo/client';
 import { DATA_SERIES_QUERY } from '../../graphql/datasheet.operations';
 import type { IDataSeriesDto } from '../../hooks/use-datasheet';
+import { useDebounce } from '../../hooks/use-debounce';
 
 interface ISeriesTableProps {
   datasheetId: string | null;
@@ -23,14 +24,8 @@ export function SeriesTable({
   onSelectionChange,
 }: ISeriesTableProps) {
   const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [sortMode, setSortMode] = useState<SortMode>('none');
-
-  // Debounce 300ms
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedSearch(search), 300);
-    return () => clearTimeout(t);
-  }, [search]);
 
   const { data, loading } = useQuery(DATA_SERIES_QUERY, {
     variables: { datasheetId, search: debouncedSearch || undefined },
@@ -45,9 +40,15 @@ export function SeriesTable({
     return 0;
   });
 
-  const allIds = sortedSeries.map((s) => s.id);
-  const allSelected = allIds.length > 0 && allIds.every((id) => selectedSeries.includes(id));
-  const someSelected = allIds.some((id) => selectedSeries.includes(id)) && !allSelected;
+  const allIds = useMemo(() => sortedSeries.map((s) => s.id), [sortedSeries]);
+  const allSelected = useMemo(
+    () => allIds.length > 0 && allIds.every((id) => selectedSeries.includes(id)),
+    [allIds, selectedSeries],
+  );
+  const someSelected = useMemo(
+    () => allIds.some((id) => selectedSeries.includes(id)) && !allSelected,
+    [allIds, selectedSeries, allSelected],
+  );
 
   const handleSelectAll = useCallback(
     (checked: boolean) => {

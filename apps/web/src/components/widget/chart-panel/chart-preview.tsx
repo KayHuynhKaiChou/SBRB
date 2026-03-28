@@ -1,6 +1,8 @@
 import React from 'react';
-import { Skeleton, Typography, Button } from 'antd';
+import { Skeleton, Typography } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
+import { IconButton } from '@sbrb/ui';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -52,7 +54,7 @@ function buildChartData(chartData: IChartDataResult, config: IChartConfig) {
   return {
     labels: chartData.labels,
     datasets: chartData.datasets.map((ds, index) => {
-      // Apply kpiee color palette when backend doesn't provide colors
+      // Apply SBRB color palette when backend doesn't provide colors
       const bgColor = ds.backgroundColor && ds.backgroundColor !== '#000000' && ds.backgroundColor !== ''
         ? ds.backgroundColor
         : getChartColor(index);
@@ -116,6 +118,7 @@ function buildOptions(config: IChartConfig) {
 }
 
 export function ChartPreview({ chartData, loading, chartType: rawChartType, config, onRefresh, compact = false }: IChartPreviewProps) {
+  const { t } = useTranslation(['widget', 'datasheet']);
   const chartType = rawChartType || 'bar';
   if (loading) {
     return (
@@ -133,12 +136,11 @@ export function ChartPreview({ chartData, loading, chartType: rawChartType, conf
       {!compact && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
           {chartData?.trend ? <TrendBadge trend={chartData.trend} /> : <span />}
-          <Button
-            size="small"
-            type="text"
+          <IconButton
             icon={<ReloadOutlined />}
+            tooltip={t('widget:refresh_chart')}
+            size="small"
             onClick={onRefresh}
-            title="Làm mới dữ liệu"
           />
         </div>
       )}
@@ -158,7 +160,7 @@ export function ChartPreview({ chartData, loading, chartType: rawChartType, conf
             }}
           >
             <Text type="secondary" style={{ fontSize: 13 }}>
-              Chưa có dữ liệu
+              {t('datasheet:no_data_hint')}
             </Text>
           </div>
         ) : (
@@ -179,8 +181,10 @@ export function ChartPreview({ chartData, loading, chartType: rawChartType, conf
   );
 }
 
+/** Stable no-op for onRefresh in compact mode (avoids new function on every render) */
+const noOp = () => undefined;
+
 /** Compact inline chart for use inside widget cards — no refresh button or trend badge */
 export function InlineChartPreview(props: Omit<IChartPreviewProps, 'onRefresh'>) {
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  return <ChartPreview {...props} compact onRefresh={() => {}} />;
+  return <ChartPreview {...props} compact onRefresh={noOp} />;
 }

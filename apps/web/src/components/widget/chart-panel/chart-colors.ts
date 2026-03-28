@@ -1,5 +1,5 @@
-/** KPIEE chart color palette — matches kpiee-dashboard-1.png reference design */
-export const KPIEE_CHART_COLORS = [
+/** SBRB chart color palette */
+export const SBRB_CHART_COLORS = [
   '#4FA8E8', // blue (primary)
   '#E87F6A', // coral
   '#F5B96A', // orange
@@ -10,7 +10,7 @@ export const KPIEE_CHART_COLORS = [
 
 /** Returns a chart color by cycling through the palette */
 export function getChartColor(index: number): string {
-  return KPIEE_CHART_COLORS[index % KPIEE_CHART_COLORS.length];
+  return SBRB_CHART_COLORS[index % SBRB_CHART_COLORS.length];
 }
 
 /** Returns a chart color with alpha transparency */

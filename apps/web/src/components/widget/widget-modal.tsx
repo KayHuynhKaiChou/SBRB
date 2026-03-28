@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Input, Button, Divider, Space, Typography } from 'antd';
+import { Modal, Input, Divider, Typography } from 'antd';
+import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
+import { ModalActions } from '../common/modal-actions';
 import type { IWidgetDto, IChartConfig } from '@sbrb/shared-types';
 import { useChartData } from '../../hooks/use-chart-data';
 import { useWidgetConfig } from '../../hooks/use-widget-config';
@@ -19,6 +22,7 @@ interface IWidgetModalProps {
 }
 
 export function WidgetModal({ widget, open, onClose, onOpenDataSelector }: IWidgetModalProps) {
+  const { t } = useTranslation(['widget', 'common']);
   const [widgetName, setWidgetName] = useState(widget.name);
   const [localConfig, setLocalConfig] = useState<IChartConfig>({ ...widget.chartConfig });
 
@@ -52,6 +56,7 @@ export function WidgetModal({ widget, open, onClose, onOpenDataSelector }: IWidg
       width={960}
       centered
       destroyOnClose
+      closable={false}
       footer={null}
       styles={{ body: { padding: 0 } }}
     >
@@ -61,20 +66,15 @@ export function WidgetModal({ widget, open, onClose, onOpenDataSelector }: IWidg
           value={widgetName}
           onChange={(e) => setWidgetName(e.target.value)}
           style={{ flex: 1, fontWeight: 600, fontSize: 15 }}
-          placeholder="Tên widget"
+          placeholder={t('widget:widget_name_placeholder')}
           bordered={false}
         />
-        <Space>
-          <Button onClick={onClose}>Đóng</Button>
-          <Button
-            type="primary"
-            loading={saving}
-            onClick={handleSave}
-            style={{ background: '#D72A44', borderColor: '#D72A44' }}
-          >
-            Lưu
-          </Button>
-        </Space>
+        <ModalActions
+          actions={[
+            { icon: <CheckOutlined />, tooltip: t('common:save'), onClick: handleSave, disabled: saving },
+            { icon: <CloseOutlined />, tooltip: t('common:close'), onClick: onClose },
+          ]}
+        />
       </div>
 
       {/* Body: Settings | Chart Preview */}

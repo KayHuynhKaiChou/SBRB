@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { Modal, Button, Alert, Row, Col, Divider } from 'antd';
+import { Modal, Alert, Row, Col, Divider } from 'antd';
+import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
+import { ModalActions } from '../common/modal-actions';
 import { useDataSheets } from '../../hooks/use-datasheet';
 import { SheetList } from './sheet-list';
 import { SeriesTable } from './series-table';
@@ -17,6 +20,7 @@ export function DataSelectorModal({
   onConfirm,
   businessId,
 }: IDataSelectorModalProps) {
+  const { t } = useTranslation(['datasheet', 'common']);
   const { dataSheets } = useDataSheets(businessId);
   const [selectedSheetId, setSelectedSheetId] = useState<string | null>(null);
   const [selectedSeries, setSelectedSeries] = useState<string[]>([]);
@@ -40,11 +44,11 @@ export function DataSelectorModal({
 
   const handleConfirm = () => {
     if (!selectedSheetId) {
-      setValidationError('Vui lòng chọn bộ dữ liệu');
+      setValidationError(t('datasheet:select_dataset_error'));
       return;
     }
     if (selectedSeries.length === 0) {
-      setValidationError('Vui lòng chọn ít nhất một chuỗi dữ liệu');
+      setValidationError(t('datasheet:select_series_error'));
       return;
     }
     onConfirm(selectedSheetId, selectedSeries, selectedPeriods);
@@ -65,20 +69,16 @@ export function DataSelectorModal({
       onCancel={handleClose}
       width="80vw"
       style={{ top: 40 }}
-      title="Chọn dữ liệu"
-      footer={[
-        <Button key="cancel" onClick={handleClose}>
-          Huỷ
-        </Button>,
-        <Button
-          key="confirm"
-          type="primary"
-          onClick={handleConfirm}
-          style={{ background: '#D72A44', borderColor: '#D72A44' }}
-        >
-          Xác nhận
-        </Button>,
-      ]}
+      title={t('datasheet:select_data_title')}
+      closable={false}
+      footer={
+        <ModalActions
+          actions={[
+            { icon: <CheckOutlined />, tooltip: t('common:confirm'), onClick: handleConfirm },
+            { icon: <CloseOutlined />, tooltip: t('common:cancel'), onClick: handleClose },
+          ]}
+        />
+      }
     >
       {validationError && (
         <Alert
