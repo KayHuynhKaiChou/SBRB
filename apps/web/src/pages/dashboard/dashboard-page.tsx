@@ -9,8 +9,10 @@ import { CanvasContainer } from '../../components/canvas/canvas-container';
 import { AddTabModal } from '../../components/tab/add-tab-modal';
 import { EditTabModal } from '../../components/tab/edit-tab-modal';
 import { AddWidgetModal } from '../../components/canvas/add-widget-modal';
-import { CREATE_WIDGET_MUTATION } from '../../graphql/canvas.operations';
+import { DataSelectorModal } from '../../components/data-selector/data-selector-modal';
+import { CREATE_WIDGET_MUTATION, WIDGETS_QUERY } from '../../graphql/canvas.operations';
 import { useCanvasStore } from '../../store/canvas.store';
+import { useWidgetConfig } from '../../hooks/use-widget-config';
 import type { ITabDto } from '@sbrb/shared-types';
 
 const { Text } = Typography;
@@ -35,13 +37,36 @@ export default function DashboardPage() {
   const [editTabOpen, setEditTabOpen] = useState(false);
   const [editingTab, setEditingTab] = useState<ITabDto | null>(null);
   const [addWidgetOpen, setAddWidgetOpen] = useState(false);
+  const [dataSelectorOpen, setDataSelectorOpen] = useState(false);
+  const [dataSelectorWidgetId, setDataSelectorWidgetId] = useState<string | null>(null);
 
   const { activeTabId: storeActiveTabId } = useCanvasStore();
   const [createWidgetMutation] = useMutation(CREATE_WIDGET_MUTATION);
+  const { updateDataLink } = useWidgetConfig();
 
   const handleEditTab = (tab: ITabDto) => {
     setEditingTab(tab);
     setEditTabOpen(true);
+  };
+
+  const handleOpenDataSelector = (widgetId: string) => {
+    setDataSelectorWidgetId(widgetId);
+    setDataSelectorOpen(true);
+  };
+
+  const handleDataSelectorConfirm = async (
+    dataSheetId: string,
+    selectedSeries: string[],
+    selectedPeriods: string[] | null,
+  ) => {
+    if (!dataSelectorWidgetId) return;
+    await updateDataLink(dataSelectorWidgetId, {
+      dataSheetId,
+      selectedSeries,
+      selectedPeriods,
+    } as any);
+    setDataSelectorOpen(false);
+    setDataSelectorWidgetId(null);
   };
 
   const handleAddWidget = async (input: { name: string; metricName?: string; unit?: string }) => {
@@ -57,6 +82,7 @@ export default function DashboardPage() {
           position: { x: 20, y: 20, w: 800, h: 400 },
         },
       },
+      refetchQueries: [{ query: WIDGETS_QUERY, variables: { tabId: storeActiveTabId } }],
     });
   };
 
@@ -75,6 +101,7 @@ export default function DashboardPage() {
           onAddWidget={() => setAddWidgetOpen(true)}
           onEditWidget={() => { /* Phase 11 */ }}
           onDeleteWidget={() => { /* Phase 11 */ }}
+          onOpenDataSelector={handleOpenDataSelector}
         />
       ) : (
         <div
@@ -108,6 +135,13 @@ export default function DashboardPage() {
         open={addWidgetOpen}
         onClose={() => setAddWidgetOpen(false)}
         onSubmit={handleAddWidget}
+      />
+
+      <DataSelectorModal
+        open={dataSelectorOpen}
+        onClose={() => { setDataSelectorOpen(false); setDataSelectorWidgetId(null); }}
+        onConfirm={handleDataSelectorConfirm}
+        businessId={effectiveBusinessId}
       />
     </AppLayout>
   );
