@@ -1,8 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { AuthorizationService } from '../../common/services/authorization.service';
 import { Business } from '../business/entities/business.entity';
-import { BusinessMember } from '../business/entities/business-member.entity';
 import { Tab } from '../tab/entities/tab.entity';
 import { Widget } from './entities/widget.entity';
 
@@ -16,8 +16,7 @@ export class WidgetAuthService {
     private readonly tabRepo: Repository<Tab>,
     @InjectRepository(Business)
     private readonly businessRepo: Repository<Business>,
-    @InjectRepository(BusinessMember)
-    private readonly memberRepo: Repository<BusinessMember>,
+    private readonly authorizationService: AuthorizationService,
   ) {}
 
   /** Verify user is a member (any role) — returns widget + businessId */
@@ -28,8 +27,7 @@ export class WidgetAuthService {
     const tab = await this.tabRepo.findOne({ where: { id: widget.tabId } });
     if (!tab) throw new NotFoundException('Tab not found');
 
-    const member = await this.memberRepo.findOne({ where: { businessId: tab.businessId, userId } });
-    if (!member) throw new ForbiddenException('Not a member of this business');
+    await this.authorizationService.requireMember(tab.businessId, userId);
 
     return { widget, businessId: tab.businessId };
   }
@@ -48,10 +46,7 @@ export class WidgetAuthService {
     const business = await this.businessRepo.findOne({ where: { id: tab.businessId } });
     if (!business) throw new NotFoundException('Business not found');
 
-    const member = await this.memberRepo.findOne({ where: { businessId: tab.businessId, userId } });
-    if (!member || !['owner', 'manager'].includes(member.role)) {
-      throw new ForbiddenException('Manager or above role required');
-    }
+    await this.authorizationService.requireManager(tab.businessId, userId);
 
     return { widget, businessId: tab.businessId, business };
   }

@@ -19,7 +19,7 @@ export class WidgetResolver {
     @Args('tabId', { type: () => ID }) tabId: string,
     @CurrentUser() user: IJwtPayload,
   ): Promise<WidgetType[]> {
-    return this.widgetService.findByTab(tabId, user.sub) as unknown as WidgetType[];
+    return this.widgetService.findByTab(tabId, user.sub);
   }
 
   @Query(() => WidgetType, { name: 'widget' })
@@ -27,7 +27,7 @@ export class WidgetResolver {
     @Args('id', { type: () => ID }) id: string,
     @CurrentUser() user: IJwtPayload,
   ): Promise<WidgetType> {
-    return this.widgetService.findById(id, user.sub) as unknown as WidgetType;
+    return this.widgetService.findById(id, user.sub);
   }
 
   @Mutation(() => WidgetType)
@@ -35,7 +35,7 @@ export class WidgetResolver {
     @Args('input') input: CreateWidgetDto,
     @CurrentUser() user: IJwtPayload,
   ): Promise<WidgetType> {
-    return this.widgetService.create(input.tabId, user.sub, input) as unknown as WidgetType;
+    return this.widgetService.create(input.tabId, user.sub, input);
   }
 
   @Mutation(() => WidgetType)
@@ -44,7 +44,7 @@ export class WidgetResolver {
     @Args('input') input: UpdateWidgetDto,
     @CurrentUser() user: IJwtPayload,
   ): Promise<WidgetType> {
-    return this.widgetService.update(id, user.sub, input) as unknown as WidgetType;
+    return this.widgetService.update(id, user.sub, input);
   }
 
   @Mutation(() => Boolean)

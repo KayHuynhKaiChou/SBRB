@@ -160,8 +160,8 @@ type Mutation {
   changeMemberRole(businessId: ID!, input: UpdateMemberRoleDto!, targetUserId: ID!): MemberType!
   changePassword(input: ChangePasswordDto!): Boolean!
   createBusiness(input: CreateBusinessDto!): BusinessType!
-  createTab(input: CreateTabInput!): TabType!
-  createWidget(input: CreateWidgetInput!): WidgetType!
+  createTab(input: CreateTabInput!): Tab!
+  createWidget(input: CreateWidgetInput!): Widget!
   declineInvitation(token: String!): Boolean!
   deleteAccount: Boolean!
   deleteBusiness(confirmName: String!, id: ID!): Boolean!
@@ -176,17 +176,17 @@ type Mutation {
   refreshToken: AuthResult!
   register(input: RegisterDto!): AuthResult!
   removeMember(businessId: ID!, targetUserId: ID!): Boolean!
-  removeWidgetDataLink(id: ID!): WidgetType!
+  removeWidgetDataLink(id: ID!): Widget!
   renameDataSheet(id: ID!, input: UpdateDatasheetDto!): DataSheetType!
   reorderTabs(orders: [TabOrderInput!]!): Boolean!
   resetPassword(input: ResetPasswordDto!): Boolean!
   transferOwnership(id: ID!, newOwnerId: ID!): Boolean!
   updateBusiness(id: ID!, input: UpdateBusinessDto!): BusinessType!
   updateMe(input: UpdateProfileDto!): User!
-  updateTab(id: ID!, input: UpdateTabInput!): TabType!
-  updateWidget(id: ID!, input: UpdateWidgetInput!): WidgetType!
-  updateWidgetConfig(config: JSON!, id: ID!): WidgetType!
-  updateWidgetDataLink(id: ID!, input: UpdateDataLinkDto!): WidgetType!
+  updateTab(id: ID!, input: UpdateTabInput!): Tab!
+  updateWidget(id: ID!, input: UpdateWidgetInput!): Widget!
+  updateWidgetConfig(config: JSON!, id: ID!): Widget!
+  updateWidgetDataLink(id: ID!, input: UpdateDataLinkDto!): Widget!
   verifyEmail(token: String!): Boolean!
 }
 
@@ -200,10 +200,10 @@ type Query {
   myBusinesses: [BusinessType!]!
   mySessions: [Session!]!
   pendingInvitations(businessId: ID!): [InvitationType!]!
-  tabs(businessId: ID!): [TabType!]!
-  widget(id: ID!): WidgetType!
+  tabs(businessId: ID!): [Tab!]!
+  widget(id: ID!): Widget!
   widgetChartData(widgetId: ID!): ChartData!
-  widgets(tabId: ID!): [WidgetType!]!
+  widgets(tabId: ID!): [Widget!]!
 }
 
 input RegisterDto {
@@ -229,12 +229,7 @@ type Subscription {
   importProgress(datasheetId: ID!): ImportProgressType!
 }
 
-input TabOrderInput {
-  id: ID!
-  order: Int!
-}
-
-type TabType {
+type Tab {
   businessId: ID!
   createdAt: DateTime!
   createdBy: ID!
@@ -246,6 +241,11 @@ type TabType {
   name: String!
   order: Int!
   updatedAt: DateTime!
+}
+
+input TabOrderInput {
+  id: ID!
+  order: Int!
 }
 
 type TrendBadge {
@@ -311,21 +311,7 @@ type User {
   lastLoginAt: DateTime
 }
 
-type WidgetPosition {
-  h: Int!
-  w: Int!
-  x: Int!
-  y: Int!
-}
-
-input WidgetPositionInput {
-  h: Int = 500
-  w: Int = 1000
-  x: Int = 20
-  y: Int = 20
-}
-
-type WidgetType {
+type Widget {
   businessId: ID!
   chartConfig: ChartConfig
   config: JSON
@@ -342,4 +328,18 @@ type WidgetType {
   tabId: ID!
   unit: String
   updatedAt: DateTime!
+}
+
+type WidgetPosition {
+  h: Int!
+  w: Int!
+  x: Int!
+  y: Int!
+}
+
+input WidgetPositionInput {
+  h: Int = 500
+  w: Int = 1000
+  x: Int = 20
+  y: Int = 20
 }

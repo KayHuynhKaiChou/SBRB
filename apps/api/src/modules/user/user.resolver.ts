@@ -17,7 +17,7 @@ export class UserResolver {
   @Query(() => UserType)
   async me(@CurrentUser() user: IJwtPayload): Promise<UserType> {
     const u = await this.userService.findById(user.sub);
-    return u as unknown as UserType;
+    return u;
   }
 
   @Mutation(() => UserType)
@@ -26,13 +26,13 @@ export class UserResolver {
     @Args('input') input: UpdateProfileDto,
   ): Promise<UserType> {
     const u = await this.userService.updateProfile(user.sub, input);
-    return u as unknown as UserType;
+    return u;
   }
 
   @Query(() => [SessionType])
   async mySessions(@CurrentUser() user: IJwtPayload): Promise<SessionType[]> {
     const sessions = await this.userService.getSessions(user.sub);
-    return sessions as unknown as SessionType[];
+    return sessions;
   }
 
   @Mutation(() => Boolean)

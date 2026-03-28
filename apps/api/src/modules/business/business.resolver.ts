@@ -19,14 +19,14 @@ export class BusinessResolver {
     @Args('id', { type: () => ID }) id: string,
     @CurrentUser() user: IJwtPayload,
   ): Promise<BusinessType> {
-    return this.businessService.findById(id, user.sub) as unknown as BusinessType;
+    return this.businessService.findById(id, user.sub);
   }
 
   @Query(() => [BusinessType], { name: 'myBusinesses' })
   async getMyBusinesses(
     @CurrentUser() user: IJwtPayload,
   ): Promise<BusinessType[]> {
-    return this.businessService.findMyBusinesses(user.sub) as unknown as BusinessType[];
+    return this.businessService.findMyBusinesses(user.sub);
   }
 
   @Mutation(() => BusinessType)
@@ -34,7 +34,7 @@ export class BusinessResolver {
     @Args('input') input: CreateBusinessDto,
     @CurrentUser() user: IJwtPayload,
   ): Promise<BusinessType> {
-    return this.businessService.create(user.sub, input) as unknown as BusinessType;
+    return this.businessService.create(user.sub, input);
   }
 
   @Mutation(() => BusinessType)
@@ -43,7 +43,7 @@ export class BusinessResolver {
     @Args('input') input: UpdateBusinessDto,
     @CurrentUser() user: IJwtPayload,
   ): Promise<BusinessType> {
-    return this.businessService.update(id, user.sub, input) as unknown as BusinessType;
+    return this.businessService.update(id, user.sub, input);
   }
 
   @Mutation(() => Boolean)

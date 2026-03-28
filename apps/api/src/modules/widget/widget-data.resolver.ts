@@ -29,7 +29,7 @@ export class WidgetDataResolver {
     @Args('config', { type: () => GraphQLJSON }) config: Record<string, unknown>,
     @CurrentUser() user: IJwtPayload,
   ): Promise<WidgetType> {
-    return this.widgetDataService.updateConfig(id, user.sub, config) as unknown as Promise<WidgetType>;
+    return this.widgetDataService.updateConfig(id, user.sub, config);
   }
 
   @Mutation(() => WidgetType)
@@ -38,7 +38,7 @@ export class WidgetDataResolver {
     @Args('input') input: UpdateDataLinkDto,
     @CurrentUser() user: IJwtPayload,
   ): Promise<WidgetType> {
-    return this.widgetDataService.updateDataLink(id, user.sub, input) as unknown as Promise<WidgetType>;
+    return this.widgetDataService.updateDataLink(id, user.sub, input);
   }
 
   @Mutation(() => WidgetType)
@@ -46,6 +46,6 @@ export class WidgetDataResolver {
     @Args('id', { type: () => ID }) id: string,
     @CurrentUser() user: IJwtPayload,
   ): Promise<WidgetType> {
-    return this.widgetDataService.removeDataLink(id, user.sub) as unknown as Promise<WidgetType>;
+    return this.widgetDataService.removeDataLink(id, user.sub);
   }
 }

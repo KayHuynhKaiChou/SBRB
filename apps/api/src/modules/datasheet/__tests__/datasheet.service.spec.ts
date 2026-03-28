@@ -1,7 +1,9 @@
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { DatasheetService } from '../datasheet.service';
+import { DatasheetImportService } from '../datasheet-import.service';
+import { DatasheetTemplateService } from '../datasheet-template.service';
 
-// Mock the parser module used by DatasheetService
+// Mock the parser module used by DatasheetImportService
 jest.mock('../../../../../worker/src/processors/import-excel-parser', () => ({
   parseFileBuffer: jest.fn().mockResolvedValue({
     headers: ['T1', 'T2', 'T3'],
@@ -30,24 +32,6 @@ const makeRepos = () => ({
   })),
 });
 
-function makeService() {
-  const sheetRepo = makeRepos();
-  const seriesRepo = makeRepos();
-  const batchRepo = makeRepos();
-  const memberRepo = makeRepos();
-  const widgetRepo = makeRepos();
-
-  const service = new DatasheetService(
-    sheetRepo as any,
-    seriesRepo as any,
-    batchRepo as any,
-    memberRepo as any,
-    widgetRepo as any,
-  );
-
-  return { service, sheetRepo, seriesRepo, batchRepo, memberRepo, widgetRepo };
-}
-
 const managerMember = { businessId: 'biz1', userId: 'user1', role: 'manager', status: 'active' };
 const viewerMember = { businessId: 'biz1', userId: 'user2', role: 'viewer', status: 'active' };
 
@@ -57,76 +41,142 @@ const xlsxFile = {
   buffer: Buffer.from('xlsx-content'),
 } as Express.Multer.File;
 
-describe('DatasheetService', () => {
+/** Build a real DatasheetImportService with mock dependencies for upload/reimport tests */
+function makeImportService() {
+  const sheetRepo = makeRepos();
+  const seriesRepo = makeRepos();
+  const batchRepo = makeRepos();
+  const memberRepo = makeRepos();
+
+  const authService = {
+    requireMember: jest.fn().mockImplementation(async (_biz: string, _user: string) => {
+      const found = memberRepo.findOne({ where: {} });
+      return found;
+    }),
+    requireManager: jest.fn().mockImplementation(async (_biz: string, _user: string) => {
+      const member = await memberRepo.findOne({ where: {} });
+      if (!member || !['owner', 'manager'].includes(member.role)) {
+        const { ForbiddenException: FE } = require('@nestjs/common');
+        throw new FE('Manager role required');
+      }
+      return member;
+    }),
+  };
+
+  const pubSub = { publish: jest.fn() };
+
+  const importService = new DatasheetImportService(
+    sheetRepo as any,
+    seriesRepo as any,
+    batchRepo as any,
+    authService as any,
+    pubSub as any,
+  );
+
+  return { importService, sheetRepo, seriesRepo, batchRepo, memberRepo, authService };
+}
+
+/** Build the DatasheetService facade with mock sub-services and repos */
+function makeService() {
+  const sheetRepo = makeRepos();
+  const seriesRepo = makeRepos();
+  const widgetRepo = makeRepos();
+  const memberRepo = makeRepos();
+
+  const authService = {
+    requireMember: jest.fn().mockImplementation(async (_biz: string, _user: string) => {
+      const member = memberRepo.findOne({ where: {} });
+      if (!member) {
+        const { ForbiddenException: FE } = require('@nestjs/common');
+        throw new FE('Access denied');
+      }
+      return member;
+    }),
+    requireManager: jest.fn().mockImplementation(async (_biz: string, _user: string) => {
+      const member = await memberRepo.findOne({ where: {} });
+      if (!member || !['owner', 'manager'].includes((member as any).role)) {
+        const { ForbiddenException: FE } = require('@nestjs/common');
+        throw new FE('Manager role required');
+      }
+      return member;
+    }),
+  };
+
+  const importService = {
+    upload: jest.fn(),
+    reimport: jest.fn(),
+    getImportHistory: jest.fn(),
+    getImportBatch: jest.fn(),
+  } as unknown as DatasheetImportService;
+
+  const templateService = {
+    generateTemplate: jest.fn(),
+  } as unknown as DatasheetTemplateService;
+
+  const service = new DatasheetService(
+    sheetRepo as any,
+    seriesRepo as any,
+    widgetRepo as any,
+    authService as any,
+    importService,
+    templateService,
+  );
+
+  return { service, sheetRepo, seriesRepo, widgetRepo, memberRepo, authService, importService, templateService };
+}
+
+describe('DatasheetService — facade delegation', () => {
   beforeEach(() => jest.clearAllMocks());
 
   describe('upload()', () => {
-    it('parses file, saves DataSheet + DataSeries + ImportBatch, returns ready', async () => {
-      const { service, sheetRepo, seriesRepo, batchRepo, memberRepo } = makeService();
-      memberRepo.findOne.mockResolvedValue(managerMember);
-
-      const mockSheet = { id: 'sheet-uuid', businessId: 'biz1' };
-      const mockBatch = { id: 'batch-uuid', businessId: 'biz1' };
-      sheetRepo.create.mockReturnValue(mockSheet);
-      sheetRepo.save.mockResolvedValue(mockSheet);
-      batchRepo.create.mockReturnValue(mockBatch);
-      batchRepo.save.mockResolvedValue(mockBatch);
-      seriesRepo.create.mockImplementation((data: any) => data);
-      seriesRepo.save.mockResolvedValue([]);
+    it('delegates to importService.upload', async () => {
+      const { service, importService } = makeService();
+      const uploadResult = { batchId: 'b1', datasheetId: 's1', status: 'ready' };
+      (importService.upload as jest.Mock).mockResolvedValue(uploadResult);
 
       const result = await service.upload(xlsxFile, 'biz1', 'user1');
-
-      expect(sheetRepo.save).toHaveBeenCalled();
-      expect(batchRepo.save).toHaveBeenCalled();
-      expect(seriesRepo.save).toHaveBeenCalled();
-      expect(sheetRepo.update).toHaveBeenCalledWith('sheet-uuid', expect.objectContaining({ status: 'ready' }));
-      expect(batchRepo.update).toHaveBeenCalledWith('batch-uuid', expect.objectContaining({ status: 'success', successRows: 2 }));
-      expect(result).toEqual({ batchId: 'batch-uuid', datasheetId: 'sheet-uuid', status: 'ready' });
+      expect(result).toEqual(uploadResult);
+      expect(importService.upload).toHaveBeenCalledWith(xlsxFile, 'biz1', 'user1');
     });
+  });
 
-    it('throws BadRequestException for invalid MIME type', async () => {
-      const { service } = makeService();
-      const invalidFile = { ...xlsxFile, mimetype: 'application/pdf' } as Express.Multer.File;
-      await expect(service.upload(invalidFile, 'biz1', 'user1')).rejects.toThrow(BadRequestException);
+  describe('reimport()', () => {
+    it('delegates to importService.reimport', async () => {
+      const { service, importService } = makeService();
+      const reimportResult = { batchId: 'b2', datasheetId: 's1', status: 'ready' };
+      (importService.reimport as jest.Mock).mockResolvedValue(reimportResult);
+
+      const result = await service.reimport('s1', xlsxFile, 'user1');
+      expect(result).toEqual(reimportResult);
+      expect(importService.reimport).toHaveBeenCalledWith('s1', xlsxFile, 'user1');
     });
+  });
 
-    it('throws ForbiddenException when user is not manager', async () => {
-      const { service, memberRepo } = makeService();
-      memberRepo.findOne.mockResolvedValue(viewerMember);
-      await expect(service.upload(xlsxFile, 'biz1', 'user2')).rejects.toThrow(ForbiddenException);
-    });
+  describe('generateTemplate()', () => {
+    it('delegates to templateService.generateTemplate', async () => {
+      const { service, templateService } = makeService();
+      const fakeBuffer = Buffer.alloc(100);
+      (templateService.generateTemplate as jest.Mock).mockResolvedValue(fakeBuffer);
 
-    it('marks sheet/batch as error when series save fails', async () => {
-      const { service, sheetRepo, seriesRepo, batchRepo, memberRepo } = makeService();
-      memberRepo.findOne.mockResolvedValue(managerMember);
-      const mockSheet = { id: 'sheet-uuid', businessId: 'biz1' };
-      const mockBatch = { id: 'batch-uuid', businessId: 'biz1' };
-      sheetRepo.create.mockReturnValue(mockSheet);
-      sheetRepo.save.mockResolvedValue(mockSheet);
-      batchRepo.create.mockReturnValue(mockBatch);
-      batchRepo.save.mockResolvedValue(mockBatch);
-      seriesRepo.create.mockImplementation((data: any) => data);
-      seriesRepo.save.mockRejectedValue(new Error('DB error'));
-
-      await expect(service.upload(xlsxFile, 'biz1', 'user1')).rejects.toThrow(BadRequestException);
-      expect(sheetRepo.update).toHaveBeenCalledWith('sheet-uuid', expect.objectContaining({ status: 'error' }));
-      expect(batchRepo.update).toHaveBeenCalledWith('batch-uuid', expect.objectContaining({ status: 'error' }));
+      const result = await service.generateTemplate('month', 3);
+      expect(result).toBe(fakeBuffer);
+      expect(templateService.generateTemplate).toHaveBeenCalledWith('month', 3);
     });
   });
 
   describe('findById()', () => {
     it('throws ForbiddenException when user is not a member', async () => {
-      const { service, sheetRepo, memberRepo } = makeService();
+      const { service, sheetRepo, authService } = makeService();
       sheetRepo.findOne.mockResolvedValue({ id: 'sheet1', businessId: 'biz1' });
-      memberRepo.findOne.mockResolvedValue(null);
+      authService.requireMember.mockRejectedValue(new ForbiddenException('Access denied'));
       await expect(service.findById('sheet1', 'non-member')).rejects.toThrow(ForbiddenException);
     });
 
     it('returns sheet when user is a member', async () => {
-      const { service, sheetRepo, memberRepo } = makeService();
+      const { service, sheetRepo, authService } = makeService();
       const mockSheet = { id: 'sheet1', businessId: 'biz1' };
       sheetRepo.findOne.mockResolvedValue(mockSheet);
-      memberRepo.findOne.mockResolvedValue(viewerMember);
+      authService.requireMember.mockResolvedValue(viewerMember);
       const result = await service.findById('sheet1', 'user2');
       expect(result).toEqual(mockSheet);
     });
@@ -140,30 +190,89 @@ describe('DatasheetService', () => {
 
   describe('delete()', () => {
     it('throws BadRequestException when widget is linked to sheet', async () => {
-      const { service, sheetRepo, memberRepo, widgetRepo } = makeService();
+      const { service, sheetRepo, widgetRepo, authService } = makeService();
       sheetRepo.findOne.mockResolvedValue({ id: 'sheet1', businessId: 'biz1' });
-      memberRepo.findOne.mockResolvedValue(managerMember);
+      authService.requireManager.mockResolvedValue(managerMember);
       widgetRepo.findOne.mockResolvedValue({ id: 'w1', dataSheetId: 'sheet1' });
       await expect(service.delete('sheet1', 'user1')).rejects.toThrow(BadRequestException);
     });
 
     it('deletes sheet when no widget is linked', async () => {
-      const { service, sheetRepo, memberRepo, widgetRepo } = makeService();
+      const { service, sheetRepo, widgetRepo, authService } = makeService();
       sheetRepo.findOne.mockResolvedValue({ id: 'sheet1', businessId: 'biz1' });
-      memberRepo.findOne.mockResolvedValue(managerMember);
+      authService.requireManager.mockResolvedValue(managerMember);
       widgetRepo.findOne.mockResolvedValue(null);
       sheetRepo.delete.mockResolvedValue({ affected: 1 });
       await service.delete('sheet1', 'user1');
       expect(sheetRepo.delete).toHaveBeenCalledWith('sheet1');
     });
   });
+});
+
+describe('DatasheetImportService — file import logic', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  describe('upload()', () => {
+    it('parses file, saves DataSheet + DataSeries + ImportBatch, returns ready', async () => {
+      const { importService, sheetRepo, seriesRepo, batchRepo, memberRepo, authService } = makeImportService();
+      memberRepo.findOne.mockResolvedValue(managerMember);
+      authService.requireManager.mockResolvedValue(managerMember);
+
+      const mockSheet = { id: 'sheet-uuid', businessId: 'biz1' };
+      const mockBatch = { id: 'batch-uuid', businessId: 'biz1' };
+      sheetRepo.create.mockReturnValue(mockSheet);
+      sheetRepo.save.mockResolvedValue(mockSheet);
+      batchRepo.create.mockReturnValue(mockBatch);
+      batchRepo.save.mockResolvedValue(mockBatch);
+      seriesRepo.create.mockImplementation((data: any) => data);
+      seriesRepo.save.mockResolvedValue([]);
+
+      const result = await importService.upload(xlsxFile, 'biz1', 'user1');
+
+      expect(sheetRepo.save).toHaveBeenCalled();
+      expect(batchRepo.save).toHaveBeenCalled();
+      expect(seriesRepo.save).toHaveBeenCalled();
+      expect(sheetRepo.update).toHaveBeenCalledWith('sheet-uuid', expect.objectContaining({ status: 'ready' }));
+      expect(batchRepo.update).toHaveBeenCalledWith('batch-uuid', expect.objectContaining({ status: 'success', successRows: 2 }));
+      expect(result).toEqual({ batchId: 'batch-uuid', datasheetId: 'sheet-uuid', status: 'ready' });
+    });
+
+    it('throws BadRequestException for invalid MIME type', async () => {
+      const { importService } = makeImportService();
+      const invalidFile = { ...xlsxFile, mimetype: 'application/pdf', originalname: 'test.pdf' } as Express.Multer.File;
+      await expect(importService.upload(invalidFile, 'biz1', 'user1')).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws ForbiddenException when user is not manager', async () => {
+      const { importService, authService } = makeImportService();
+      authService.requireManager.mockRejectedValue(new ForbiddenException('Manager role required'));
+      await expect(importService.upload(xlsxFile, 'biz1', 'user2')).rejects.toThrow(ForbiddenException);
+    });
+
+    it('marks sheet/batch as error when series save fails', async () => {
+      const { importService, sheetRepo, seriesRepo, batchRepo, authService } = makeImportService();
+      authService.requireManager.mockResolvedValue(managerMember);
+      const mockSheet = { id: 'sheet-uuid', businessId: 'biz1' };
+      const mockBatch = { id: 'batch-uuid', businessId: 'biz1' };
+      sheetRepo.create.mockReturnValue(mockSheet);
+      sheetRepo.save.mockResolvedValue(mockSheet);
+      batchRepo.create.mockReturnValue(mockBatch);
+      batchRepo.save.mockResolvedValue(mockBatch);
+      seriesRepo.create.mockImplementation((data: any) => data);
+      seriesRepo.save.mockRejectedValue(new Error('DB error'));
+
+      await expect(importService.upload(xlsxFile, 'biz1', 'user1')).rejects.toThrow(BadRequestException);
+      expect(sheetRepo.update).toHaveBeenCalledWith('sheet-uuid', expect.objectContaining({ status: 'error' }));
+      expect(batchRepo.update).toHaveBeenCalledWith('batch-uuid', expect.objectContaining({ status: 'error' }));
+    });
+  });
 
   describe('reimport()', () => {
     it('deletes old series, saves new ones, returns ready', async () => {
-      const { service, sheetRepo, seriesRepo, batchRepo, memberRepo } = makeService();
+      const { importService, sheetRepo, seriesRepo, batchRepo, authService } = makeImportService();
       const existingSheet = { id: 'sheet1', businessId: 'biz1' };
       sheetRepo.findOne.mockResolvedValue(existingSheet);
-      memberRepo.findOne.mockResolvedValue(managerMember);
+      authService.requireManager.mockResolvedValue(managerMember);
       const mockBatch = { id: 'batch-uuid', businessId: 'biz1' };
       batchRepo.create.mockReturnValue(mockBatch);
       batchRepo.save.mockResolvedValue(mockBatch);
@@ -171,7 +280,7 @@ describe('DatasheetService', () => {
       seriesRepo.create.mockImplementation((data: any) => data);
       seriesRepo.save.mockResolvedValue([]);
 
-      const result = await service.reimport('sheet1', xlsxFile, 'user1');
+      const result = await importService.reimport('sheet1', xlsxFile, 'user1');
 
       expect(seriesRepo.delete).toHaveBeenCalledWith({ dataSheetId: 'sheet1' });
       expect(seriesRepo.save).toHaveBeenCalled();
@@ -179,20 +288,24 @@ describe('DatasheetService', () => {
       expect(result.status).toBe('ready');
     });
   });
+});
 
-  describe('generateTemplate()', () => {
-    it('returns non-empty Buffer for month type with 3 rows', async () => {
-      const { service } = makeService();
-      const buffer = await service.generateTemplate('month', 3);
-      expect(Buffer.isBuffer(buffer)).toBe(true);
-      expect((buffer as Buffer).length).toBeGreaterThan(0);
-    });
+describe('DatasheetTemplateService — template generation', () => {
+  let templateService: DatasheetTemplateService;
 
-    it('returns non-empty Buffer for quarter type', async () => {
-      const { service } = makeService();
-      const buffer = await service.generateTemplate('quarter', 2);
-      expect(Buffer.isBuffer(buffer)).toBe(true);
-      expect((buffer as Buffer).length).toBeGreaterThan(0);
-    });
+  beforeEach(() => {
+    templateService = new DatasheetTemplateService();
+  });
+
+  it('returns non-empty Buffer for month type with 3 rows', async () => {
+    const buffer = await templateService.generateTemplate('month', 3);
+    expect(Buffer.isBuffer(buffer)).toBe(true);
+    expect((buffer as Buffer).length).toBeGreaterThan(0);
+  });
+
+  it('returns non-empty Buffer for quarter type', async () => {
+    const buffer = await templateService.generateTemplate('quarter', 2);
+    expect(Buffer.isBuffer(buffer)).toBe(true);
+    expect((buffer as Buffer).length).toBeGreaterThan(0);
   });
 });

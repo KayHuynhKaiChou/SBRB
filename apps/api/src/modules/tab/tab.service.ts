@@ -6,9 +6,10 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
-import { BusinessMember } from '../business/entities/business-member.entity';
+import { AuthorizationService } from '../../common/services/authorization.service';
 import { CreateTabDto } from './dto/create-tab.dto';
 import { TabOrderItemDto } from './dto/reorder-tabs.dto';
+import { TabType } from './dto/tab.type';
 import { UpdateTabDto } from './dto/update-tab.dto';
 import { Tab } from './entities/tab.entity';
 
@@ -21,14 +22,13 @@ export class TabService {
   constructor(
     @InjectRepository(Tab)
     private readonly tabRepo: Repository<Tab>,
-    @InjectRepository(BusinessMember)
-    private readonly memberRepo: Repository<BusinessMember>,
+    private readonly authorizationService: AuthorizationService,
     private readonly dataSource: DataSource,
   ) {}
 
   /** Get all tabs for a business sorted: pinned first, then by position */
-  async findByBusiness(businessId: string, userId: string): Promise<Array<Tab & { iconColor: string; iconName: string; order: number }>> {
-    await this.requireMember(businessId, userId);
+  async findByBusiness(businessId: string, userId: string): Promise<TabType[]> {
+    await this.authorizationService.requireMember(businessId, userId);
     const tabs = await this.tabRepo
       .createQueryBuilder('t')
       .where('t.businessId = :businessId', { businessId })
@@ -39,8 +39,8 @@ export class TabService {
   }
 
   /** Create a new tab — Manager+ only; max 20 tabs/business */
-  async create(businessId: string, userId: string, dto: CreateTabDto): Promise<Tab & { iconColor: string; iconName: string; order: number }> {
-    const member = await this.requireMember(businessId, userId);
+  async create(businessId: string, userId: string, dto: CreateTabDto): Promise<TabType> {
+    const member = await this.authorizationService.requireMember(businessId, userId);
     if (!MANAGER_ROLES.includes(member.role)) {
       throw new ForbiddenException('Manager or higher required to create tabs');
     }
@@ -74,9 +74,9 @@ export class TabService {
   }
 
   /** Update tab — Manager+ required; only Owner can modify protected tabs */
-  async update(id: string, userId: string, dto: UpdateTabDto): Promise<Tab & { iconColor: string; iconName: string; order: number }> {
+  async update(id: string, userId: string, dto: UpdateTabDto): Promise<TabType> {
     const tab = await this.findTabOrFail(id);
-    const member = await this.requireMember(tab.businessId, userId);
+    const member = await this.authorizationService.requireMember(tab.businessId, userId);
 
     if (!MANAGER_ROLES.includes(member.role)) {
       throw new ForbiddenException('Manager or higher required to update tabs');
@@ -103,7 +103,7 @@ export class TabService {
   /** Delete tab — Manager+; only Owner can delete protected tabs; cascades widgets */
   async delete(id: string, userId: string): Promise<void> {
     const tab = await this.findTabOrFail(id);
-    const member = await this.requireMember(tab.businessId, userId);
+    const member = await this.authorizationService.requireMember(tab.businessId, userId);
 
     if (!MANAGER_ROLES.includes(member.role)) {
       throw new ForbiddenException('Manager or higher required to delete tabs');
@@ -128,7 +128,7 @@ export class TabService {
 
     // Verify user is a member with manager+ on the first tab's business
     const firstTab = await this.findTabOrFail(orders[0].id);
-    const member = await this.requireMember(firstTab.businessId, userId);
+    const member = await this.authorizationService.requireMember(firstTab.businessId, userId);
     if (!MANAGER_ROLES.includes(member.role)) {
       throw new ForbiddenException('Manager or higher required to reorder tabs');
     }
@@ -144,14 +144,6 @@ export class TabService {
   // Private helpers
   // ---------------------------------------------------------------------------
 
-  private async requireMember(businessId: string, userId: string): Promise<BusinessMember> {
-    const member = await this.memberRepo.findOne({
-      where: { businessId, userId, status: 'active' },
-    });
-    if (!member) throw new NotFoundException('Business not found or access denied');
-    return member;
-  }
-
   private async findTabOrFail(id: string): Promise<Tab> {
     const tab = await this.tabRepo.findOne({ where: { id } });
     if (!tab) throw new NotFoundException(`Tab ${id} not found`);
@@ -159,11 +151,19 @@ export class TabService {
   }
 
   /** Map DB entity fields to GraphQL contract field names */
-  private mapTab(tab: Tab): Tab & { iconColor: string; iconName: string; order: number } {
-    return Object.assign(tab, {
+  private mapTab(tab: Tab): TabType {
+    return {
+      id: tab.id,
+      businessId: tab.businessId,
+      createdBy: tab.createdBy,
+      name: tab.name,
       iconColor: tab.color,
       iconName: tab.icon,
       order: tab.position,
-    });
+      isProtected: tab.isProtected,
+      isPinned: tab.isPinned,
+      createdAt: tab.createdAt,
+      updatedAt: tab.updatedAt,
+    };
   }
 }

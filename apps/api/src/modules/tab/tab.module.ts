@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { BusinessMember } from '../business/entities/business-member.entity';
+import { CommonModule } from '../../common/common.module';
 import { Tab } from './entities/tab.entity';
 import { TabResolver } from './tab.resolver';
 import { TabService } from './tab.service';
@@ -11,7 +11,7 @@ import { TabService } from './tab.service';
  * Max 20 tabs per business
  */
 @Module({
-  imports: [TypeOrmModule.forFeature([Tab, BusinessMember])],
+  imports: [TypeOrmModule.forFeature([Tab]), CommonModule],
   providers: [TabService, TabResolver],
   exports: [TabService],
 })

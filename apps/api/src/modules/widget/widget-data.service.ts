@@ -6,6 +6,7 @@ import { DataSeries } from '../datasheet/entities/data-series.entity';
 import { Widget } from './entities/widget.entity';
 import { ChartData, ChartDataset, TrendBadge } from './dto/chart-data.dto';
 import { UpdateDataLinkDto } from './dto/update-data-link.dto';
+import { WidgetType } from './dto/widget.type';
 import { WidgetAuthService } from './widget-auth.service';
 
 /** 20-color standard chart palette */
@@ -95,11 +96,16 @@ export class WidgetDataService {
   }
 
   /** Map Widget entity to GraphQL WidgetType contract */
-  private mapWidget(widget: Widget, businessId: string) {
+  private mapWidget(widget: Widget, businessId: string): WidgetType {
     const config = widget.config as Record<string, unknown> | null ?? {};
     return {
-      ...widget,
+      id: widget.id,
+      tabId: widget.tabId,
       businessId,
+      createdBy: widget.createdBy,
+      name: widget.name,
+      metricName: widget.metricName,
+      unit: widget.unit,
       position: { x: widget.x, y: widget.y, w: widget.w, h: widget.h },
       chartConfig: {
         type: (config['type'] as string) ?? null,
@@ -108,11 +114,18 @@ export class WidgetDataService {
         yAxisFromZero: (config['yAxisFromZero'] as boolean) ?? null,
         showLegend: (config['showLegend'] as boolean) ?? null,
       },
+      config: widget.config as Record<string, unknown> | null,
+      dataSheetId: widget.dataSheetId,
+      selectedSeries: widget.selectedSeries,
+      selectedPeriods: widget.selectedPeriods,
+      isRestricted: widget.isRestricted,
+      createdAt: widget.createdAt,
+      updatedAt: widget.updatedAt,
     };
   }
 
   /** Update widget chart config JSONB — SRS 4.5.3 */
-  async updateConfig(widgetId: string, userId: string, config: Record<string, unknown>) {
+  async updateConfig(widgetId: string, userId: string, config: Record<string, unknown>): Promise<WidgetType> {
     const { widget, businessId } = await this.widgetAuth.assertManagerByWidgetId(widgetId, userId);
     widget.config = config;
     const saved = await this.widgetRepo.save(widget);
@@ -120,7 +133,7 @@ export class WidgetDataService {
   }
 
   /** Link a widget to a DataSheet with series/period filters — SRS 4.5.4 */
-  async updateDataLink(widgetId: string, userId: string, dto: UpdateDataLinkDto) {
+  async updateDataLink(widgetId: string, userId: string, dto: UpdateDataLinkDto): Promise<WidgetType> {
     const { widget, businessId } = await this.widgetAuth.assertManagerByWidgetId(widgetId, userId);
 
     const dataSheet = await this.dataSheetRepo.findOne({ where: { id: dto.dataSheetId } });
@@ -156,7 +169,7 @@ export class WidgetDataService {
   }
 
   /** Clear all data link fields from a widget — SRS 4.5.5 */
-  async removeDataLink(widgetId: string, userId: string) {
+  async removeDataLink(widgetId: string, userId: string): Promise<WidgetType> {
     const { widget, businessId } = await this.widgetAuth.assertManagerByWidgetId(widgetId, userId);
 
     widget.dataSheetId = null;

@@ -29,7 +29,7 @@ export class DatasheetResolver {
     return this.datasheetService.findByBusiness(
       businessId,
       user.sub,
-    ) as unknown as DataSheetType[];
+    );
   }
 
   @Query(() => DataSheetType, { name: 'dataSheet' })
@@ -37,7 +37,7 @@ export class DatasheetResolver {
     @Args('id', { type: () => ID }) id: string,
     @CurrentUser() user: IJwtPayload,
   ): Promise<DataSheetType> {
-    return this.datasheetService.findById(id, user.sub) as unknown as DataSheetType;
+    return this.datasheetService.findById(id, user.sub);
   }
 
   @Query(() => [DataSeriesType], { name: 'dataSeries' })
@@ -50,7 +50,7 @@ export class DatasheetResolver {
       datasheetId,
       user.sub,
       search,
-    ) as unknown as DataSeriesType[];
+    );
   }
 
   @Mutation(() => DataSheetType)
@@ -59,7 +59,7 @@ export class DatasheetResolver {
     @Args('input') input: UpdateDatasheetDto,
     @CurrentUser() user: IJwtPayload,
   ): Promise<DataSheetType> {
-    return this.datasheetService.rename(id, user.sub, input.name) as unknown as DataSheetType;
+    return this.datasheetService.rename(id, user.sub, input.name);
   }
 
   @Mutation(() => Boolean)

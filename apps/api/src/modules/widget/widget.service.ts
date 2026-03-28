@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ConflictException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -9,12 +8,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
 import { detectCollision, findFirstEmptyPosition, snapPosition, validatePosition } from '@sbrb/shared-utils';
 import { MAX_WIDGETS_PER_TAB } from '@sbrb/shared-constants';
-import { BusinessMember } from '../business/entities/business-member.entity';
 import { Business } from '../business/entities/business.entity';
 import { Tab } from '../tab/entities/tab.entity';
+import { AuthorizationService } from '../../common/services/authorization.service';
 import { CreateWidgetDto } from './dto/create-widget.dto';
 import { UpdateWidgetDto } from './dto/update-widget.dto';
 import { UpdateWidgetPositionDto } from './dto/update-widget-position.dto';
+import { WidgetType } from './dto/widget.type';
 import { AlertThreshold } from './entities/alert-threshold.entity';
 import { Widget } from './entities/widget.entity';
 import { WidgetAuthService } from './widget-auth.service';
@@ -27,13 +27,12 @@ export class WidgetService {
     private readonly widgetRepo: Repository<Widget>,
     @InjectRepository(AlertThreshold)
     private readonly alertRepo: Repository<AlertThreshold>,
-    @InjectRepository(BusinessMember)
-    private readonly memberRepo: Repository<BusinessMember>,
     @InjectRepository(Tab)
     private readonly tabRepo: Repository<Tab>,
     @InjectRepository(Business)
     private readonly businessRepo: Repository<Business>,
     private readonly widgetAuth: WidgetAuthService,
+    private readonly authorizationService: AuthorizationService,
   ) {}
 
   /** Verify user is Manager+ in the business that owns the tab */
@@ -44,10 +43,7 @@ export class WidgetService {
     const business = await this.businessRepo.findOne({ where: { id: tab.businessId } });
     if (!business) throw new NotFoundException('Business not found');
 
-    const member = await this.memberRepo.findOne({ where: { businessId: tab.businessId, userId } });
-    if (!member || !['owner', 'manager'].includes(member.role)) {
-      throw new ForbiddenException('Manager or above role required');
-    }
+    await this.authorizationService.requireManager(tab.businessId, userId);
 
     return { tab, business };
   }
@@ -57,32 +53,30 @@ export class WidgetService {
     const tab = await this.tabRepo.findOne({ where: { id: tabId } });
     if (!tab) throw new NotFoundException('Tab not found');
 
-    const member = await this.memberRepo.findOne({ where: { businessId: tab.businessId, userId } });
-    if (!member) throw new ForbiddenException('Not a member of this business');
+    await this.authorizationService.requireMember(tab.businessId, userId);
 
     return tab;
   }
 
-  async findByTab(tabId: string, userId: string): Promise<ReturnType<typeof this.mapWidget>[]> {
+  async findByTab(tabId: string, userId: string): Promise<WidgetType[]> {
     const tab = await this.assertMemberAccess(tabId, userId);
     const widgets = await this.widgetRepo.find({ where: { tabId } });
     return widgets.map((w) => this.mapWidget(w, tab.businessId));
   }
 
-  async findById(id: string, userId: string): Promise<ReturnType<typeof this.mapWidget>> {
+  async findById(id: string, userId: string): Promise<WidgetType> {
     const widget = await this.widgetRepo.findOne({ where: { id } });
     if (!widget) throw new NotFoundException('Widget not found');
 
     const tab = await this.tabRepo.findOne({ where: { id: widget.tabId } });
     if (!tab) throw new NotFoundException('Tab not found');
 
-    const member = await this.memberRepo.findOne({ where: { businessId: tab.businessId, userId } });
-    if (!member) throw new ForbiddenException('Not a member of this business');
+    await this.authorizationService.requireMember(tab.businessId, userId);
 
     return this.mapWidget(widget, tab.businessId);
   }
 
-  async create(tabId: string, userId: string, dto: CreateWidgetDto): Promise<ReturnType<typeof this.mapWidget>> {
+  async create(tabId: string, userId: string, dto: CreateWidgetDto): Promise<WidgetType> {
     const { tab, business } = await this.assertManagerRole(tabId, userId);
 
     const count = await this.widgetRepo.count({ where: { tabId } });
@@ -121,7 +115,7 @@ export class WidgetService {
     return this.mapWidget(saved, tab.businessId);
   }
 
-  async update(id: string, userId: string, dto: UpdateWidgetDto): Promise<ReturnType<typeof this.mapWidget>> {
+  async update(id: string, userId: string, dto: UpdateWidgetDto): Promise<WidgetType> {
     const { widget, businessId } = await this.widgetAuth.assertManagerByWidgetId(id, userId);
 
     if (dto.name !== undefined) widget.name = dto.name;
@@ -188,11 +182,16 @@ export class WidgetService {
   }
 
   /** Map Widget entity to GraphQL response contract (nested position, chartConfig, businessId) */
-  private mapWidget(widget: Widget, businessId: string) {
+  private mapWidget(widget: Widget, businessId: string): WidgetType {
     const config = widget.config as Record<string, unknown> | null ?? {};
     return {
-      ...widget,
+      id: widget.id,
+      tabId: widget.tabId,
       businessId,
+      createdBy: widget.createdBy,
+      name: widget.name,
+      metricName: widget.metricName,
+      unit: widget.unit,
       position: {
         x: widget.x,
         y: widget.y,
@@ -206,6 +205,13 @@ export class WidgetService {
         yAxisFromZero: (config['yAxisFromZero'] as boolean) ?? null,
         showLegend: (config['showLegend'] as boolean) ?? null,
       },
+      config: widget.config as Record<string, unknown> | null,
+      dataSheetId: widget.dataSheetId,
+      selectedSeries: widget.selectedSeries,
+      selectedPeriods: widget.selectedPeriods,
+      isRestricted: widget.isRestricted,
+      createdAt: widget.createdAt,
+      updatedAt: widget.updatedAt,
     };
   }
 }

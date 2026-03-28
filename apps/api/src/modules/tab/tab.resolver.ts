@@ -20,7 +20,7 @@ export class TabResolver {
     @Args('businessId', { type: () => ID }) businessId: string,
     @CurrentUser() user: IJwtPayload,
   ): Promise<TabType[]> {
-    return this.tabService.findByBusiness(businessId, user.sub) as unknown as TabType[];
+    return this.tabService.findByBusiness(businessId, user.sub);
   }
 
   @Mutation(() => TabType)
@@ -28,7 +28,7 @@ export class TabResolver {
     @Args('input') input: CreateTabDto,
     @CurrentUser() user: IJwtPayload,
   ): Promise<TabType> {
-    return this.tabService.create(input.businessId, user.sub, input) as unknown as TabType;
+    return this.tabService.create(input.businessId, user.sub, input);
   }
 
   @Mutation(() => TabType)
@@ -37,7 +37,7 @@ export class TabResolver {
     @Args('input') input: UpdateTabDto,
     @CurrentUser() user: IJwtPayload,
   ): Promise<TabType> {
-    return this.tabService.update(id, user.sub, input) as unknown as TabType;
+    return this.tabService.update(id, user.sub, input);
   }
 
   @Mutation(() => Boolean)

@@ -64,7 +64,7 @@ export class ChartConfigType {
 }
 
 /** GraphQL return type for Widget — SRS 4.4 */
-@ObjectType()
+@ObjectType('Widget')
 export class WidgetType {
   @Field(() => ID)
   id: string;

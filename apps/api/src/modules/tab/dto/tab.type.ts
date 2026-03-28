@@ -1,7 +1,7 @@
 import { Field, ID, Int, ObjectType } from '@nestjs/graphql';
 
 /** GraphQL return type for Tab — SRS 4.3 */
-@ObjectType()
+@ObjectType('Tab')
 export class TabType {
   @Field(() => ID)
   id: string;

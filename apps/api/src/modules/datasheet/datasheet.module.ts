@@ -2,11 +2,13 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MulterModule } from '@nestjs/platform-express';
 import { PubSub } from 'graphql-subscriptions';
-import { BusinessMember } from '../business/entities/business-member.entity';
+import { CommonModule } from '../../common/common.module';
 import { Widget } from '../widget/entities/widget.entity';
 import { DataSheet } from './entities/data-sheet.entity';
 import { DataSeries } from './entities/data-series.entity';
 import { ImportBatch } from './entities/import-batch.entity';
+import { DatasheetImportService } from './datasheet-import.service';
+import { DatasheetTemplateService } from './datasheet-template.service';
 import { DatasheetService } from './datasheet.service';
 import { DatasheetController } from './datasheet.controller';
 import { DatasheetResolver } from './datasheet.resolver';
@@ -18,10 +20,13 @@ import { DatasheetResolver } from './datasheet.resolver';
  */
 @Module({
   imports: [
-    TypeOrmModule.forFeature([DataSheet, DataSeries, ImportBatch, Widget, BusinessMember]),
+    TypeOrmModule.forFeature([DataSheet, DataSeries, ImportBatch, Widget]),
     MulterModule.register({ limits: { fileSize: 10 * 1024 * 1024 } }),
+    CommonModule,
   ],
   providers: [
+    DatasheetImportService,
+    DatasheetTemplateService,
     DatasheetService,
     DatasheetResolver,
     { provide: 'PUBSUB', useValue: new PubSub() },

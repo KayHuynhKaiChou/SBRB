@@ -24,14 +24,14 @@ export class MemberResolver {
     @Args('businessId', { type: () => ID }) businessId: string,
     @Args('filter', { nullable: true }) filter?: string,
   ): Promise<MemberType[]> {
-    return this.memberService.members(businessId, filter) as unknown as MemberType[];
+    return this.memberService.members(businessId, filter);
   }
 
   @Query(() => [InvitationType], { name: 'pendingInvitations' })
   async pendingInvitations(
     @Args('businessId', { type: () => ID }) businessId: string,
   ): Promise<InvitationType[]> {
-    return this.invitationService.pendingInvitations(businessId) as unknown as InvitationType[];
+    return this.invitationService.pendingInvitations(businessId);
   }
 
   @Mutation(() => InvitationType)
@@ -40,7 +40,7 @@ export class MemberResolver {
     @Args('input') input: InviteMemberDto,
     @CurrentUser() user: IJwtPayload,
   ): Promise<InvitationType> {
-    return this.invitationService.invite(businessId, user.sub, input) as unknown as InvitationType;
+    return this.invitationService.invite(businessId, user.sub, input);
   }
 
   @Mutation(() => Boolean)
@@ -57,7 +57,7 @@ export class MemberResolver {
     @Args('token') token: string,
     @CurrentUser() user: IJwtPayload,
   ): Promise<MemberType> {
-    return this.invitationService.acceptInvitation(token, user.sub) as unknown as MemberType;
+    return this.invitationService.acceptInvitation(token, user.sub);
   }
 
   @Mutation(() => Boolean)
@@ -80,7 +80,7 @@ export class MemberResolver {
       user.sub,
       targetUserId,
       input.role,
-    ) as unknown as MemberType;
+    );
   }
 
   @Mutation(() => Boolean)
@@ -104,6 +104,6 @@ export class MemberResolver {
       user.sub,
       targetUserId,
       input.widgetIds,
-    ) as unknown as MemberType;
+    );
   }
 }
