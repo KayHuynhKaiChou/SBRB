@@ -3,7 +3,7 @@ import { useQuery, useMutation } from '@apollo/client';
 import { message } from 'antd';
 import { detectCollision } from '@sbrb/shared-utils';
 import { useCanvasStore } from '../store/canvas.store';
-import { useAuthStore } from '../store/auth.store';
+import { apiClient } from '../services/api-client';
 import { WIDGETS_QUERY, UPDATE_WIDGET_MUTATION } from '../graphql/canvas.operations';
 import type { IWidgetPosition } from '@sbrb/shared-types';
 
@@ -36,24 +36,16 @@ export function useCanvas(tabId: string) {
   const patchPosition = useCallback(
     async (payload: IDebouncedPosition) => {
       const { widgetId, ...pos } = payload;
-      const accessToken = useAuthStore.getState().accessToken;
       try {
-        const res = await fetch(`/api/v1/widgets/${widgetId}/position`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify(pos),
-        });
-        if (res.status === 409) {
+        const { conflict } = await apiClient.patch(`/api/v1/widgets/${widgetId}/position`, pos);
+        if (conflict) {
           // Server-side collision — revert to last valid
           const last = lastValidPositions.current.get(widgetId);
           if (last) {
             updateWidgetPosition(widgetId, last);
           }
           message.error('Vị trí đã có widget khác (server)');
-        } else if (res.ok) {
+        } else {
           lastValidPositions.current.set(widgetId, pos);
         }
       } catch {

@@ -52,8 +52,27 @@ export function useTabs(businessId: string) {
 
   const createTab = async (input: Omit<ICreateTabInput, 'businessId'>) => {
     try {
-      await createTabMutation({ variables: { input: { ...input, businessId } } });
-      await refetch();
+      await createTabMutation({
+        variables: { input: { ...input, businessId } },
+        update: (cache, { data: mutationData }) => {
+          const newTab = mutationData?.createTab;
+          if (!newTab) return;
+          const existing = cache.readQuery<{ tabs: unknown[] }>({
+            query: TABS_QUERY,
+            variables: { businessId },
+          });
+          if (existing) {
+            cache.writeQuery({
+              query: TABS_QUERY,
+              variables: { businessId },
+              data: { tabs: [...existing.tabs, newTab] },
+            });
+          } else {
+            // Fallback if cache miss
+            refetch().catch(() => null);
+          }
+        },
+      });
     } catch (err) {
       message.error('Tạo tab thất bại');
       throw err;
@@ -62,8 +81,28 @@ export function useTabs(businessId: string) {
 
   const updateTab = async (id: string, input: IUpdateTabInput) => {
     try {
-      await updateTabMutation({ variables: { id, input } });
-      await refetch();
+      await updateTabMutation({
+        variables: { id, input },
+        update: (cache, { data: mutationData }) => {
+          const updatedTab = mutationData?.updateTab;
+          if (!updatedTab) return;
+          const existing = cache.readQuery<{ tabs: Array<{ id: string }> }>({
+            query: TABS_QUERY,
+            variables: { businessId },
+          });
+          if (existing) {
+            cache.writeQuery({
+              query: TABS_QUERY,
+              variables: { businessId },
+              data: {
+                tabs: existing.tabs.map((t) => (t.id === id ? { ...t, ...updatedTab } : t)),
+              },
+            });
+          } else {
+            refetch().catch(() => null);
+          }
+        },
+      });
     } catch (err) {
       message.error('Cập nhật tab thất bại');
       throw err;
@@ -72,9 +111,25 @@ export function useTabs(businessId: string) {
 
   const deleteTab = async (id: string) => {
     try {
-      await deleteTabMutation({ variables: { id } });
+      await deleteTabMutation({
+        variables: { id },
+        update: (cache) => {
+          const existing = cache.readQuery<{ tabs: Array<{ id: string }> }>({
+            query: TABS_QUERY,
+            variables: { businessId },
+          });
+          if (existing) {
+            cache.writeQuery({
+              query: TABS_QUERY,
+              variables: { businessId },
+              data: { tabs: existing.tabs.filter((t) => t.id !== id) },
+            });
+          } else {
+            refetch().catch(() => null);
+          }
+        },
+      });
       if (activeTabId === id) setActiveTab(null);
-      await refetch();
     } catch (err) {
       message.error('Xóa tab thất bại');
       throw err;

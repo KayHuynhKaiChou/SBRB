@@ -62,15 +62,15 @@ export function useAuth() {
     );
 
     if (validBusiness) {
-      navigate(`/dashboard/${currentBusinessId}`);
+      navigate('/dashboard');
     } else if (businesses.length > 0) {
       // Use first available business
       const firstBizId = businesses[0].id;
       useAuthStore.getState().setCurrentBusiness(firstBizId);
-      navigate(`/dashboard/${firstBizId}`);
+      navigate('/dashboard');
     } else {
       // No businesses — go to onboarding
-      useAuthStore.getState().setCurrentBusiness(null as unknown as string);
+      useAuthStore.getState().setCurrentBusiness(null);
       navigate('/onboarding');
     }
   };

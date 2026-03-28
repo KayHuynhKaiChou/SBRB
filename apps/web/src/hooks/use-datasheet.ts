@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useSubscription } from '@apollo/client';
 import { message } from 'antd';
-import { useAuthStore } from '../store/auth.store';
+import { apiClient } from '../services/api-client';
 import {
   DATA_SHEETS_QUERY,
   IMPORT_PROGRESS_SUBSCRIPTION,
@@ -71,27 +71,17 @@ export function useImportDataSheet(businessId: string) {
   const upload = async (file: File, name: string): Promise<string> => {
     setIsUploading(true);
     setProgress(null);
-    const accessToken = useAuthStore.getState().accessToken;
-
     const formData = new FormData();
     formData.append('file', file);
     formData.append('name', name);
 
     try {
-      const res = await fetch(`/api/v1/businesses/${businessId}/data-sheets/upload`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${accessToken}` },
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ message: 'Upload thất bại' }));
-        throw new Error(err.message ?? 'Upload thất bại');
-      }
-
-      const result = await res.json();
+      const result = await apiClient.upload<{ datasheetId: string }>(
+        `/api/v1/businesses/${businessId}/data-sheets/upload`,
+        formData,
+      );
       setUploadedDatasheetId(result.datasheetId);
-      return result.datasheetId as string;
+      return result.datasheetId;
     } finally {
       setIsUploading(false);
     }
@@ -106,13 +96,8 @@ export function useReimport() {
 
   const reimport = async (datasheetId: string) => {
     setLoading(true);
-    const accessToken = useAuthStore.getState().accessToken;
     try {
-      const res = await fetch(`/api/v1/data-sheets/${datasheetId}/reimport`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      if (!res.ok) throw new Error('Reimport thất bại');
+      await apiClient.post(`/api/v1/data-sheets/${datasheetId}/reimport`);
     } finally {
       setLoading(false);
     }
@@ -159,14 +144,8 @@ export function useDownloadTemplate() {
 
   const downloadTemplate = async () => {
     setLoading(true);
-    const accessToken = useAuthStore.getState().accessToken;
     try {
-      const res = await fetch('/api/v1/data-sheets/export-template', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      if (!res.ok) throw new Error('Tải mẫu thất bại');
-
-      const blob = await res.blob();
+      const blob = await apiClient.getBlob('/api/v1/data-sheets/export-template');
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

@@ -5,7 +5,14 @@ import {
   UPDATE_WIDGET_DATA_LINK_MUTATION,
   REMOVE_WIDGET_DATA_LINK_MUTATION,
 } from '../graphql/widget-config.operations';
-import type { IChartConfig, IWidgetDataLink } from '@sbrb/shared-types';
+import type { IChartConfig } from '@sbrb/shared-types';
+
+/** Input shape matching GraphQL UpdateDataLinkDto */
+export interface IUpdateDataLinkInput {
+  dataSheetId: string;
+  selectedSeries: string[];
+  selectedPeriods: string[] | null;
+}
 
 export function useWidgetConfig() {
   const [updateConfigMutation, { loading: updatingConfig }] = useMutation(
@@ -36,7 +43,7 @@ export function useWidgetConfig() {
     }
   };
 
-  const updateDataLink = async (id: string, dataLink: IWidgetDataLink) => {
+  const updateDataLink = async (id: string, dataLink: IUpdateDataLinkInput) => {
     try {
       await updateDataLinkMutation({ variables: { id, input: dataLink } });
     } catch {

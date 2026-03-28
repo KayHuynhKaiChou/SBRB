@@ -93,7 +93,7 @@ export function useAuthInit() {
             if (!isValid && businesses.length > 0) {
               useAuthStore.getState().setCurrentBusiness(businesses[0].id);
             } else if (!isValid) {
-              useAuthStore.getState().setCurrentBusiness(null as unknown as string);
+              useAuthStore.getState().setCurrentBusiness(null);
             }
           }
         }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { useParams, Navigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { Typography } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { useMutation } from '@apollo/client';
 import { useAuthStore } from '../../store/auth.store';
 import { useTabs } from '../../hooks/use-tabs';
@@ -18,20 +19,15 @@ import type { ITabDto } from '@sbrb/shared-types';
 const { Text } = Typography;
 
 export default function DashboardPage() {
-  const { businessId: paramBusinessId } = useParams<{ businessId: string }>();
-  const { currentBusinessId, setCurrentBusiness } = useAuthStore();
+  const { t } = useTranslation('dashboard');
+  const { currentBusinessId } = useAuthStore();
 
-  const effectiveBusinessId = paramBusinessId || currentBusinessId || '';
-  if (paramBusinessId && paramBusinessId !== currentBusinessId) {
-    setCurrentBusiness(paramBusinessId);
-  }
-
-  if (!effectiveBusinessId) {
+  if (!currentBusinessId) {
     return <Navigate to="/onboarding" replace />;
   }
 
   const { tabs, activeTabId, setActiveTab, createTab, updateTab, deleteTab } =
-    useTabs(effectiveBusinessId);
+    useTabs(currentBusinessId);
 
   const [addTabOpen, setAddTabOpen] = useState(false);
   const [editTabOpen, setEditTabOpen] = useState(false);
@@ -64,7 +60,7 @@ export default function DashboardPage() {
       dataSheetId,
       selectedSeries,
       selectedPeriods,
-    } as any);
+    });
     setDataSelectorOpen(false);
     setDataSelectorWidgetId(null);
   };
@@ -75,7 +71,7 @@ export default function DashboardPage() {
       variables: {
         input: {
           tabId: storeActiveTabId,
-          businessId: effectiveBusinessId,
+          businessId: currentBusinessId,
           name: input.name,
           metricName: input.metricName ?? '',
           unit: input.unit ?? '',
@@ -94,6 +90,7 @@ export default function DashboardPage() {
       onAddTab={() => setAddTabOpen(true)}
       onEditTab={handleEditTab}
       onDeleteTab={deleteTab}
+      onAddWidget={() => setAddWidgetOpen(true)}
     >
       {activeTabId ? (
         <CanvasContainer
@@ -113,7 +110,7 @@ export default function DashboardPage() {
           }}
         >
           <Text type="secondary" style={{ fontSize: 14 }}>
-            Chưa có tab nào. Tạo tab mới để bắt đầu.
+            {t('no_tabs_message')}
           </Text>
         </div>
       )}
@@ -141,7 +138,7 @@ export default function DashboardPage() {
         open={dataSelectorOpen}
         onClose={() => { setDataSelectorOpen(false); setDataSelectorWidgetId(null); }}
         onConfirm={handleDataSelectorConfirm}
-        businessId={effectiveBusinessId}
+        businessId={currentBusinessId}
       />
     </AppLayout>
   );

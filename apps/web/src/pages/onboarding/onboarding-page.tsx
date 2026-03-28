@@ -54,7 +54,7 @@ function CreateBusinessForm({ onBack }: { onBack: () => void }) {
     const { data } = await createBusiness({ variables: { input: values } });
     const businessId: string = data.createBusiness.id;
     setCurrentBusiness(businessId);
-    navigate(`/dashboard/${businessId}`);
+    navigate('/dashboard');
   };
 
   return (
@@ -144,7 +144,7 @@ function JoinBusinessForm({ onBack }: { onBack: () => void }) {
     const { data } = await acceptInvitation({ variables: { token: values.code } });
     const businessId: string = data.acceptInvitation.id;
     setCurrentBusiness(businessId);
-    navigate(`/dashboard/${businessId}`);
+    navigate('/dashboard');
   };
 
   return (
