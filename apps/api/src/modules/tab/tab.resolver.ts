@@ -25,11 +25,10 @@ export class TabResolver {
 
   @Mutation(() => TabType)
   async createTab(
-    @Args('businessId', { type: () => ID }) businessId: string,
     @Args('input') input: CreateTabDto,
     @CurrentUser() user: IJwtPayload,
   ): Promise<TabType> {
-    return this.tabService.create(businessId, user.sub, input) as unknown as TabType;
+    return this.tabService.create(input.businessId, user.sub, input) as unknown as TabType;
   }
 
   @Mutation(() => TabType)
@@ -50,12 +49,12 @@ export class TabResolver {
     return true;
   }
 
-  @Mutation(() => [TabType])
+  @Mutation(() => Boolean)
   async reorderTabs(
-    @Args('businessId', { type: () => ID }) businessId: string,
     @Args('orders', { type: () => [TabOrderItemDto] }) orders: TabOrderItemDto[],
     @CurrentUser() user: IJwtPayload,
-  ): Promise<TabType[]> {
-    return this.tabService.reorder(businessId, user.sub, orders) as unknown as TabType[];
+  ): Promise<boolean> {
+    await this.tabService.reorder(user.sub, orders);
+    return true;
   }
 }

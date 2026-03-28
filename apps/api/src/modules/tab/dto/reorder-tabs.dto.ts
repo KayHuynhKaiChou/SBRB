@@ -2,7 +2,7 @@ import { Field, ID, InputType, Int } from '@nestjs/graphql';
 import { IsInt, IsUUID, Min } from 'class-validator';
 
 /** Single tab order item for batch reorder */
-@InputType()
+@InputType('TabOrderInput')
 export class TabOrderItemDto {
   @Field(() => ID)
   @IsUUID()
@@ -11,5 +11,5 @@ export class TabOrderItemDto {
   @Field(() => Int)
   @IsInt()
   @Min(0)
-  position: number;
+  order: number;
 }

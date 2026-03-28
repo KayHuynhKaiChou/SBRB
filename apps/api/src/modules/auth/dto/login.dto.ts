@@ -4,11 +4,11 @@ import { IsEmail, IsString, MaxLength } from 'class-validator';
 /** SRS 4.1.2 — Login input */
 @InputType()
 export class LoginDto {
-  @Field()
+  @Field(() => String)
   @IsEmail()
   email: string;
 
-  @Field()
+  @Field(() => String)
   @IsString()
   @MaxLength(100)
   password: string;

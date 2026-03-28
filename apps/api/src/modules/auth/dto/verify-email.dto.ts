@@ -4,7 +4,7 @@ import { IsString, IsUUID } from 'class-validator';
 /** Token from verification email link */
 @InputType()
 export class VerifyEmailDto {
-  @Field()
+  @Field(() => String)
   @IsString()
   @IsUUID()
   token: string;

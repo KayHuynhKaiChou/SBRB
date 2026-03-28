@@ -6,24 +6,24 @@ export class UserType {
   @Field(() => ID)
   id: string;
 
-  @Field()
+  @Field(() => String)
   email: string;
 
-  @Field()
+  @Field(() => String)
   fullName: string;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   avatarUrl?: string | null;
 
-  @Field()
+  @Field(() => Boolean)
   emailVerified: boolean;
 
-  @Field()
+  @Field(() => String)
   language: string;
 
-  @Field()
+  @Field(() => Date)
   createdAt: Date;
 
-  @Field({ nullable: true })
+  @Field(() => Date, { nullable: true })
   lastLoginAt?: Date | null;
 }

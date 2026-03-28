@@ -23,7 +23,7 @@ const BCRYPT_ROUNDS = 12;
 const ATTEMPT_KEY = (email: string) => `auth:attempts:${email}`;
 const ATTEMPT_LIMIT = 5;
 const ATTEMPT_TTL = 15 * 60; // 15 min
-const REFRESH_TTL_DAYS = 30;
+const REFRESH_TTL_DAYS = 365;
 const COOKIE_NAME = 'refresh_token';
 
 export interface IAuthTokens {
@@ -90,6 +90,7 @@ export class AuthLoginService {
   }
 
   async refresh(rawToken: string, ip: string, userAgent: string, res: Response): Promise<IAuthTokens> {
+    if (!rawToken) throw new UnauthorizedException('No refresh token');
     // Find by hash is not efficient — iterate is required since we hash differently each time.
     // Use a deterministic approach: store the raw token hashed with a fixed approach.
     // We use bcrypt.compare against stored hash.

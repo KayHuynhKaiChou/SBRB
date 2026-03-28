@@ -4,12 +4,12 @@ import { IsString, Matches, MaxLength, MinLength } from 'class-validator';
 /** Authenticated user changing their own password */
 @InputType()
 export class ChangePasswordDto {
-  @Field()
+  @Field(() => String)
   @IsString()
   @MaxLength(100)
   currentPassword: string;
 
-  @Field()
+  @Field(() => String)
   @IsString()
   @MinLength(8)
   @MaxLength(100)

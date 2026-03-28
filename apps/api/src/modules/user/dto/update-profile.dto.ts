@@ -4,19 +4,19 @@ import { IsIn, IsOptional, IsString, MaxLength, MinLength } from 'class-validato
 /** Update own profile fields */
 @InputType()
 export class UpdateProfileDto {
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   @IsOptional()
   @IsString()
   @MinLength(1)
   @MaxLength(100)
   fullName?: string;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   @IsOptional()
   @IsIn(['vi', 'en'])
   language?: string;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   @IsOptional()
   @IsString()
   @MaxLength(500)

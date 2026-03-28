@@ -1,39 +1,42 @@
 import { Field, ID, InputType } from '@nestjs/graphql';
-import { IsBoolean, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
-import GraphQLJSON from 'graphql-type-json';
+import { IsBoolean, IsOptional, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
+import { WidgetPositionInput } from './widget.type';
 
 /** SRS 4.4 — Create widget input */
-@InputType()
+@InputType('CreateWidgetInput')
 export class CreateWidgetDto {
-  @Field()
+  @Field(() => ID)
+  @IsUUID()
+  tabId: string;
+
+  @Field(() => ID)
+  @IsUUID()
+  businessId: string;
+
+  @Field(() => String)
   @IsString()
   @MinLength(1)
   @MaxLength(40)
   name: string;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   @IsOptional()
   @IsString()
   @MaxLength(80)
-  metric_name?: string;
+  metricName?: string;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   @IsOptional()
   @IsString()
   @MaxLength(20)
   unit?: string;
 
-  @Field(() => GraphQLJSON, { nullable: true })
+  @Field(() => WidgetPositionInput, { nullable: true })
   @IsOptional()
-  config?: Record<string, unknown>;
+  position?: WidgetPositionInput;
 
-  @Field({ nullable: true, defaultValue: false })
+  @Field(() => Boolean, { nullable: true, defaultValue: false })
   @IsOptional()
   @IsBoolean()
-  is_restricted?: boolean;
-
-  @Field(() => ID, { nullable: true })
-  @IsOptional()
-  @IsString()
-  data_sheet_id?: string;
+  isRestricted?: boolean;
 }

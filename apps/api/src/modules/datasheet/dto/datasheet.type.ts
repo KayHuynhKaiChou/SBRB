@@ -12,13 +12,13 @@ export class DataSheetType {
   @Field(() => ID)
   uploadedBy: string;
 
-  @Field()
+  @Field(() => String)
   name: string;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   originalFilename: string | null;
 
-  @Field()
+  @Field(() => String)
   periodType: string;
 
   @Field(() => [String])
@@ -30,22 +30,22 @@ export class DataSheetType {
   @Field(() => Int)
   periodCount: number;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   fileUrl: string | null;
 
-  @Field()
+  @Field(() => String)
   status: string;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   errorMessage: string | null;
 
-  @Field({ nullable: true })
+  @Field(() => Date, { nullable: true })
   importedAt: Date | null;
 
-  @Field()
+  @Field(() => Date)
   createdAt: Date;
 
-  @Field()
+  @Field(() => Date)
   updatedAt: Date;
 }
 
@@ -58,7 +58,7 @@ export class DataSeriesType {
   @Field(() => ID)
   dataSheetId: string;
 
-  @Field()
+  @Field(() => String)
   seriesName: string;
 
   @Field(() => Int)
@@ -74,10 +74,10 @@ export class ImportProgressType {
   @Field(() => Float)
   percent: number;
 
-  @Field()
+  @Field(() => String)
   status: string;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   errorMessage?: string;
 }
 

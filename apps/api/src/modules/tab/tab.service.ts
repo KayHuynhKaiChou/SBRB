@@ -27,18 +27,19 @@ export class TabService {
   ) {}
 
   /** Get all tabs for a business sorted: pinned first, then by position */
-  async findByBusiness(businessId: string, userId: string): Promise<Tab[]> {
+  async findByBusiness(businessId: string, userId: string): Promise<Array<Tab & { iconColor: string; iconName: string; order: number }>> {
     await this.requireMember(businessId, userId);
-    return this.tabRepo
+    const tabs = await this.tabRepo
       .createQueryBuilder('t')
       .where('t.businessId = :businessId', { businessId })
       .orderBy('t.isPinned', 'DESC')
       .addOrderBy('t.position', 'ASC')
       .getMany();
+    return tabs.map(this.mapTab);
   }
 
   /** Create a new tab — Manager+ only; max 20 tabs/business */
-  async create(businessId: string, userId: string, dto: CreateTabDto): Promise<Tab> {
+  async create(businessId: string, userId: string, dto: CreateTabDto): Promise<Tab & { iconColor: string; iconName: string; order: number }> {
     const member = await this.requireMember(businessId, userId);
     if (!MANAGER_ROLES.includes(member.role)) {
       throw new ForbiddenException('Manager or higher required to create tabs');
@@ -61,18 +62,19 @@ export class TabService {
       businessId,
       createdBy: userId,
       name: dto.name,
-      color: dto.color ?? '#D72A44',
-      icon: dto.icon ?? 'chart-bar',
+      color: dto.iconColor ?? '#D72A44',
+      icon: dto.iconName ?? 'chart-bar',
       position: nextPosition,
       isPinned: dto.isPinned ?? false,
       isProtected: dto.isProtected ?? false,
     });
 
-    return this.tabRepo.save(tab);
+    const saved = await this.tabRepo.save(tab);
+    return this.mapTab(saved);
   }
 
   /** Update tab — Manager+ required; only Owner can modify protected tabs */
-  async update(id: string, userId: string, dto: UpdateTabDto): Promise<Tab> {
+  async update(id: string, userId: string, dto: UpdateTabDto): Promise<Tab & { iconColor: string; iconName: string; order: number }> {
     const tab = await this.findTabOrFail(id);
     const member = await this.requireMember(tab.businessId, userId);
 
@@ -84,8 +86,8 @@ export class TabService {
     }
 
     if (dto.name !== undefined) tab.name = dto.name;
-    if (dto.color !== undefined) tab.color = dto.color;
-    if (dto.icon !== undefined) tab.icon = dto.icon;
+    if (dto.iconColor !== undefined) tab.color = dto.iconColor;
+    if (dto.iconName !== undefined) tab.icon = dto.iconName;
     if (dto.isPinned !== undefined) tab.isPinned = dto.isPinned;
     if (dto.isProtected !== undefined) {
       if (dto.isProtected && member.role !== 'owner') {
@@ -94,7 +96,8 @@ export class TabService {
       tab.isProtected = dto.isProtected;
     }
 
-    return this.tabRepo.save(tab);
+    const saved = await this.tabRepo.save(tab);
+    return this.mapTab(saved);
   }
 
   /** Delete tab — Manager+; only Owner can delete protected tabs; cascades widgets */
@@ -114,26 +117,27 @@ export class TabService {
   }
 
   /**
-   * Reorder tabs — Manager+; accepts [{id, position}] array;
+   * Reorder tabs — Manager+; accepts [{id, order}] array;
    * updates all in a single transaction
    */
   async reorder(
-    businessId: string,
     userId: string,
     orders: TabOrderItemDto[],
-  ): Promise<Tab[]> {
-    const member = await this.requireMember(businessId, userId);
+  ): Promise<void> {
+    if (orders.length === 0) return;
+
+    // Verify user is a member with manager+ on the first tab's business
+    const firstTab = await this.findTabOrFail(orders[0].id);
+    const member = await this.requireMember(firstTab.businessId, userId);
     if (!MANAGER_ROLES.includes(member.role)) {
       throw new ForbiddenException('Manager or higher required to reorder tabs');
     }
 
     await this.dataSource.transaction(async (em) => {
       for (const item of orders) {
-        await em.update(Tab, { id: item.id, businessId }, { position: item.position });
+        await em.update(Tab, { id: item.id }, { position: item.order });
       }
     });
-
-    return this.findByBusiness(businessId, userId);
   }
 
   // ---------------------------------------------------------------------------
@@ -152,5 +156,14 @@ export class TabService {
     const tab = await this.tabRepo.findOne({ where: { id } });
     if (!tab) throw new NotFoundException(`Tab ${id} not found`);
     return tab;
+  }
+
+  /** Map DB entity fields to GraphQL contract field names */
+  private mapTab(tab: Tab): Tab & { iconColor: string; iconName: string; order: number } {
+    return Object.assign(tab, {
+      iconColor: tab.color,
+      iconName: tab.icon,
+      order: tab.position,
+    });
   }
 }

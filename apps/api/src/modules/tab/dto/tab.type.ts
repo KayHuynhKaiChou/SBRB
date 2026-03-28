@@ -12,27 +12,27 @@ export class TabType {
   @Field(() => ID)
   createdBy: string;
 
-  @Field()
+  @Field(() => String)
   name: string;
 
-  @Field()
-  color: string;
+  @Field(() => String)
+  iconColor: string;
 
-  @Field()
-  icon: string;
+  @Field(() => String)
+  iconName: string;
 
   @Field(() => Int)
-  position: number;
+  order: number;
 
-  @Field()
+  @Field(() => Boolean)
   isProtected: boolean;
 
-  @Field()
+  @Field(() => Boolean)
   isPinned: boolean;
 
-  @Field()
+  @Field(() => Date)
   createdAt: Date;
 
-  @Field()
+  @Field(() => Date)
   updatedAt: Date;
 }

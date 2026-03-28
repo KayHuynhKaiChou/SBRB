@@ -4,7 +4,7 @@ import { InputType, Field } from '@nestjs/graphql';
 /** DTO for renaming a DataSheet */
 @InputType()
 export class UpdateDatasheetDto {
-  @Field()
+  @Field(() => String)
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)

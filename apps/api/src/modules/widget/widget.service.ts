@@ -17,6 +17,7 @@ import { UpdateWidgetDto } from './dto/update-widget.dto';
 import { UpdateWidgetPositionDto } from './dto/update-widget-position.dto';
 import { AlertThreshold } from './entities/alert-threshold.entity';
 import { Widget } from './entities/widget.entity';
+import { WidgetAuthService } from './widget-auth.service';
 
 /** Widget CRUD + position update with collision detection — SRS 4.4 / 4.5 */
 @Injectable()
@@ -32,6 +33,7 @@ export class WidgetService {
     private readonly tabRepo: Repository<Tab>,
     @InjectRepository(Business)
     private readonly businessRepo: Repository<Business>,
+    private readonly widgetAuth: WidgetAuthService,
   ) {}
 
   /** Verify user is Manager+ in the business that owns the tab */
@@ -61,31 +63,13 @@ export class WidgetService {
     return tab;
   }
 
-  /** Verify user has Manager+ access by widgetId */
-  private async assertManagerByWidgetId(widgetId: string, userId: string): Promise<{ widget: Widget; business: Business }> {
-    const widget = await this.widgetRepo.findOne({ where: { id: widgetId } });
-    if (!widget) throw new NotFoundException('Widget not found');
-
-    const tab = await this.tabRepo.findOne({ where: { id: widget.tabId } });
-    if (!tab) throw new NotFoundException('Tab not found');
-
-    const business = await this.businessRepo.findOne({ where: { id: tab.businessId } });
-    if (!business) throw new NotFoundException('Business not found');
-
-    const member = await this.memberRepo.findOne({ where: { businessId: tab.businessId, userId } });
-    if (!member || !['owner', 'manager'].includes(member.role)) {
-      throw new ForbiddenException('Manager or above role required');
-    }
-
-    return { widget, business };
+  async findByTab(tabId: string, userId: string): Promise<ReturnType<typeof this.mapWidget>[]> {
+    const tab = await this.assertMemberAccess(tabId, userId);
+    const widgets = await this.widgetRepo.find({ where: { tabId } });
+    return widgets.map((w) => this.mapWidget(w, tab.businessId));
   }
 
-  async findByTab(tabId: string, userId: string): Promise<Widget[]> {
-    await this.assertMemberAccess(tabId, userId);
-    return this.widgetRepo.find({ where: { tabId } });
-  }
-
-  async findById(id: string, userId: string): Promise<Widget> {
+  async findById(id: string, userId: string): Promise<ReturnType<typeof this.mapWidget>> {
     const widget = await this.widgetRepo.findOne({ where: { id } });
     if (!widget) throw new NotFoundException('Widget not found');
 
@@ -95,11 +79,11 @@ export class WidgetService {
     const member = await this.memberRepo.findOne({ where: { businessId: tab.businessId, userId } });
     if (!member) throw new ForbiddenException('Not a member of this business');
 
-    return widget;
+    return this.mapWidget(widget, tab.businessId);
   }
 
-  async create(tabId: string, userId: string, dto: CreateWidgetDto): Promise<Widget> {
-    const { business } = await this.assertManagerRole(tabId, userId);
+  async create(tabId: string, userId: string, dto: CreateWidgetDto): Promise<ReturnType<typeof this.mapWidget>> {
+    const { tab, business } = await this.assertManagerRole(tabId, userId);
 
     const count = await this.widgetRepo.count({ where: { tabId } });
     if (count >= MAX_WIDGETS_PER_TAB) {
@@ -113,41 +97,44 @@ export class WidgetService {
       position: { x: w.x, y: w.y, w: w.w, h: w.h },
     }));
 
-    const defaultSize = { w: 1000, h: 500 };
-    const position = findFirstEmptyPosition(existingPositions, defaultSize, business.canvasWidth);
+    const defaultSize = { w: dto.position?.w ?? 1000, h: dto.position?.h ?? 500 };
+    const position = dto.position
+      ? { x: dto.position.x ?? 20, y: dto.position.y ?? 20, ...defaultSize }
+      : findFirstEmptyPosition(existingPositions, defaultSize, business.canvasWidth);
 
     const widget = this.widgetRepo.create({
       tabId,
       createdBy: userId,
       name: dto.name,
-      metricName: dto.metric_name ?? null,
+      metricName: dto.metricName ?? null,
       unit: dto.unit ?? null,
-      config: dto.config ?? {},
-      isRestricted: dto.is_restricted ?? false,
-      dataSheetId: dto.data_sheet_id ?? null,
+      config: {},
+      isRestricted: dto.isRestricted ?? false,
+      dataSheetId: null,
       x: position.x,
       y: position.y,
       w: position.w,
       h: position.h,
     });
 
-    return this.widgetRepo.save(widget);
+    const saved = await this.widgetRepo.save(widget);
+    return this.mapWidget(saved, tab.businessId);
   }
 
-  async update(id: string, userId: string, dto: UpdateWidgetDto): Promise<Widget> {
-    const { widget } = await this.assertManagerByWidgetId(id, userId);
+  async update(id: string, userId: string, dto: UpdateWidgetDto): Promise<ReturnType<typeof this.mapWidget>> {
+    const { widget, businessId } = await this.widgetAuth.assertManagerByWidgetId(id, userId);
 
     if (dto.name !== undefined) widget.name = dto.name;
-    if (dto.metric_name !== undefined) widget.metricName = dto.metric_name ?? null;
+    if (dto.metricName !== undefined) widget.metricName = dto.metricName ?? null;
     if (dto.unit !== undefined) widget.unit = dto.unit ?? null;
-    if (dto.config !== undefined) widget.config = dto.config;
-    if (dto.is_restricted !== undefined) widget.isRestricted = dto.is_restricted;
+    if (dto.isRestricted !== undefined) widget.isRestricted = dto.isRestricted;
 
-    return this.widgetRepo.save(widget);
+    const saved = await this.widgetRepo.save(widget);
+    return this.mapWidget(saved, businessId);
   }
 
   async delete(id: string, userId: string): Promise<void> {
-    const { widget } = await this.assertManagerByWidgetId(id, userId);
+    const { widget } = await this.widgetAuth.assertManagerByWidgetId(id, userId);
 
     // Cascade delete alert thresholds first (FK has CASCADE but we ensure it explicitly)
     await this.alertRepo.delete({ widgetId: widget.id });
@@ -159,7 +146,7 @@ export class WidgetService {
    * REST: PATCH /api/v1/widgets/:id/position (debounced 300ms client-side)
    */
   async updatePosition(id: string, userId: string, dto: UpdateWidgetPositionDto): Promise<Widget> {
-    const { widget, business } = await this.assertManagerByWidgetId(id, userId);
+    const { widget, business } = await this.widgetAuth.assertManagerByWidgetId(id, userId);
 
     const snapped = snapPosition(dto);
     const newPosition = { x: snapped.x, y: snapped.y, w: snapped.w, h: snapped.h };
@@ -198,5 +185,27 @@ export class WidgetService {
     widget.h = newPosition.h;
 
     return this.widgetRepo.save(widget);
+  }
+
+  /** Map Widget entity to GraphQL response contract (nested position, chartConfig, businessId) */
+  private mapWidget(widget: Widget, businessId: string) {
+    const config = widget.config as Record<string, unknown> | null ?? {};
+    return {
+      ...widget,
+      businessId,
+      position: {
+        x: widget.x,
+        y: widget.y,
+        w: widget.w,
+        h: widget.h,
+      },
+      chartConfig: {
+        type: (config['type'] as string) ?? null,
+        colorIndex: (config['colorIndex'] as number) ?? null,
+        showLabels: (config['showLabels'] as boolean) ?? null,
+        yAxisFromZero: (config['yAxisFromZero'] as boolean) ?? null,
+        showLegend: (config['showLegend'] as boolean) ?? null,
+      },
+    };
   }
 }

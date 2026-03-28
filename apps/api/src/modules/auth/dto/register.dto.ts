@@ -10,11 +10,11 @@ import {
 /** SRS 4.1.1 — Registration input */
 @InputType()
 export class RegisterDto {
-  @Field()
+  @Field(() => String)
   @IsEmail()
   email: string;
 
-  @Field()
+  @Field(() => String)
   @IsString()
   @MinLength(8)
   @MaxLength(100)
@@ -23,7 +23,7 @@ export class RegisterDto {
   })
   password: string;
 
-  @Field()
+  @Field(() => String)
   @IsString()
   @MinLength(1)
   @MaxLength(100)

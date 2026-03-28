@@ -6,22 +6,22 @@ export class BusinessType {
   @Field(() => ID)
   id: string;
 
-  @Field()
+  @Field(() => String)
   name: string;
 
-  @Field()
+  @Field(() => String)
   industry: string;
 
-  @Field()
+  @Field(() => String)
   timezone: string;
 
-  @Field()
+  @Field(() => String)
   currency: string;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   logoUrl?: string | null;
 
-  @Field()
+  @Field(() => String)
   primaryColor: string;
 
   @Field(() => Int)
@@ -33,12 +33,12 @@ export class BusinessType {
   @Field(() => Int)
   snapGrid: number;
 
-  @Field()
+  @Field(() => String)
   ownerId: string;
 
-  @Field()
+  @Field(() => Date)
   createdAt: Date;
 
-  @Field()
+  @Field(() => Date)
   updatedAt: Date;
 }

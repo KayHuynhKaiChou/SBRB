@@ -4,12 +4,12 @@ import { IsString, IsUUID, Matches, MaxLength, MinLength } from 'class-validator
 /** SRS 4.1.5 — Reset password with token */
 @InputType()
 export class ResetPasswordDto {
-  @Field()
+  @Field(() => String)
   @IsString()
   @IsUUID()
   token: string;
 
-  @Field()
+  @Field(() => String)
   @IsString()
   @MinLength(8)
   @MaxLength(100)

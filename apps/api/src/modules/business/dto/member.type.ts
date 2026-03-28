@@ -6,22 +6,22 @@ export class MemberType {
   @Field(() => ID)
   id: string;
 
-  @Field()
+  @Field(() => String)
   businessId: string;
 
-  @Field()
+  @Field(() => String)
   userId: string;
 
-  @Field()
+  @Field(() => String)
   role: string;
 
-  @Field()
+  @Field(() => String)
   status: string;
 
   @Field(() => [String])
   assignedWidgetIds: string[];
 
-  @Field()
+  @Field(() => Date)
   joinedAt: Date;
 }
 
@@ -31,24 +31,24 @@ export class InvitationType {
   @Field(() => ID)
   id: string;
 
-  @Field()
+  @Field(() => String)
   businessId: string;
 
-  @Field()
+  @Field(() => String)
   email: string;
 
-  @Field()
+  @Field(() => String)
   role: string;
 
-  @Field()
+  @Field(() => String)
   token: string;
 
-  @Field()
+  @Field(() => Date)
   expiresAt: Date;
 
-  @Field({ nullable: true })
+  @Field(() => Date, { nullable: true })
   usedAt?: Date | null;
 
-  @Field()
+  @Field(() => Date)
   createdAt: Date;
 }

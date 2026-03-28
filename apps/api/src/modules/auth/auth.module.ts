@@ -36,7 +36,7 @@ import { REDIS_CLIENT, RedisRateLimitService } from './redis-rate-limit.service'
       useFactory: (config: ConfigService) => ({
         secret: config.get<string>('JWT_SECRET'),
         signOptions: {
-          expiresIn: config.get<string>('JWT_ACCESS_EXPIRY', '15m'),
+          expiresIn: config.get<string>('JWT_ACCESS_EXPIRY', '30d'),
         },
       }),
     }),

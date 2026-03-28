@@ -11,6 +11,8 @@ import { BusinessController } from './business.controller';
 import { MemberService } from './member.service';
 import { MemberResolver } from './member.resolver';
 import { InvitationService } from './invitation.service';
+import { User } from '../auth/entities/user.entity';
+import { MailModule } from '../mail/mail.module';
 import { MinioModule } from '../minio/minio.module';
 import { AuditModule } from '../audit/audit.module';
 
@@ -21,7 +23,8 @@ import { AuditModule } from '../audit/audit.module';
  */
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Business, BusinessMember, BusinessInvitation]),
+    TypeOrmModule.forFeature([Business, BusinessMember, BusinessInvitation, User]),
+    MailModule,
     MinioModule,
     AuditModule,
   ],

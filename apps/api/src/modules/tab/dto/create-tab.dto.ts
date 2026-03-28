@@ -1,37 +1,42 @@
-import { Field, InputType } from '@nestjs/graphql';
+import { Field, ID, InputType } from '@nestjs/graphql';
 import {
   IsBoolean,
   IsHexColor,
   IsOptional,
   IsString,
+  IsUUID,
   MaxLength,
 } from 'class-validator';
 
 /** SRS 4.3.1 — Create tab input */
-@InputType()
+@InputType('CreateTabInput')
 export class CreateTabDto {
-  @Field()
+  @Field(() => ID)
+  @IsUUID()
+  businessId: string;
+
+  @Field(() => String)
   @IsString()
   @MaxLength(30)
   name: string;
 
-  @Field({ nullable: true, defaultValue: '#D72A44' })
+  @Field(() => String, { nullable: true, defaultValue: '#D72A44' })
   @IsOptional()
   @IsHexColor()
-  color?: string;
+  iconColor?: string;
 
-  @Field({ nullable: true, defaultValue: 'chart-bar' })
+  @Field(() => String, { nullable: true, defaultValue: 'chart-bar' })
   @IsOptional()
   @IsString()
   @MaxLength(50)
-  icon?: string;
+  iconName?: string;
 
-  @Field({ nullable: true, defaultValue: false })
+  @Field(() => Boolean, { nullable: true, defaultValue: false })
   @IsOptional()
   @IsBoolean()
   isPinned?: boolean;
 
-  @Field({ nullable: true, defaultValue: false })
+  @Field(() => Boolean, { nullable: true, defaultValue: false })
   @IsOptional()
   @IsBoolean()
   isProtected?: boolean;

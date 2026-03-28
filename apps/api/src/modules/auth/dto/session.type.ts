@@ -6,15 +6,15 @@ export class SessionType {
   @Field(() => ID)
   id: string;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   deviceName?: string | null;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   ipAddress?: string | null;
 
-  @Field()
+  @Field(() => Date)
   lastActiveAt: Date;
 
-  @Field()
+  @Field(() => Date)
   createdAt: Date;
 }

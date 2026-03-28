@@ -4,11 +4,11 @@ import { IsEmail, IsEnum } from 'class-validator';
 /** SRS 4.2.2 — Invite member input */
 @InputType()
 export class InviteMemberDto {
-  @Field()
+  @Field(() => String)
   @IsEmail()
   email: string;
 
-  @Field()
+  @Field(() => String)
   @IsEnum(['manager', 'staff', 'viewer'])
   role: 'manager' | 'staff' | 'viewer';
 }

@@ -9,27 +9,27 @@ import {
 /** SRS 4.2.1 — Create business input */
 @InputType()
 export class CreateBusinessDto {
-  @Field()
+  @Field(() => String)
   @IsString()
   @MinLength(2)
   name: string;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   @IsOptional()
   @IsString()
   industry?: string;
 
-  @Field({ nullable: true, defaultValue: 'Asia/Ho_Chi_Minh' })
+  @Field(() => String, { nullable: true, defaultValue: 'Asia/Ho_Chi_Minh' })
   @IsOptional()
   @IsString()
   timezone?: string;
 
-  @Field({ nullable: true, defaultValue: 'VND' })
+  @Field(() => String, { nullable: true, defaultValue: 'VND' })
   @IsOptional()
   @IsString()
   currency?: string;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   @IsOptional()
   @IsHexColor()
   primary_color?: string;

@@ -1,12 +1,14 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as ExcelJS from 'exceljs';
+import { PubSub } from 'graphql-subscriptions';
 import { BusinessMember } from '../business/entities/business-member.entity';
 import { Widget } from '../widget/entities/widget.entity';
 import { DataSheet } from './entities/data-sheet.entity';
@@ -40,6 +42,7 @@ export class DatasheetService {
     private readonly memberRepo: Repository<BusinessMember>,
     @InjectRepository(Widget)
     private readonly widgetRepo: Repository<Widget>,
+    @Inject('PUBSUB') private readonly pubSub: PubSub,
   ) {}
 
   /** Upload + parse Excel/CSV synchronously, save series to DB — no MinIO, no queue */
@@ -116,10 +119,13 @@ export class DatasheetService {
         successRows: rows.length,
         errorRows: 0,
       });
+
+      this.publishProgress(savedSheet.id, 100, 'done');
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       await this.sheetRepo.update(savedSheet.id, { status: 'error', errorMessage: msg });
       await this.batchRepo.update(savedBatch.id, { status: 'error', errorMessage: msg });
+      this.publishProgress(savedSheet.id, 0, 'error', msg);
       throw new BadRequestException(`Import thất bại: ${msg}`);
     }
 
@@ -276,10 +282,13 @@ export class DatasheetService {
         successRows: rows.length,
         errorRows: 0,
       });
+
+      this.publishProgress(datasheetId, 100, 'done');
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       await this.sheetRepo.update(datasheetId, { status: 'error', errorMessage: msg });
       await this.batchRepo.update(savedBatch.id, { status: 'error', errorMessage: msg });
+      this.publishProgress(datasheetId, 0, 'error', msg);
       throw new BadRequestException(`Reimport thất bại: ${msg}`);
     }
 
@@ -310,6 +319,12 @@ export class DatasheetService {
     const sheet = await this.sheetRepo.findOne({ where: { id } });
     if (!sheet) throw new NotFoundException(`DataSheet ${id} not found`);
     return sheet;
+  }
+
+  private publishProgress(datasheetId: string, percent: number, status: string, errorMessage?: string) {
+    this.pubSub.publish('importProgress', {
+      importProgress: { datasheetId, percent, status, errorMessage: errorMessage ?? null },
+    });
   }
 
   private buildPeriodHeaders(periodType: string): string[] {

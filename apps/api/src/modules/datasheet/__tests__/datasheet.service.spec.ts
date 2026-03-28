@@ -1,12 +1,26 @@
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { DatasheetService } from '../datasheet.service';
 
+// Mock the parser module used by DatasheetService
+jest.mock('../../../../../worker/src/processors/import-excel-parser', () => ({
+  parseFileBuffer: jest.fn().mockResolvedValue({
+    headers: ['T1', 'T2', 'T3'],
+    rows: [
+      { name: 'Revenue', values: { T1: 100, T2: 200, T3: 300 } },
+      { name: 'Cost', values: { T1: 50, T2: 80, T3: 120 } },
+    ],
+    warnings: [],
+  }),
+  validateParseResult: jest.fn(),
+}));
+
 const makeRepos = () => ({
   findOne: jest.fn(),
   find: jest.fn(),
   create: jest.fn(),
   save: jest.fn(),
   delete: jest.fn(),
+  update: jest.fn().mockResolvedValue(undefined),
   count: jest.fn(),
   createQueryBuilder: jest.fn(() => ({
     where: jest.fn().mockReturnThis(),
@@ -22,11 +36,6 @@ function makeService() {
   const batchRepo = makeRepos();
   const memberRepo = makeRepos();
   const widgetRepo = makeRepos();
-  const queue = { add: jest.fn().mockResolvedValue(undefined) };
-  const minioService = {
-    upload: jest.fn().mockResolvedValue('bucket/key'),
-    delete: jest.fn(),
-  };
 
   const service = new DatasheetService(
     sheetRepo as any,
@@ -34,11 +43,9 @@ function makeService() {
     batchRepo as any,
     memberRepo as any,
     widgetRepo as any,
-    queue as any,
-    minioService as any,
   );
 
-  return { service, sheetRepo, seriesRepo, batchRepo, memberRepo, widgetRepo, queue, minioService };
+  return { service, sheetRepo, seriesRepo, batchRepo, memberRepo, widgetRepo };
 }
 
 const managerMember = { businessId: 'biz1', userId: 'user1', role: 'manager', status: 'active' };
@@ -54,26 +61,27 @@ describe('DatasheetService', () => {
   beforeEach(() => jest.clearAllMocks());
 
   describe('upload()', () => {
-    it('creates DataSheet + ImportBatch + enqueues job for valid xlsx', async () => {
-      const { service, sheetRepo, batchRepo, memberRepo, queue, minioService } = makeService();
+    it('parses file, saves DataSheet + DataSeries + ImportBatch, returns ready', async () => {
+      const { service, sheetRepo, seriesRepo, batchRepo, memberRepo } = makeService();
       memberRepo.findOne.mockResolvedValue(managerMember);
+
       const mockSheet = { id: 'sheet-uuid', businessId: 'biz1' };
       const mockBatch = { id: 'batch-uuid', businessId: 'biz1' };
       sheetRepo.create.mockReturnValue(mockSheet);
       sheetRepo.save.mockResolvedValue(mockSheet);
       batchRepo.create.mockReturnValue(mockBatch);
       batchRepo.save.mockResolvedValue(mockBatch);
+      seriesRepo.create.mockImplementation((data: any) => data);
+      seriesRepo.save.mockResolvedValue([]);
 
       const result = await service.upload(xlsxFile, 'biz1', 'user1');
 
-      expect(minioService.upload).toHaveBeenCalled();
       expect(sheetRepo.save).toHaveBeenCalled();
       expect(batchRepo.save).toHaveBeenCalled();
-      expect(queue.add).toHaveBeenCalledWith(
-        'import-excel',
-        expect.objectContaining({ batchId: 'batch-uuid', datasheetId: 'sheet-uuid' }),
-      );
-      expect(result).toEqual({ batchId: 'batch-uuid', datasheetId: 'sheet-uuid', status: 'processing' });
+      expect(seriesRepo.save).toHaveBeenCalled();
+      expect(sheetRepo.update).toHaveBeenCalledWith('sheet-uuid', expect.objectContaining({ status: 'ready' }));
+      expect(batchRepo.update).toHaveBeenCalledWith('batch-uuid', expect.objectContaining({ status: 'success', successRows: 2 }));
+      expect(result).toEqual({ batchId: 'batch-uuid', datasheetId: 'sheet-uuid', status: 'ready' });
     });
 
     it('throws BadRequestException for invalid MIME type', async () => {
@@ -87,6 +95,23 @@ describe('DatasheetService', () => {
       memberRepo.findOne.mockResolvedValue(viewerMember);
       await expect(service.upload(xlsxFile, 'biz1', 'user2')).rejects.toThrow(ForbiddenException);
     });
+
+    it('marks sheet/batch as error when series save fails', async () => {
+      const { service, sheetRepo, seriesRepo, batchRepo, memberRepo } = makeService();
+      memberRepo.findOne.mockResolvedValue(managerMember);
+      const mockSheet = { id: 'sheet-uuid', businessId: 'biz1' };
+      const mockBatch = { id: 'batch-uuid', businessId: 'biz1' };
+      sheetRepo.create.mockReturnValue(mockSheet);
+      sheetRepo.save.mockResolvedValue(mockSheet);
+      batchRepo.create.mockReturnValue(mockBatch);
+      batchRepo.save.mockResolvedValue(mockBatch);
+      seriesRepo.create.mockImplementation((data: any) => data);
+      seriesRepo.save.mockRejectedValue(new Error('DB error'));
+
+      await expect(service.upload(xlsxFile, 'biz1', 'user1')).rejects.toThrow(BadRequestException);
+      expect(sheetRepo.update).toHaveBeenCalledWith('sheet-uuid', expect.objectContaining({ status: 'error' }));
+      expect(batchRepo.update).toHaveBeenCalledWith('batch-uuid', expect.objectContaining({ status: 'error' }));
+    });
   });
 
   describe('findById()', () => {
@@ -94,7 +119,6 @@ describe('DatasheetService', () => {
       const { service, sheetRepo, memberRepo } = makeService();
       sheetRepo.findOne.mockResolvedValue({ id: 'sheet1', businessId: 'biz1' });
       memberRepo.findOne.mockResolvedValue(null);
-
       await expect(service.findById('sheet1', 'non-member')).rejects.toThrow(ForbiddenException);
     });
 
@@ -103,7 +127,6 @@ describe('DatasheetService', () => {
       const mockSheet = { id: 'sheet1', businessId: 'biz1' };
       sheetRepo.findOne.mockResolvedValue(mockSheet);
       memberRepo.findOne.mockResolvedValue(viewerMember);
-
       const result = await service.findById('sheet1', 'user2');
       expect(result).toEqual(mockSheet);
     });
@@ -121,7 +144,6 @@ describe('DatasheetService', () => {
       sheetRepo.findOne.mockResolvedValue({ id: 'sheet1', businessId: 'biz1' });
       memberRepo.findOne.mockResolvedValue(managerMember);
       widgetRepo.findOne.mockResolvedValue({ id: 'w1', dataSheetId: 'sheet1' });
-
       await expect(service.delete('sheet1', 'user1')).rejects.toThrow(BadRequestException);
     });
 
@@ -131,9 +153,30 @@ describe('DatasheetService', () => {
       memberRepo.findOne.mockResolvedValue(managerMember);
       widgetRepo.findOne.mockResolvedValue(null);
       sheetRepo.delete.mockResolvedValue({ affected: 1 });
-
       await service.delete('sheet1', 'user1');
       expect(sheetRepo.delete).toHaveBeenCalledWith('sheet1');
+    });
+  });
+
+  describe('reimport()', () => {
+    it('deletes old series, saves new ones, returns ready', async () => {
+      const { service, sheetRepo, seriesRepo, batchRepo, memberRepo } = makeService();
+      const existingSheet = { id: 'sheet1', businessId: 'biz1' };
+      sheetRepo.findOne.mockResolvedValue(existingSheet);
+      memberRepo.findOne.mockResolvedValue(managerMember);
+      const mockBatch = { id: 'batch-uuid', businessId: 'biz1' };
+      batchRepo.create.mockReturnValue(mockBatch);
+      batchRepo.save.mockResolvedValue(mockBatch);
+      seriesRepo.delete.mockResolvedValue({ affected: 2 });
+      seriesRepo.create.mockImplementation((data: any) => data);
+      seriesRepo.save.mockResolvedValue([]);
+
+      const result = await service.reimport('sheet1', xlsxFile, 'user1');
+
+      expect(seriesRepo.delete).toHaveBeenCalledWith({ dataSheetId: 'sheet1' });
+      expect(seriesRepo.save).toHaveBeenCalled();
+      expect(sheetRepo.update).toHaveBeenCalledWith('sheet1', expect.objectContaining({ status: 'ready' }));
+      expect(result.status).toBe('ready');
     });
   });
 

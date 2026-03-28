@@ -77,6 +77,6 @@ export class DatasheetResolver {
       payload.importProgress.datasheetId === variables.datasheetId,
   })
   importProgress(@Args('datasheetId', { type: () => ID }) _datasheetId: string) {
-    return this.pubSub.asyncIterator('importProgress');
+    return (this.pubSub as any).asyncIterator(['importProgress']);
   }
 }

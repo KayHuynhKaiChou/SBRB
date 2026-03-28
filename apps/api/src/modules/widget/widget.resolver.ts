@@ -32,11 +32,10 @@ export class WidgetResolver {
 
   @Mutation(() => WidgetType)
   async createWidget(
-    @Args('tabId', { type: () => ID }) tabId: string,
     @Args('input') input: CreateWidgetDto,
     @CurrentUser() user: IJwtPayload,
   ): Promise<WidgetType> {
-    return this.widgetService.create(tabId, user.sub, input) as unknown as WidgetType;
+    return this.widgetService.create(input.tabId, user.sub, input) as unknown as WidgetType;
   }
 
   @Mutation(() => WidgetType)

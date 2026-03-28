@@ -1,13 +1,14 @@
 import { Injectable, ExecutionContext } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
+import { GqlExecutionContext } from '@nestjs/graphql';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 
-/** Guard: validates JWT from HttpOnly cookie or Bearer header */
+/** Guard: validates JWT from HttpOnly cookie or Bearer header — supports REST and GraphQL */
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
   constructor(private reflector: Reflector) {
-    super();
+    super({ session: false });
   }
 
   canActivate(context: ExecutionContext) {
@@ -17,5 +18,13 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     ]);
     if (isPublic) return true;
     return super.canActivate(context);
+  }
+
+  getRequest(context: ExecutionContext) {
+    if (context.getType() === 'http') {
+      return context.switchToHttp().getRequest();
+    }
+    const ctx = GqlExecutionContext.create(context);
+    return ctx.getContext().req;
   }
 }

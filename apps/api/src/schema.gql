@@ -1,0 +1,345 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+input AssignWidgetsDto {
+  widgetIds: [String!]!
+}
+
+type AuthResult {
+  accessToken: String
+  message: String
+}
+
+type BusinessType {
+  canvasHeight: Int!
+  canvasWidth: Int!
+  createdAt: DateTime!
+  currency: String!
+  id: ID!
+  industry: String!
+  logoUrl: String
+  name: String!
+  ownerId: String!
+  primaryColor: String!
+  snapGrid: Int!
+  timezone: String!
+  updatedAt: DateTime!
+}
+
+input ChangePasswordDto {
+  currentPassword: String!
+  newPassword: String!
+}
+
+type ChartConfig {
+  colorIndex: Int
+  showLabels: Boolean
+  showLegend: Boolean
+  type: String
+  yAxisFromZero: Boolean
+}
+
+type ChartData {
+  datasets: [ChartDataset!]!
+  labels: [String!]!
+  trend: TrendBadge
+}
+
+type ChartDataset {
+  backgroundColor: String
+  borderColor: String
+  data: [Float!]!
+  label: String!
+}
+
+input CreateBusinessDto {
+  currency: String = "VND"
+  industry: String
+  name: String!
+  primary_color: String
+  timezone: String = "Asia/Ho_Chi_Minh"
+}
+
+input CreateTabInput {
+  businessId: ID!
+  iconColor: String = "#D72A44"
+  iconName: String = "chart-bar"
+  isPinned: Boolean = false
+  isProtected: Boolean = false
+  name: String!
+}
+
+input CreateWidgetInput {
+  businessId: ID!
+  isRestricted: Boolean = false
+  metricName: String
+  name: String!
+  position: WidgetPositionInput
+  tabId: ID!
+  unit: String
+}
+
+type DataSeriesType {
+  dataSheetId: ID!
+  id: ID!
+  rowIndex: Int!
+  seriesName: String!
+}
+
+type DataSheetType {
+  businessId: ID!
+  createdAt: DateTime!
+  errorMessage: String
+  fileUrl: String
+  id: ID!
+  importedAt: DateTime
+  name: String!
+  originalFilename: String
+  periodCount: Int!
+  periodHeaders: [String!]!
+  periodType: String!
+  seriesCount: Int!
+  status: String!
+  updatedAt: DateTime!
+  uploadedBy: ID!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type ImportProgressType {
+  datasheetId: ID!
+  errorMessage: String
+  percent: Float!
+  status: String!
+}
+
+type InvitationType {
+  businessId: String!
+  createdAt: DateTime!
+  email: String!
+  expiresAt: DateTime!
+  id: ID!
+  role: String!
+  token: String!
+  usedAt: DateTime
+}
+
+input InviteMemberDto {
+  email: String!
+  role: String!
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
+input LoginDto {
+  email: String!
+  password: String!
+}
+
+type MemberType {
+  assignedWidgetIds: [String!]!
+  businessId: String!
+  id: ID!
+  joinedAt: DateTime!
+  role: String!
+  status: String!
+  userId: String!
+}
+
+type Mutation {
+  acceptInvitation(token: String!): MemberType!
+  assignWidgets(businessId: ID!, input: AssignWidgetsDto!, targetUserId: ID!): MemberType!
+  cancelInvitation(businessId: ID!, invitationId: ID!): Boolean!
+  changeMemberRole(businessId: ID!, input: UpdateMemberRoleDto!, targetUserId: ID!): MemberType!
+  changePassword(input: ChangePasswordDto!): Boolean!
+  createBusiness(input: CreateBusinessDto!): BusinessType!
+  createTab(input: CreateTabInput!): TabType!
+  createWidget(input: CreateWidgetInput!): WidgetType!
+  declineInvitation(token: String!): Boolean!
+  deleteAccount: Boolean!
+  deleteBusiness(confirmName: String!, id: ID!): Boolean!
+  deleteDataSheet(id: ID!): Boolean!
+  deleteSession(id: ID!): Boolean!
+  deleteTab(id: ID!): Boolean!
+  deleteWidget(id: ID!): Boolean!
+  forgotPassword(email: String!): Boolean!
+  inviteMember(businessId: ID!, input: InviteMemberDto!): InvitationType!
+  login(input: LoginDto!): AuthResult!
+  logout: Boolean!
+  refreshToken: AuthResult!
+  register(input: RegisterDto!): AuthResult!
+  removeMember(businessId: ID!, targetUserId: ID!): Boolean!
+  removeWidgetDataLink(id: ID!): WidgetType!
+  renameDataSheet(id: ID!, input: UpdateDatasheetDto!): DataSheetType!
+  reorderTabs(orders: [TabOrderInput!]!): Boolean!
+  resetPassword(input: ResetPasswordDto!): Boolean!
+  transferOwnership(id: ID!, newOwnerId: ID!): Boolean!
+  updateBusiness(id: ID!, input: UpdateBusinessDto!): BusinessType!
+  updateMe(input: UpdateProfileDto!): User!
+  updateTab(id: ID!, input: UpdateTabInput!): TabType!
+  updateWidget(id: ID!, input: UpdateWidgetInput!): WidgetType!
+  updateWidgetConfig(config: JSON!, id: ID!): WidgetType!
+  updateWidgetDataLink(id: ID!, input: UpdateDataLinkDto!): WidgetType!
+  verifyEmail(token: String!): Boolean!
+}
+
+type Query {
+  business(id: ID!): BusinessType!
+  dataSeries(datasheetId: ID!, search: String): [DataSeriesType!]!
+  dataSheet(id: ID!): DataSheetType!
+  dataSheets(businessId: ID!): [DataSheetType!]!
+  me: User!
+  members(businessId: ID!, filter: String): [MemberType!]!
+  myBusinesses: [BusinessType!]!
+  mySessions: [Session!]!
+  pendingInvitations(businessId: ID!): [InvitationType!]!
+  tabs(businessId: ID!): [TabType!]!
+  widget(id: ID!): WidgetType!
+  widgetChartData(widgetId: ID!): ChartData!
+  widgets(tabId: ID!): [WidgetType!]!
+}
+
+input RegisterDto {
+  email: String!
+  fullName: String!
+  password: String!
+}
+
+input ResetPasswordDto {
+  newPassword: String!
+  token: String!
+}
+
+type Session {
+  createdAt: DateTime!
+  deviceName: String
+  id: ID!
+  ipAddress: String
+  lastActiveAt: DateTime!
+}
+
+type Subscription {
+  importProgress(datasheetId: ID!): ImportProgressType!
+}
+
+input TabOrderInput {
+  id: ID!
+  order: Int!
+}
+
+type TabType {
+  businessId: ID!
+  createdAt: DateTime!
+  createdBy: ID!
+  iconColor: String!
+  iconName: String!
+  id: ID!
+  isPinned: Boolean!
+  isProtected: Boolean!
+  name: String!
+  order: Int!
+  updatedAt: DateTime!
+}
+
+type TrendBadge {
+  direction: String!
+  value: Float!
+  vsLabel: String!
+}
+
+input UpdateBusinessDto {
+  canvas_height: Int
+  canvas_width: Int
+  currency: String = "VND"
+  industry: String
+  name: String
+  primary_color: String
+  snap_grid: Boolean
+  timezone: String = "Asia/Ho_Chi_Minh"
+}
+
+input UpdateDataLinkDto {
+  dataSheetId: ID!
+  selectedPeriods: [String!]
+  selectedSeries: [String!]!
+}
+
+input UpdateDatasheetDto {
+  name: String!
+}
+
+input UpdateMemberRoleDto {
+  role: String!
+}
+
+input UpdateProfileDto {
+  avatarUrl: String
+  fullName: String
+  language: String
+}
+
+input UpdateTabInput {
+  iconColor: String
+  iconName: String
+  isPinned: Boolean
+  isProtected: Boolean
+  name: String
+}
+
+input UpdateWidgetInput {
+  isRestricted: Boolean
+  metricName: String
+  name: String
+  unit: String
+}
+
+type User {
+  avatarUrl: String
+  createdAt: DateTime!
+  email: String!
+  emailVerified: Boolean!
+  fullName: String!
+  id: ID!
+  language: String!
+  lastLoginAt: DateTime
+}
+
+type WidgetPosition {
+  h: Int!
+  w: Int!
+  x: Int!
+  y: Int!
+}
+
+input WidgetPositionInput {
+  h: Int = 500
+  w: Int = 1000
+  x: Int = 20
+  y: Int = 20
+}
+
+type WidgetType {
+  businessId: ID!
+  chartConfig: ChartConfig
+  config: JSON
+  createdAt: DateTime!
+  createdBy: ID!
+  dataSheetId: ID
+  id: ID!
+  isRestricted: Boolean!
+  metricName: String
+  name: String!
+  position: WidgetPosition!
+  selectedPeriods: [String!]
+  selectedSeries: [String!]!
+  tabId: ID!
+  unit: String
+  updatedAt: DateTime!
+}

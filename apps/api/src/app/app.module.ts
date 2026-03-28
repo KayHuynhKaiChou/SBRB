@@ -33,9 +33,9 @@ import { UserModule } from '../modules/user/user.module';
       useFactory: (config: ConfigService) => ({
         type: 'postgres',
         url: config.get<string>('DATABASE_URL'),
-        ssl: config.get('NODE_ENV') === 'production'
-          ? { rejectUnauthorized: false }
-          : false,
+        // Supabase pooler requires SSL with self-signed cert — accept in all envs
+        ssl: { rejectUnauthorized: false },
+        extra: { ssl: { rejectUnauthorized: false } },
         entities: [join(__dirname, '..', '**', '*.entity.{ts,js}')],
         migrations: [join(__dirname, '..', 'migrations', '*.{ts,js}')],
         synchronize: config.get('NODE_ENV') === 'development', // NEVER in production
@@ -66,7 +66,10 @@ import { UserModule } from '../modules/user/user.module';
           host: config.get<string>('REDIS_HOST', 'localhost'),
           port: config.get<number>('REDIS_PORT', 6379),
           password: config.get<string>('REDIS_PASSWORD'),
-          tls: config.get('REDIS_TLS', 'false') === 'true' ? {} : undefined,
+          // Redis Cloud TLS — rejectUnauthorized: false fixes self-signed cert on Windows
+          tls: config.get('REDIS_TLS', 'false') === 'true'
+            ? { rejectUnauthorized: false }
+            : undefined,
         },
       }),
     }),
