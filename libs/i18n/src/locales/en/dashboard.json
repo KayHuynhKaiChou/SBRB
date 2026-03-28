@@ -11,5 +11,9 @@
   "tab_pinned": "Pinned tab",
   "widget_restricted": "Restricted widget",
   "collision_warning": "Cannot place here — another widget is already in this position",
-  "canvas_boundary_warning": "Widget exceeds canvas boundary"
+  "canvas_boundary_warning": "Widget exceeds canvas boundary",
+  "add_tab_tooltip": "Add new tab",
+  "snap_grid_on": "Snap grid: On (Alt)",
+  "snap_grid_off": "Snap grid: Off (Alt)",
+  "no_tabs_message": "No tabs yet. Create a new tab to get started."
 }

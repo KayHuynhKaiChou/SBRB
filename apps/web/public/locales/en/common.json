@@ -17,5 +17,9 @@
   "error_generic": "Something went wrong. Please try again.",
   "success_saved": "Saved",
   "confirm_delete_title": "Confirm delete",
-  "confirm_delete_msg": "This action cannot be undone."
+  "confirm_delete_msg": "This action cannot be undone.",
+  "back": "Back",
+  "next": "Next",
+  "reimport": "Reimport",
+  "start_import": "Start import"
 }

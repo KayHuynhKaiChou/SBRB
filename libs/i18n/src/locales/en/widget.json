@@ -29,5 +29,8 @@
   "restricted_label": "Restricted",
   "mark_restricted": "Mark as restricted",
   "unmark_restricted": "Remove restriction",
-  "max_per_tab": "Maximum 50 widgets per tab"
+  "max_per_tab": "Maximum 50 widgets per tab",
+  "edit_tooltip": "Edit",
+  "delete_tooltip": "Delete widget",
+  "widget_name_placeholder": "Widget name"
 }

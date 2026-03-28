@@ -17,5 +17,9 @@
   "error_generic": "Đã có lỗi xảy ra. Vui lòng thử lại.",
   "success_saved": "Đã lưu",
   "confirm_delete_title": "Xác nhận xoá",
-  "confirm_delete_msg": "Hành động này không thể hoàn tác."
+  "confirm_delete_msg": "Hành động này không thể hoàn tác.",
+  "back": "Quay lại",
+  "next": "Tiếp theo",
+  "reimport": "Reimport",
+  "start_import": "Bắt đầu import"
 }

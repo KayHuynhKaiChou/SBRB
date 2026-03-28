@@ -11,5 +11,9 @@
   "tab_pinned": "Tab ghim",
   "widget_restricted": "Widget hạn chế",
   "collision_warning": "Không thể đặt đây — vị trí đã có widget khác",
-  "canvas_boundary_warning": "Widget vượt ra ngoài biên canvas"
+  "canvas_boundary_warning": "Widget vượt ra ngoài biên canvas",
+  "add_tab_tooltip": "Thêm tab mới",
+  "snap_grid_on": "Lưới snap: Bật (Alt)",
+  "snap_grid_off": "Lưới snap: Tắt (Alt)",
+  "no_tabs_message": "Chưa có tab nào. Tạo tab mới để bắt đầu."
 }

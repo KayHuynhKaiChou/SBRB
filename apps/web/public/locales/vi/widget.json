@@ -29,5 +29,8 @@
   "restricted_label": "Hạn chế",
   "mark_restricted": "Đánh dấu hạn chế",
   "unmark_restricted": "Bỏ hạn chế",
-  "max_per_tab": "Tối đa 50 Widget / Tab"
+  "max_per_tab": "Tối đa 50 Widget / Tab",
+  "edit_tooltip": "Chỉnh sửa",
+  "delete_tooltip": "Xoá widget",
+  "widget_name_placeholder": "Tên widget"
 }
