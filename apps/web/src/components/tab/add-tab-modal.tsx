@@ -2,7 +2,7 @@ import React from 'react';
 import { Form, Input, Select, Switch, Row, Col } from 'antd';
 import type { ICreateTabInput } from '../../hooks/use-tabs';
 import { TAB_PRESET_COLORS, TAB_ICON_OPTIONS } from '../../constants/tab-config';
-import { FormModal } from '../common/form-modal';
+import { FormModal } from '@sbrb/ui';
 
 interface IAddTabModalProps {
   open: boolean;
@@ -30,11 +30,11 @@ export function AddTabModal({ open, onClose, onSubmit }: IAddTabModalProps) {
         <Row gutter={8}>
           <Col>
             <Form.Item name="iconColor" noStyle>
-              <Select style={{ width: 120 }}>
+              <Select className="!w-[120px]">
                 {TAB_PRESET_COLORS.map((c) => (
                   <Select.Option key={c} value={c}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ width: 12, height: 12, borderRadius: '50%', background: c, display: 'inline-block' }} />
+                    <span className="flex items-center gap-2">
+                      <span style={{ background: c }} className="w-3 h-3 rounded-full inline-block" />
                       {c}
                     </span>
                   </Select.Option>

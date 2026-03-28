@@ -3,7 +3,7 @@ import { Form, Input, Select, Switch } from 'antd';
 import type { ITabDto } from '@sbrb/shared-types';
 import type { IUpdateTabInput } from '../../hooks/use-tabs';
 import { TAB_PRESET_COLORS, TAB_ICON_OPTIONS } from '../../constants/tab-config';
-import { FormModal } from '../common/form-modal';
+import { FormModal } from '@sbrb/ui';
 
 interface IEditTabModalProps {
   open: boolean;

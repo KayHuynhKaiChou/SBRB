@@ -1,17 +1,80 @@
-import React, { useState } from 'react';
-import { Modal, Alert, Row, Col, Divider } from 'antd';
-import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
+import React from 'react';
+import { Row, Col, Divider, Form, Input } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { ModalActions } from '../common/modal-actions';
+import { FormModal } from '@sbrb/ui';
 import { useDataSheets } from '../../hooks/use-datasheet';
 import { SheetList } from './sheet-list';
 import { SeriesTable } from './series-table';
+
+interface IDataSelectorForm {
+  sheetId: string;
+  selectedSeries: string[];
+  selectedPeriods?: string[];
+}
 
 interface IDataSelectorModalProps {
   open: boolean;
   onClose: () => void;
   onConfirm: (dataSheetId: string, selectedSeries: string[], selectedPeriods: string[] | null) => void;
   businessId: string;
+}
+
+/** Inner content — uses Form.useFormInstance() + dependencies instead of useWatch */
+function DataSelectorContent({ businessId }: { businessId: string }) {
+  const { t } = useTranslation(['datasheet']);
+  const form = Form.useFormInstance<IDataSelectorForm>();
+  const { dataSheets } = useDataSheets(businessId);
+
+  const handleSelectionChange = (series: string[], periods: string[] | null) => {
+    form.setFieldsValue({ selectedSeries: series, selectedPeriods: periods ?? undefined });
+  };
+
+  return (
+    <>
+      <Form.Item name="selectedSeries" hidden><Input /></Form.Item>
+      <Form.Item name="selectedPeriods" hidden><Input /></Form.Item>
+
+      <Row className="h-[60vh]">
+        <Col span={8} className="pr-3 h-full overflow-y-auto">
+          <Form.Item
+            name="sheetId"
+            rules={[{ required: true, message: t('datasheet:select_dataset_error') }]}
+            className="!h-full !mb-0"
+            normalize={(value) => {
+              setTimeout(() => form.setFieldsValue({ selectedSeries: [], selectedPeriods: undefined }));
+              return value;
+            }}
+          >
+            <SheetList sheets={dataSheets} />
+          </Form.Item>
+        </Col>
+
+        <Col span={1} className="flex justify-center">
+          <Divider type="vertical" className="!h-full" />
+        </Col>
+
+        <Col span={15} className="pl-3 h-full overflow-y-auto">
+          <Form.Item dependencies={['sheetId', 'selectedSeries', 'selectedPeriods']} noStyle>
+            {({ getFieldValue }) => {
+              const sheetId = getFieldValue('sheetId');
+              const series = getFieldValue('selectedSeries') ?? [];
+              const periods = getFieldValue('selectedPeriods');
+              const sheet = dataSheets.find((s) => s.id === sheetId);
+              return (
+                <SeriesTable
+                  datasheetId={sheetId}
+                  selectedSeries={series}
+                  selectedPeriods={periods ?? null}
+                  periodHeaders={sheet?.periodHeaders ?? []}
+                  onSelectionChange={handleSelectionChange}
+                />
+              );
+            }}
+          </Form.Item>
+        </Col>
+      </Row>
+    </>
+  );
 }
 
 export function DataSelectorModal({
@@ -21,99 +84,27 @@ export function DataSelectorModal({
   businessId,
 }: IDataSelectorModalProps) {
   const { t } = useTranslation(['datasheet', 'common']);
-  const { dataSheets } = useDataSheets(businessId);
-  const [selectedSheetId, setSelectedSheetId] = useState<string | null>(null);
-  const [selectedSeries, setSelectedSeries] = useState<string[]>([]);
-  const [selectedPeriods, setSelectedPeriods] = useState<string[] | null>(null);
-  const [validationError, setValidationError] = useState<string | null>(null);
 
-  const selectedSheet = dataSheets.find((s) => s.id === selectedSheetId);
-
-  const handleSheetSelect = (id: string) => {
-    setSelectedSheetId(id);
-    setSelectedSeries([]);
-    setSelectedPeriods(null);
-    setValidationError(null);
-  };
-
-  const handleSelectionChange = (series: string[], periods: string[] | null) => {
-    setSelectedSeries(series);
-    setSelectedPeriods(periods);
-    if (series.length > 0) setValidationError(null);
-  };
-
-  const handleConfirm = () => {
-    if (!selectedSheetId) {
-      setValidationError(t('datasheet:select_dataset_error'));
-      return;
+  const handleSubmit = async (values: IDataSelectorForm) => {
+    if (!values.selectedSeries?.length) {
+      throw new Error(t('datasheet:select_series_error'));
     }
-    if (selectedSeries.length === 0) {
-      setValidationError(t('datasheet:select_series_error'));
-      return;
-    }
-    onConfirm(selectedSheetId, selectedSeries, selectedPeriods);
-    handleClose();
-  };
-
-  const handleClose = () => {
-    setSelectedSheetId(null);
-    setSelectedSeries([]);
-    setSelectedPeriods(null);
-    setValidationError(null);
-    onClose();
+    onConfirm(values.sheetId, values.selectedSeries, values.selectedPeriods ?? null);
   };
 
   return (
-    <Modal
-      open={open}
-      onCancel={handleClose}
-      width="80vw"
-      style={{ top: 40 }}
+    <FormModal<IDataSelectorForm>
       title={t('datasheet:select_data_title')}
-      closable={false}
-      footer={
-        <ModalActions
-          actions={[
-            { icon: <CheckOutlined />, tooltip: t('common:confirm'), onClick: handleConfirm },
-            { icon: <CloseOutlined />, tooltip: t('common:cancel'), onClick: handleClose },
-          ]}
-        />
-      }
+      open={open}
+      onClose={onClose}
+      onSubmit={handleSubmit}
+      okText={t('common:confirm')}
+      cancelText={t('common:cancel')}
+      width="80vw"
+      modalStyle={{ top: 40 }}
+      initialValues={{ selectedSeries: [], selectedPeriods: undefined }}
     >
-      {validationError && (
-        <Alert
-          message={validationError}
-          type="error"
-          showIcon
-          style={{ marginBottom: 12 }}
-          closable
-          onClose={() => setValidationError(null)}
-        />
-      )}
-
-      <Row style={{ height: '60vh' }}>
-        <Col span={8} style={{ paddingRight: 12, height: '100%', overflowY: 'auto' }}>
-          <SheetList
-            sheets={dataSheets}
-            selected={selectedSheetId}
-            onSelect={handleSheetSelect}
-          />
-        </Col>
-
-        <Col span={1} style={{ display: 'flex', justifyContent: 'center' }}>
-          <Divider type="vertical" style={{ height: '100%' }} />
-        </Col>
-
-        <Col span={15} style={{ paddingLeft: 12, height: '100%', overflowY: 'auto' }}>
-          <SeriesTable
-            datasheetId={selectedSheetId}
-            selectedSeries={selectedSeries}
-            selectedPeriods={selectedPeriods}
-            periodHeaders={selectedSheet?.periodHeaders ?? []}
-            onSelectionChange={handleSelectionChange}
-          />
-        </Col>
-      </Row>
-    </Modal>
+      <DataSelectorContent businessId={businessId} />
+    </FormModal>
   );
 }

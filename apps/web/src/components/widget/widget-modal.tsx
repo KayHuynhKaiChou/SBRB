@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Modal, Input, Divider, Typography } from 'antd';
+import React, { useEffect } from 'react';
+import { Modal, Input, Divider, Typography, Form } from 'antd';
 import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { ModalActions } from '../common/modal-actions';
+import { IconButton } from '@sbrb/ui';
 import type { IWidgetDto, IChartConfig } from '@sbrb/shared-types';
 import { useChartData } from '../../hooks/use-chart-data';
 import { useWidgetConfig } from '../../hooks/use-widget-config';
@@ -14,6 +14,8 @@ import { ChartPreview } from './chart-panel/chart-preview';
 
 const { Text } = Typography;
 
+const CONFIG_FIELDS = ['type', 'showLabels', 'showLegend', 'yAxisFromZero', 'xAxisName', 'yAxisName'] as const;
+
 interface IWidgetModalProps {
   widget: IWidgetDto;
   open: boolean;
@@ -23,26 +25,36 @@ interface IWidgetModalProps {
 
 export function WidgetModal({ widget, open, onClose, onOpenDataSelector }: IWidgetModalProps) {
   const { t } = useTranslation(['widget', 'common']);
-  const [widgetName, setWidgetName] = useState(widget.name);
-  const [localConfig, setLocalConfig] = useState<IChartConfig>({ ...widget.chartConfig });
+  const [form] = Form.useForm();
 
-  // Re-sync when widget prop changes (e.g. after save)
   useEffect(() => {
-    setWidgetName(widget.name);
-    setLocalConfig({ ...widget.chartConfig });
-  }, [widget]);
+    form.setFieldsValue({
+      name: widget.name,
+      type: widget.chartConfig.type,
+      showLabels: widget.chartConfig.showLabels,
+      showLegend: widget.chartConfig.showLegend,
+      yAxisFromZero: widget.chartConfig.yAxisFromZero,
+      xAxisName: widget.chartConfig.xAxisName,
+      yAxisName: widget.chartConfig.yAxisName,
+    });
+  }, [widget, form]);
 
   const { chartData, loading, refetch } = useChartData(widget.id);
   const { updateConfig, loading: saving } = useWidgetConfig();
   const { removeDataLink } = useWidgetConfig();
 
   const handleSave = async () => {
-    await updateConfig(widget.id, { ...localConfig, name: widgetName } as Parameters<typeof updateConfig>[1]);
+    const values = form.getFieldsValue();
+    await updateConfig(widget.id, {
+      name: values.name,
+      type: values.type,
+      showLabels: values.showLabels,
+      showLegend: values.showLegend,
+      yAxisFromZero: values.yAxisFromZero,
+      xAxisName: values.xAxisName,
+      yAxisName: values.yAxisName,
+    } as Parameters<typeof updateConfig>[1]);
     onClose();
-  };
-
-  const handleConfigChange = (partial: Partial<IChartConfig>) => {
-    setLocalConfig((prev) => ({ ...prev, ...partial }));
   };
 
   const handleRemoveLink = async () => {
@@ -60,67 +72,74 @@ export function WidgetModal({ widget, open, onClose, onOpenDataSelector }: IWidg
       footer={null}
       styles={{ body: { padding: 0 } }}
     >
-      {/* Header row */}
-      <div style={{ padding: '14px 20px', borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', gap: 12 }}>
-        <Input
-          value={widgetName}
-          onChange={(e) => setWidgetName(e.target.value)}
-          style={{ flex: 1, fontWeight: 600, fontSize: 15 }}
-          placeholder={t('widget:widget_name_placeholder')}
-          bordered={false}
-        />
-        <ModalActions
-          actions={[
-            { icon: <CheckOutlined />, tooltip: t('common:save'), onClick: handleSave, disabled: saving },
-            { icon: <CloseOutlined />, tooltip: t('common:close'), onClick: onClose },
-          ]}
-        />
-      </div>
-
-      {/* Body: Settings | Chart Preview */}
-      <div style={{ display: 'flex', height: 520, overflow: 'hidden' }}>
-        {/* Left panel — settings (260px fixed) */}
-        <div
-          style={{
-            width: 260,
-            flexShrink: 0,
-            borderRight: '1px solid #f0f0f0',
-            overflowY: 'auto',
-            padding: '16px 14px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 16,
-          }}
-        >
-          <ChartTypeSelector value={localConfig.type} onChange={(t) => handleConfigChange({ type: t })} />
-          <Divider style={{ margin: '0' }} />
-          <DisplaySettings config={localConfig} onChange={handleConfigChange} />
-          <Divider style={{ margin: '0' }} />
-          <div>
-            <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 8 }}>
-              Nguồn dữ liệu
-            </Text>
-            <DataSelectorButton
-              widget={widget}
-              onOpenSelector={onOpenDataSelector}
-              onRemoveLink={handleRemoveLink}
+      <Form form={form} component={false}>
+        {/* Header row */}
+        <div className="px-5 py-3.5 border-b border-gray-100 flex items-center gap-3">
+          <Form.Item name="name" noStyle>
+            <Input
+              className="!flex-1 !font-semibold !text-[15px]"
+              placeholder={t('widget:widget_name_placeholder')}
+              bordered={false}
             />
+          </Form.Item>
+          <div className="flex gap-2">
+            <IconButton icon={<CheckOutlined />} tooltip={t('common:save')} size="small" onClick={handleSave} disabled={saving} />
+            <IconButton icon={<CloseOutlined />} tooltip={t('common:close')} size="small" onClick={onClose} />
           </div>
-          <Divider style={{ margin: '0' }} />
-          <AlertThresholdPanel />
         </div>
 
-        {/* Right panel — chart preview (flex-grow) */}
-        <div style={{ flex: 1, padding: '16px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          <ChartPreview
-            chartData={chartData}
-            loading={loading}
-            chartType={localConfig.type}
-            config={localConfig}
-            onRefresh={refetch}
-          />
-        </div>
-      </div>
+        {/* Body: Settings | Chart Preview — re-renders on config field changes */}
+        <Form.Item dependencies={[...CONFIG_FIELDS]} noStyle>
+          {({ getFieldValue }) => {
+            const localConfig: IChartConfig = {
+              type: getFieldValue('type') ?? widget.chartConfig.type,
+              colorIndex: widget.chartConfig.colorIndex,
+              showLabels: getFieldValue('showLabels') ?? false,
+              showLegend: getFieldValue('showLegend') ?? false,
+              yAxisFromZero: getFieldValue('yAxisFromZero') ?? false,
+              xAxisName: getFieldValue('xAxisName'),
+              yAxisName: getFieldValue('yAxisName'),
+            };
+
+            return (
+              <div className="flex h-[520px] overflow-hidden">
+                {/* Left panel — settings */}
+                <div className="w-[260px] shrink-0 border-r border-gray-100 overflow-y-auto p-4 pl-3.5 flex flex-col gap-4">
+                  <Form.Item name="type" noStyle>
+                    <ChartTypeSelector />
+                  </Form.Item>
+                  <Divider className="!m-0" />
+                  <DisplaySettings config={localConfig} onChange={(partial) => form.setFieldsValue(partial)} />
+                  <Divider className="!m-0" />
+                  <div>
+                    <Text type="secondary" className="!text-[11px] block mb-2">
+                      Nguồn dữ liệu
+                    </Text>
+                    <DataSelectorButton
+                      widget={widget}
+                      onOpenSelector={onOpenDataSelector}
+                      onRemoveLink={handleRemoveLink}
+                    />
+                  </div>
+                  <Divider className="!m-0" />
+                  <AlertThresholdPanel />
+                </div>
+
+                {/* Right panel — chart preview */}
+                <div className="flex-1 p-4 overflow-hidden flex flex-col">
+                  <ChartPreview
+                    chartData={chartData}
+                    loading={loading}
+                    chartType={localConfig.type}
+                    config={localConfig}
+                    onRefresh={refetch}
+                  />
+                </div>
+              </div>
+            );
+          }}
+        </Form.Item>
+      </Form>
     </Modal>
   );
 }

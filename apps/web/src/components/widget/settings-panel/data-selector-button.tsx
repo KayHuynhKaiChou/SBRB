@@ -19,17 +19,9 @@ export function DataSelectorButton({ widget, onOpenSelector, onRemoveLink }: IDa
 
   if (!hasLink) {
     return (
-      <div
-        style={{
-          border: '1.5px dashed #d9d9d9',
-          borderRadius: 8,
-          padding: '14px 12px',
-          textAlign: 'center',
-          background: '#fafafa',
-        }}
-      >
-        <DatabaseOutlined style={{ fontSize: 22, color: '#bfbfbf', marginBottom: 6, display: 'block' }} />
-        <Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 10 }}>
+      <div className="border border-dashed border-[#d9d9d9] rounded-lg px-3 py-[14px] text-center bg-[#fafafa]">
+        <DatabaseOutlined className="!text-[22px] !text-[#bfbfbf] !mb-1.5 !block" />
+        <Text type="secondary" className="!text-xs !block !mb-2.5">
           Chưa có dữ liệu
         </Text>
         <Button
@@ -38,7 +30,7 @@ export function DataSelectorButton({ widget, onOpenSelector, onRemoveLink }: IDa
           ghost
           icon={<PlusOutlined />}
           onClick={onOpenSelector}
-          style={{ fontSize: 12 }}
+          className="!text-xs"
         >
           Chọn dữ liệu từ file đã import
         </Button>
@@ -49,23 +41,12 @@ export function DataSelectorButton({ widget, onOpenSelector, onRemoveLink }: IDa
   const periodsLabel = periodsCount !== null ? `${periodsCount} kỳ` : 'Tất cả kỳ';
 
   return (
-    <div
-      style={{
-        border: '1px solid #e8e8e8',
-        borderRadius: 8,
-        padding: '10px 12px',
-        background: '#f6ffed',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 8,
-      }}
-    >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-        <DatabaseOutlined style={{ color: '#52c41a', flexShrink: 0 }} />
-        <div style={{ minWidth: 0 }}>
-          <Text style={{ fontSize: 12, display: 'block' }}>DataSheet</Text>
-          <Text type="secondary" style={{ fontSize: 11 }}>
+    <div className="border border-[#e8e8e8] rounded-lg px-3 py-[10px] bg-[#f6ffed] flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2 min-w-0">
+        <DatabaseOutlined className="!text-[#52c41a] !shrink-0" />
+        <div className="min-w-0">
+          <Text className="!text-xs !block">DataSheet</Text>
+          <Text type="secondary" className="!text-[11px]">
             {seriesCount} series · {periodsLabel}
           </Text>
         </div>
@@ -75,7 +56,7 @@ export function DataSelectorButton({ widget, onOpenSelector, onRemoveLink }: IDa
         danger
         icon={<DisconnectOutlined />}
         onClick={onRemoveLink}
-        style={{ fontSize: 11, flexShrink: 0 }}
+        className="!text-[11px] !shrink-0"
       >
         Xoá liên kết
       </Button>

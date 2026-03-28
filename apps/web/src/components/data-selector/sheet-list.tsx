@@ -7,11 +7,11 @@ const { Text } = Typography;
 
 interface ISheetListProps {
   sheets: IDataSheetDto[];
-  selected: string | null;
-  onSelect: (id: string) => void;
+  value?: string | null;
+  onChange?: (id: string) => void;
 }
 
-export function SheetList({ sheets, selected, onSelect }: ISheetListProps) {
+export function SheetList({ sheets, value, onChange }: ISheetListProps) {
   const [search, setSearch] = useState('');
 
   const filtered = sheets.filter((s) =>
@@ -19,41 +19,37 @@ export function SheetList({ sheets, selected, onSelect }: ISheetListProps) {
   );
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div className="flex flex-col h-full">
       <Input
         prefix={<SearchOutlined />}
         placeholder="Tìm bộ dữ liệu..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        style={{ marginBottom: 8 }}
+        className="!mb-2"
         size="small"
       />
       {filtered.length === 0 ? (
         <Empty description="Không có dữ liệu" image={Empty.PRESENTED_IMAGE_SIMPLE} />
       ) : (
-        <div style={{ overflowY: 'auto', flex: 1 }}>
+        <div className="overflow-y-auto flex-1">
           <Radio.Group
-            value={selected}
-            onChange={(e) => onSelect(e.target.value as string)}
-            style={{ width: '100%' }}
+            value={value}
+            onChange={(e) => onChange?.(e.target.value as string)}
+            className="!w-full"
           >
             {filtered.map((sheet) => (
               <div
                 key={sheet.id}
-                style={{
-                  padding: '8px 4px',
-                  borderBottom: '1px solid #f0f0f0',
-                  cursor: 'pointer',
-                }}
-                onClick={() => onSelect(sheet.id)}
+                className="px-1 py-2 border-b border-gray-100 cursor-pointer"
+                onClick={() => onChange?.(sheet.id)}
               >
                 <Radio value={sheet.id}>
                   <div>
-                    <Text strong style={{ fontSize: 13 }}>
+                    <Text strong className="!text-[13px]">
                       {sheet.name}
                     </Text>
                     <br />
-                    <Text type="secondary" style={{ fontSize: 11 }}>
+                    <Text type="secondary" className="!text-[11px]">
                       {sheet.seriesCount} chuỗi · {sheet.periodCount} kỳ
                     </Text>
                   </div>

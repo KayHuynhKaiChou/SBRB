@@ -1,6 +1,6 @@
 import React from 'react';
 import { Form, Input } from 'antd';
-import { FormModal } from '../common/form-modal';
+import { FormModal } from '@sbrb/ui';
 
 interface IAddWidgetInput {
   name: string;
