@@ -23,33 +23,14 @@ export function BusinessSwitcher() {
   return (
     <Dropdown menu={{ items: menuItems }} placement="bottomLeft" trigger={['click']}>
       <div
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 4,
-          cursor: 'pointer',
-          padding: '3px 8px',
-          borderRadius: 6,
-          maxWidth: 180,
-          transition: 'background 0.15s',
-        }}
+        className="inline-flex items-center gap-1 cursor-pointer px-2 py-[3px] rounded-[6px] max-w-[180px] transition-[background] duration-150"
         onMouseEnter={e => (e.currentTarget.style.background = '#f5f5f5')}
         onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
       >
-        <span
-          style={{
-            fontSize: 13,
-            fontWeight: 500,
-            color: '#333',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            maxWidth: 140,
-          }}
-        >
+        <span className="text-[13px] font-medium text-[#333] overflow-hidden text-ellipsis whitespace-nowrap max-w-[140px]">
           {businessName}
         </span>
-        <DownOutlined style={{ fontSize: 9, color: '#aaa', flexShrink: 0 }} />
+        <DownOutlined className="!text-[9px] !text-[#aaa] shrink-0" />
       </div>
     </Dropdown>
   );

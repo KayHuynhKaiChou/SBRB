@@ -67,34 +67,18 @@ export function WidgetCard({
         maxHeight={800}
         style={{ zIndex: 1 }}
       >
+        {/* boxShadow is dynamic (hovered state) — kept as inline */}
         <div
           style={{
-            width: '100%',
-            height: '100%',
-            background: '#ffffff',
-            borderRadius: 12,
             boxShadow: hovered ? '0 4px 20px rgba(0,0,0,0.12)' : '0 2px 12px rgba(0,0,0,0.06)',
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-            transition: 'box-shadow 0.2s',
-            position: 'relative',
           }}
+          className="w-full h-full bg-white rounded-xl flex flex-col overflow-hidden transition-shadow duration-200 relative"
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
         >
           {/* Hover action buttons — top-right corner */}
           {hovered && (
-            <div
-              style={{
-                position: 'absolute',
-                top: 8,
-                right: 8,
-                display: 'flex',
-                gap: 4,
-                zIndex: 5,
-              }}
-            >
+            <div className="absolute top-2 right-2 flex gap-1 z-[5]">
               <IconButton
                 icon={<EditOutlined />}
                 tooltip={t('common:edit')}
@@ -116,7 +100,7 @@ export function WidgetCard({
           />
 
           {/* Chart body */}
-          <div style={{ flex: 1, padding: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <div className="flex-1 p-4 overflow-hidden flex flex-col">
             <InlineChartPreview
               chartData={chartData}
               loading={loading}

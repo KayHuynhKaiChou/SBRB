@@ -123,7 +123,7 @@ export function ChartPreview({ chartData, loading, chartType: rawChartType, conf
   if (loading) {
     return (
       <div style={{ padding: compact ? 4 : 16 }}>
-        <Skeleton.Node active style={{ width: '100%', height: compact ? 120 : 340 }} />
+        <Skeleton.Node active className="!w-full" style={{ height: compact ? 120 : 340 }} />
       </div>
     );
   }
@@ -131,10 +131,10 @@ export function ChartPreview({ chartData, loading, chartType: rawChartType, conf
   const hasData = chartData && chartData.datasets.length > 0;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div className="flex flex-col h-full">
       {/* header row — hidden in compact mode */}
       {!compact && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+        <div className="flex items-center justify-between mb-2">
           {chartData?.trend ? <TrendBadge trend={chartData.trend} /> : <span />}
           <IconButton
             icon={<ReloadOutlined />}
@@ -146,20 +146,10 @@ export function ChartPreview({ chartData, loading, chartType: rawChartType, conf
       )}
 
       {/* chart area */}
-      <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
+      <div className="flex-1 relative min-h-0">
         {!hasData ? (
-          <div
-            style={{
-              height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#bfbfbf',
-              gap: 8,
-            }}
-          >
-            <Text type="secondary" style={{ fontSize: 13 }}>
+          <div className="h-full flex flex-col items-center justify-center text-[#bfbfbf] gap-2">
+            <Text type="secondary" className="!text-[13px]">
               {t('datasheet:no_data_hint')}
             </Text>
           </div>

@@ -27,26 +27,19 @@ export default function ForgotPasswordPage() {
   if (sent) {
     return (
       <AuthLayout title="Kiểm tra email">
-        <div
-          className="rounded-xl p-6 text-center"
-          style={{ background: '#FFF7F8', border: '1px solid #FECDD3' }}
-        >
-          <div
-            className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
-            style={{ background: '#D72A44' }}
-          >
+        <div className="rounded-xl p-6 text-center bg-[#FFF7F8] border border-rose-200">
+          <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4 bg-[#D72A44]">
             <RiSendPlaneLine size={26} color="white" />
           </div>
-          <Typography.Title level={5} style={{ margin: '0 0 8px', color: '#111827' }}>
+          <Typography.Title level={5} className="!mt-0 !mb-2 !text-gray-900">
             Email đã được gửi!
           </Typography.Title>
-          <Typography.Text style={{ color: '#6B7280', fontSize: 14, display: 'block', marginBottom: 20 }}>
+          <Typography.Text className="!text-gray-500 !text-sm !block !mb-5">
             Nếu email tồn tại trong hệ thống, chúng tôi đã gửi link đặt lại mật khẩu. Vui lòng kiểm tra hộp thư.
           </Typography.Text>
           <Link
             to="/auth/login"
-            className="inline-flex items-center gap-1"
-            style={{ color: '#D72A44', fontWeight: 600, fontSize: 14 }}
+            className="inline-flex items-center gap-1 !text-[#D72A44] !font-semibold !text-sm"
           >
             <RiArrowLeftLine size={16} />
             Quay lại đăng nhập
@@ -64,7 +57,7 @@ export default function ForgotPasswordPage() {
       <Form form={form} layout="vertical" onFinish={onFinish} size="large" requiredMark={false}>
         <Form.Item
           name="email"
-          label={<span style={{ fontWeight: 500, color: '#374151' }}>Email</span>}
+          label={<span className="font-medium text-gray-700">Email</span>}
           rules={[
             { required: true, message: 'Vui lòng nhập email' },
             { type: 'email', message: 'Email không hợp lệ' },
@@ -74,25 +67,17 @@ export default function ForgotPasswordPage() {
             prefix={<RiMailLine color="#9CA3AF" />}
             placeholder="you@example.com"
             autoComplete="email"
-            style={{ borderRadius: 8, height: 44 }}
+            className="!rounded-lg !h-11"
           />
         </Form.Item>
 
-        <Form.Item style={{ marginBottom: 16 }}>
+        <Form.Item className="!mb-4">
           <Button
             type="primary"
             htmlType="submit"
             block
             loading={forgotLoading}
-            style={{
-              height: 44,
-              borderRadius: 8,
-              background: '#D72A44',
-              border: 'none',
-              fontWeight: 600,
-              fontSize: 15,
-              boxShadow: '0 4px 12px rgba(215,42,68,0.3)',
-            }}
+            className="!h-11 !rounded-lg !bg-[#D72A44] !border-none !font-semibold !text-[15px] ![box-shadow:0_4px_12px_rgba(215,42,68,0.3)]"
           >
             Gửi link đặt lại
           </Button>
@@ -101,8 +86,7 @@ export default function ForgotPasswordPage() {
         <div className="text-center">
           <Link
             to="/auth/login"
-            className="inline-flex items-center gap-1"
-            style={{ color: '#6B7280', fontSize: 14, fontWeight: 500 }}
+            className="inline-flex items-center gap-1 !text-gray-500 !text-sm !font-medium"
           >
             <RiArrowLeftLine size={16} />
             Quay lại đăng nhập

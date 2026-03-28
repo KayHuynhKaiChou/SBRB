@@ -7,17 +7,9 @@ const { Text } = Typography;
 /** Placeholder for future alert threshold configuration */
 export function AlertThresholdPanel() {
   return (
-    <div
-      style={{
-        border: '1px solid #e8e8e8',
-        borderRadius: 8,
-        padding: '12px',
-        background: '#fafafa',
-        textAlign: 'center',
-      }}
-    >
-      <BellOutlined style={{ fontSize: 20, color: '#bfbfbf', marginBottom: 6, display: 'block' }} />
-      <Text type="secondary" style={{ fontSize: 12 }}>
+    <div className="border border-[#e8e8e8] rounded-lg p-3 bg-[#fafafa] text-center">
+      <BellOutlined className="!text-[20px] !text-[#bfbfbf] !mb-1.5 !block" />
+      <Text type="secondary" className="!text-xs">
         Cấu hình cảnh báo (coming soon)
       </Text>
     </div>

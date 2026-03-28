@@ -49,38 +49,15 @@ export function Header({
   }, [toggleSnap]);
 
   return (
-    <AntHeader
-      style={{
-        background: '#ffffff',
-        borderBottom: '1px solid #e8e8e8',
-        padding: '0 12px 0 16px',
-        display: 'flex',
-        alignItems: 'center',
-        height: 52,
-        lineHeight: '52px',
-        boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-        zIndex: 100,
-        gap: 12,
-      }}
-    >
+    <AntHeader className="!bg-white !border-b !border-[#e8e8e8] !px-3 !pl-4 !flex !items-center !h-[52px] !leading-[52px] !shadow-[0_1px_4px_rgba(0,0,0,0.06)] !z-[100] !gap-3">
       {/* Business switcher */}
       <BusinessSwitcher />
 
       {/* Divider */}
-      <div style={{ width: 1, height: 24, background: '#e8e8e8', flexShrink: 0 }} />
+      <div className="w-px h-6 bg-[#e8e8e8] shrink-0" />
 
       {/* Tab pills row */}
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 4,
-          overflowX: 'auto',
-          scrollbarWidth: 'none',
-          minWidth: 0,
-        }}
-      >
+      <div className="flex-1 flex items-center gap-1 overflow-x-auto [scrollbar-width:none] min-w-0">
         {sorted.map((tab) => {
           const isActive = tab.id === activeTabId;
           return (
@@ -89,22 +66,11 @@ export function Header({
                 onClick={() => onTabSelect(tab.id)}
                 onDoubleClick={() => onEditTab(tab)}
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  padding: '4px 12px',
-                  borderRadius: 20,
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontSize: 12,
-                  fontWeight: isActive ? 600 : 400,
                   background: isActive ? 'var(--sbrb-accent-coral)' : 'var(--sbrb-tab-inactive-bg)',
                   color: isActive ? '#ffffff' : '#555',
-                  transition: 'background 0.15s, color 0.15s',
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0,
-                  lineHeight: 1.4,
+                  fontWeight: isActive ? 600 : 400,
                 }}
+                className="inline-flex items-center gap-[5px] px-3 py-1 rounded-[20px] border-none cursor-pointer text-xs transition-[background,color] duration-150 whitespace-nowrap shrink-0 leading-[1.4]"
               >
                 {tab.name}
               </button>
@@ -122,7 +88,7 @@ export function Header({
       </div>
 
       {/* Right side: add widget + snap grid + zoom select */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+      <div className="flex items-center gap-1.5 shrink-0">
         <IconButton
           icon={<PlusOutlined />}
           tooltip={t('dashboard:add_widget')}
@@ -139,7 +105,7 @@ export function Header({
         />
 
         {/* Divider */}
-        <div style={{ width: 1, height: 18, background: '#e8e8e8' }} />
+        <div className="w-px h-[18px] bg-[#e8e8e8]" />
 
         {/* Zoom select */}
         <Select
@@ -147,7 +113,7 @@ export function Header({
           onChange={(v) => setZoom(v as ZoomLevel)}
           size="small"
           variant="borderless"
-          style={{ width: 80 }}
+          className="!w-20"
           options={ZOOM_OPTIONS.map((z) => ({ value: z, label: `${z}%` }))}
         />
       </div>

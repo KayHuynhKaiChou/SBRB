@@ -28,40 +28,28 @@ export function CanvasContainer({
   const { zoom } = useCanvasStore();
 
   return (
-    <div
-      style={{
-        position: 'relative',
-        flex: 1,
-        overflow: 'auto',
-        background: '#EEF2FF',
-      }}
-    >
-      {/* Scrollable canvas area */}
+    <div className="relative flex-1 overflow-auto bg-[#EEF2FF]">
+      {/* Scrollable canvas area — width/height are dynamic (zoom-computed), kept as inline */}
       <div
         style={{
           width: CANVAS_WIDTH * (zoom / 100),
           height: CANVAS_HEIGHT * (zoom / 100),
-          position: 'relative',
-          minWidth: '100%',
-          minHeight: '100%',
         }}
+        className="relative min-w-full min-h-full"
       >
-        {/* Canvas surface with zoom transform */}
+        {/* Canvas surface with zoom transform — transform/size/bg-image are dynamic, kept as inline */}
         <div
           style={{
             width: CANVAS_WIDTH,
             height: CANVAS_HEIGHT,
             transform: `scale(${zoom / 100})`,
             transformOrigin: 'top left',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            background: '#EEF2FF',
             backgroundImage: snapEnabled
               ? 'radial-gradient(circle, #c5cef0 1px, transparent 1px)'
               : 'none',
             backgroundSize: '20px 20px',
           }}
+          className="absolute top-0 left-0 bg-[#EEF2FF]"
         >
           {widgets.map((w) => (
             <WidgetCard
@@ -77,17 +65,8 @@ export function CanvasContainer({
           ))}
 
           {widgets.length === 0 && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                textAlign: 'center',
-                pointerEvents: 'none',
-              }}
-            >
-              <Text type="secondary" style={{ fontSize: 14 }}>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
+              <Text type="secondary" className="!text-sm">
                 Chưa có widget nào. Nhấn "+ Widget" để thêm mới.
               </Text>
             </div>

@@ -28,19 +28,14 @@ export function AppLayout({
   onAddWidget,
 }: IAppLayoutProps) {
   return (
-    <Layout style={{ height: '100vh', overflow: 'hidden' }}>
+    <Layout className="!h-screen !overflow-hidden">
       {/* Fixed 60px sidebar */}
       <Sidebar />
 
       {/* Main area offset by sidebar width */}
       <Layout
-        style={{
-          marginLeft: 'var(--sidebar-width)',
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100vh',
-          overflow: 'hidden',
-        }}
+        style={{ marginLeft: 'var(--sidebar-width)' }}
+        className="!flex !flex-col !h-screen !overflow-hidden"
       >
         <Header
           tabs={tabs}
@@ -52,13 +47,8 @@ export function AppLayout({
           onAddWidget={onAddWidget}
         />
         <Content
-          style={{
-            flex: 1,
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column',
-            background: 'var(--canvas-bg)',
-          }}
+          style={{ background: 'var(--canvas-bg)' }}
+          className="!flex-1 !overflow-hidden !flex !flex-col"
         >
           {children}
         </Content>

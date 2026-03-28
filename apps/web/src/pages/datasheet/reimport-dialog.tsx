@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Upload, Alert, Progress, Space, Typography, message } from 'antd';
 import { CloseOutlined, CheckOutlined, InboxOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { ModalActions } from '../../components/common/modal-actions';
+import { IconButton } from '@sbrb/ui';
 import type { UploadFile } from 'antd';
 import { apiClient } from '../../services/api-client';
 import { validateUploadFile } from '../../utils/file-upload-validator';
@@ -79,16 +79,14 @@ export function ReimportDialog({
       onCancel={loading ? undefined : handleClose}
       closable={false}
       footer={
-        <ModalActions
-          actions={[
-            { icon: <CheckOutlined />, tooltip: t('common:reimport'), onClick: handleConfirm, disabled: !file || loading },
-            { icon: <CloseOutlined />, tooltip: t('common:cancel'), onClick: handleClose, disabled: loading },
-          ]}
-        />
+        <div className="flex justify-end gap-2">
+          <IconButton icon={<CheckOutlined />} tooltip={t('common:reimport')} size="small" onClick={handleConfirm} disabled={!file || loading} />
+          <IconButton icon={<CloseOutlined />} tooltip={t('common:cancel')} size="small" onClick={handleClose} disabled={loading} />
+        </div>
       }
       width={480}
     >
-      <Space direction="vertical" style={{ width: '100%' }} size="middle">
+      <Space direction="vertical" className="!w-full" size="middle">
         <Text type="secondary">
           {t('datasheet:reimport_description')} <strong>{datasheetName}</strong>.
         </Text>

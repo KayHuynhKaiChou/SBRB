@@ -80,7 +80,7 @@ export function SeriesTable({
 
   if (!datasheetId) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+      <div className="flex items-center justify-center h-full">
         <Empty description="Chọn bộ dữ liệu ở bên trái" image={Empty.PRESENTED_IMAGE_SIMPLE} />
       </div>
     );
@@ -111,7 +111,7 @@ export function SeriesTable({
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 8 }}>
+    <div className="flex flex-col h-full gap-2">
       <Space>
         <Input
           prefix={<SearchOutlined />}
@@ -119,7 +119,7 @@ export function SeriesTable({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           size="small"
-          style={{ width: 200 }}
+          className="!w-[200px]"
         />
         <Button
           size="small"
@@ -133,7 +133,7 @@ export function SeriesTable({
 
       {/* Period filter */}
       {periodHeaders.length > 0 && (
-        <div style={{ maxHeight: 60, overflowX: 'auto', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div className="max-h-[60px] overflow-x-auto flex gap-2 flex-wrap">
           {periodHeaders.map((period) => {
             const checked = selectedPeriods === null || selectedPeriods.includes(period);
             return (
@@ -141,7 +141,7 @@ export function SeriesTable({
                 key={period}
                 checked={checked}
                 onChange={(e) => handleTogglePeriod(period, e.target.checked)}
-                style={{ fontSize: 11 }}
+                className="!text-[11px]"
               >
                 {period}
               </Checkbox>
@@ -158,7 +158,7 @@ export function SeriesTable({
         size="small"
         pagination={false}
         scroll={{ y: 300 }}
-        style={{ flex: 1 }}
+        className="!flex-1"
       />
     </div>
   );

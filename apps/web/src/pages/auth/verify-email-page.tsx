@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Spin, Typography, Button } from 'antd';
-import { RiCheckboxCircleLine, RiErrorWarningLine, RiLoader4Line } from 'react-icons/ri';
+import { RiCheckboxCircleLine, RiErrorWarningLine } from 'react-icons/ri';
 import { useSearchParams, Link } from 'react-router-dom';
 import { AuthLayout } from '../../components/auth/auth-layout';
 import { useAuth } from '../../hooks/use-auth';
@@ -27,7 +27,7 @@ export default function VerifyEmailPage() {
       <AuthLayout title="Xác nhận email">
         <div className="flex flex-col items-center py-10 gap-4">
           <Spin size="large" />
-          <Typography.Text style={{ color: '#6B7280', fontSize: 15 }}>
+          <Typography.Text className="!text-gray-500 !text-[15px]">
             Đang xác nhận email của bạn...
           </Typography.Text>
         </div>
@@ -39,29 +39,19 @@ export default function VerifyEmailPage() {
     return (
       <AuthLayout title="Xác nhận email">
         <div className="flex flex-col items-center py-6 text-center gap-4">
-          <div
-            className="w-16 h-16 rounded-full flex items-center justify-center"
-            style={{ background: '#FEF2F2' }}
-          >
+          <div className="w-16 h-16 rounded-full flex items-center justify-center bg-red-50">
             <RiErrorWarningLine size={36} color="#EF4444" />
           </div>
           <div>
-            <Typography.Title level={5} style={{ margin: '0 0 6px', color: '#111827' }}>
+            <Typography.Title level={5} className="!mt-0 !mb-1.5 !text-gray-900">
               Xác nhận thất bại
             </Typography.Title>
-            <Typography.Text style={{ color: '#6B7280', fontSize: 14 }}>{error}</Typography.Text>
+            <Typography.Text className="!text-gray-500 !text-sm">{error}</Typography.Text>
           </div>
           <Link to="/auth/login">
             <Button
               type="primary"
-              style={{
-                borderRadius: 8,
-                background: '#D72A44',
-                border: 'none',
-                fontWeight: 600,
-                height: 40,
-                paddingInline: 24,
-              }}
+              className="!rounded-lg !bg-[#D72A44] !border-none !font-semibold !h-10 !px-6"
             >
               Quay lại đăng nhập
             </Button>
@@ -75,31 +65,21 @@ export default function VerifyEmailPage() {
     return (
       <AuthLayout title="Xác nhận email">
         <div className="flex flex-col items-center py-6 text-center gap-4">
-          <div
-            className="w-16 h-16 rounded-full flex items-center justify-center"
-            style={{ background: '#F0FDF4' }}
-          >
+          <div className="w-16 h-16 rounded-full flex items-center justify-center bg-green-50">
             <RiCheckboxCircleLine size={36} color="#22C55E" />
           </div>
           <div>
-            <Typography.Title level={5} style={{ margin: '0 0 6px', color: '#111827' }}>
+            <Typography.Title level={5} className="!mt-0 !mb-1.5 !text-gray-900">
               Email đã được xác nhận!
             </Typography.Title>
-            <Typography.Text style={{ color: '#6B7280', fontSize: 14 }}>
+            <Typography.Text className="!text-gray-500 !text-sm">
               Tài khoản của bạn đã được kích hoạt thành công.
             </Typography.Text>
           </div>
           <Link to="/auth/login">
             <Button
               type="primary"
-              style={{
-                borderRadius: 8,
-                background: '#D72A44',
-                border: 'none',
-                fontWeight: 600,
-                height: 40,
-                paddingInline: 24,
-              }}
+              className="!rounded-lg !bg-[#D72A44] !border-none !font-semibold !h-10 !px-6"
             >
               Đăng nhập ngay
             </Button>

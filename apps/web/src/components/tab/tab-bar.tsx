@@ -26,16 +26,7 @@ export function TabBar({
   const sorted = sortTabsByPinnedThenOrder(tabs);
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-        overflowX: 'auto',
-        scrollbarWidth: 'none',
-      }}
-    >
+    <div className="flex flex-row items-center gap-1 overflow-x-auto [scrollbar-width:none]">
       {sorted.map((tab) => {
         const isActive = tab.id === activeTabId;
         return (
@@ -44,21 +35,11 @@ export function TabBar({
               onClick={() => onTabSelect(tab.id)}
               onDoubleClick={() => onEditTab(tab)}
               style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '4px 12px',
-                borderRadius: 20,
-                border: 'none',
-                cursor: 'pointer',
-                fontSize: 12,
-                fontWeight: isActive ? 600 : 400,
                 background: isActive ? 'var(--sbrb-accent-coral)' : 'var(--sbrb-tab-inactive-bg)',
                 color: isActive ? '#ffffff' : '#555',
-                transition: 'background 0.15s, color 0.15s',
-                whiteSpace: 'nowrap',
-                flexShrink: 0,
-                lineHeight: 1.4,
+                fontWeight: isActive ? 600 : 400,
               }}
+              className="inline-flex items-center px-3 py-1 rounded-[20px] border-none cursor-pointer text-xs transition-[background,color] duration-150 whitespace-nowrap shrink-0 leading-[1.4]"
             >
               {tab.name}
             </button>

@@ -17,21 +17,15 @@ export function TrendBadge({ trend }: ITrendBadgeProps) {
 
   return (
     <span
+      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-xl text-[13px] font-medium"
       style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: 4,
-        padding: '2px 8px',
-        borderRadius: 12,
         background: `${color}18`,
         color,
-        fontSize: 13,
-        fontWeight: 500,
       }}
     >
       {icon}
       {Math.abs(trend.value).toFixed(1)}%
-      <span style={{ color: '#8c8c8c', fontSize: 11, fontWeight: 400 }}>vs {trend.vsLabel}</span>
+      <span className="text-[#8c8c8c] text-[11px] font-normal">vs {trend.vsLabel}</span>
     </span>
   );
 }

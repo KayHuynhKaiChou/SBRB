@@ -1,5 +1,5 @@
 import React from 'react';
-import { Switch, InputNumber, Input, Typography, Space } from 'antd';
+import { Switch, Input, Typography, Space } from 'antd';
 import type { IChartConfig } from '@sbrb/shared-types';
 
 const { Text } = Typography;
@@ -12,8 +12,8 @@ interface IDisplaySettingsProps {
 /** Row helper for label + control */
 function SettingRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-      <Text style={{ fontSize: 12 }}>{label}</Text>
+    <div className="flex items-center justify-between mb-3">
+      <Text className="!text-xs">{label}</Text>
       {children}
     </div>
   );
@@ -22,7 +22,7 @@ function SettingRow({ label, children }: { label: string; children: React.ReactN
 export function DisplaySettings({ config, onChange }: IDisplaySettingsProps) {
   return (
     <div>
-      <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 8 }}>
+      <Text type="secondary" className="!text-[11px] !block !mb-2">
         Hiển thị
       </Text>
 
@@ -50,25 +50,25 @@ export function DisplaySettings({ config, onChange }: IDisplaySettingsProps) {
         />
       </SettingRow>
 
-      <Space direction="vertical" style={{ width: '100%' }} size={8}>
+      <Space direction="vertical" className="!w-full" size={8}>
         <div>
-          <Text style={{ fontSize: 11, color: '#888' }}>Nhãn trục X</Text>
+          <Text className="!text-[11px] !text-[#888]">Nhãn trục X</Text>
           <Input
             size="small"
             value={config.xAxisName ?? ''}
             onChange={(e) => onChange({ xAxisName: e.target.value })}
             placeholder="Trục X"
-            style={{ marginTop: 4 }}
+            className="!mt-1"
           />
         </div>
         <div>
-          <Text style={{ fontSize: 11, color: '#888' }}>Nhãn trục Y</Text>
+          <Text className="!text-[11px] !text-[#888]">Nhãn trục Y</Text>
           <Input
             size="small"
             value={config.yAxisName ?? ''}
             onChange={(e) => onChange({ yAxisName: e.target.value })}
             placeholder="Trục Y"
-            style={{ marginTop: 4 }}
+            className="!mt-1"
           />
         </div>
       </Space>

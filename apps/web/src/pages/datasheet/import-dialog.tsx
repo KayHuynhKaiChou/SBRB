@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Steps, Upload, Alert, Input, Progress, Typography, Space } from 'antd';
 import { CloseOutlined, CheckOutlined, ArrowLeftOutlined, ArrowRightOutlined, InboxOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { ModalActions } from '../../components/common/modal-actions';
+import { IconButton } from '@sbrb/ui';
 import { message } from 'antd';
 import type { UploadFile } from 'antd';
 import { useImportDataSheet } from '../../hooks/use-datasheet';
@@ -115,8 +115,8 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
         );
       case 1:
         return (
-          <div style={{ padding: '16px 0' }}>
-            <Space direction="vertical" style={{ width: '100%' }}>
+          <div className="py-4">
+            <Space direction="vertical" className="!w-full">
               <Text strong>{t('datasheet:file_info')}:</Text>
               <Text>{t('datasheet:file_name')}: {file?.name}</Text>
               <Text>{t('datasheet:file_size')}: {file ? (file.size / 1024).toFixed(1) + ' KB' : '-'}</Text>
@@ -128,8 +128,8 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
         );
       case 2:
         return (
-          <div style={{ padding: '16px 0' }}>
-            <Space direction="vertical" style={{ width: '100%' }}>
+          <div className="py-4">
+            <Space direction="vertical" className="!w-full">
               <Text strong>{t('datasheet:dataset_name_label')}:</Text>
               <Input
                 value={importName}
@@ -154,25 +154,25 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
   const renderFooter = () => {
     if (step === 0) {
       return (
-        <ModalActions actions={[
-          { icon: <ArrowRightOutlined />, tooltip: t('common:next'), onClick: handleNext, disabled: !file },
-          { icon: <CloseOutlined />, tooltip: t('common:cancel'), onClick: handleClose },
-        ]} />
+        <div className="flex justify-end gap-2">
+          <IconButton icon={<ArrowRightOutlined />} tooltip={t('common:next')} size="small" onClick={handleNext} disabled={!file} />
+          <IconButton icon={<CloseOutlined />} tooltip={t('common:cancel')} size="small" onClick={handleClose} />
+        </div>
       );
     }
     if (step === 1) {
       return (
-        <ModalActions actions={[
-          { icon: <ArrowRightOutlined />, tooltip: t('common:next'), onClick: handleNext },
-          { icon: <ArrowLeftOutlined />, tooltip: t('common:back'), onClick: () => setStep(0) },
-        ]} />
+        <div className="flex justify-end gap-2">
+          <IconButton icon={<ArrowRightOutlined />} tooltip={t('common:next')} size="small" onClick={handleNext} />
+          <IconButton icon={<ArrowLeftOutlined />} tooltip={t('common:back')} size="small" onClick={() => setStep(0)} />
+        </div>
       );
     }
     return (
-      <ModalActions actions={[
-        { icon: <CheckOutlined />, tooltip: t('common:start_import'), onClick: handleStartImport, disabled: !importName.trim() || importing || isUploading },
-        { icon: <ArrowLeftOutlined />, tooltip: t('common:back'), onClick: () => setStep(1), disabled: importing || isUploading },
-      ]} />
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+        <IconButton icon={<CheckOutlined />} tooltip={t('common:start_import')} size="small" onClick={handleStartImport} disabled={!importName.trim() || importing || isUploading} />
+        <IconButton icon={<ArrowLeftOutlined />} tooltip={t('common:back')} size="small" onClick={() => setStep(1)} disabled={importing || isUploading} />
+      </div>
     );
   };
 
@@ -185,7 +185,7 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
       footer={renderFooter()}
       width={520}
     >
-      <Steps current={step} items={stepItems} style={{ marginBottom: 24 }} />
+      <Steps current={step} items={stepItems} className="!mb-6" />
       {error && (
         <Alert
           message={error}
@@ -193,7 +193,7 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
           showIcon
           closable
           onClose={() => setError(null)}
-          style={{ marginBottom: 12 }}
+          className="!mb-3"
         />
       )}
       {renderStepContent()}

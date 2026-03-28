@@ -48,38 +48,26 @@ export function TabItem({ tab, isActive, onSelect, onEdit, onDelete }: ITabItemP
       <div
         onClick={onSelect}
         style={{
-          padding: '10px 12px',
-          cursor: 'pointer',
           borderLeft: isActive ? '3px solid #1677ff' : '3px solid transparent',
           background: isActive ? '#e6f4ff' : 'transparent',
-          borderRadius: '0 4px 4px 0',
-          marginBottom: 2,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
         }}
+        className="px-3 py-[10px] cursor-pointer rounded-[0_4px_4px_0] mb-0.5 flex items-center gap-2"
       >
         <span
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            background: tab.iconColor || '#1677ff',
-            flexShrink: 0,
-          }}
+          style={{ background: tab.iconColor || '#1677ff' }}
+          className="w-2 h-2 rounded-full shrink-0"
         />
         <Text
           ellipsis
           style={{
             color: isActive ? '#1677ff' : '#262626',
             fontWeight: isActive ? 600 : 400,
-            fontSize: 13,
-            flex: 1,
           }}
+          className="!text-[13px] !flex-1"
         >
           {tab.name}
         </Text>
-        {tab.isPinned && <PushpinFilled style={{ fontSize: 10, color: '#8c8c8c' }} />}
+        {tab.isPinned && <PushpinFilled className="!text-[10px] !text-[#8c8c8c]" />}
       </div>
     </Dropdown>
   );

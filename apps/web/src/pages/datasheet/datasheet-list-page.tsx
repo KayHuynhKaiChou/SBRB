@@ -111,7 +111,7 @@ export default function DataSheetListPage() {
                 onChange={(e) => setRenameValue(e.target.value)}
                 onPressEnter={() => handleConfirmRename(record.id)}
                 autoFocus
-                style={{ width: 180 }}
+                className="!w-[180px]"
               />
               <IconButton
                 icon={<CheckOutlined />}
@@ -197,12 +197,12 @@ export default function DataSheetListPage() {
   ];
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout className="!min-h-screen">
       <Sidebar />
-      <Layout style={{ marginLeft: 60 }}>
-    <div style={{ padding: '24px', height: '100%', overflowY: 'auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={4} style={{ margin: 0 }}>
+      <Layout className="!ml-[60px]">
+    <div className="p-6 h-full overflow-y-auto">
+      <div className="flex justify-between items-center mb-4">
+        <Title level={4} className="!m-0">
           {t('datasheet:manage_title')}
         </Title>
         <Space>
@@ -228,7 +228,7 @@ export default function DataSheetListPage() {
         placeholder={t('datasheet:search_placeholder')}
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        style={{ marginBottom: 12, width: 300 }}
+        className="!mb-3 !w-[300px]"
         allowClear
       />
 

@@ -63,11 +63,11 @@ function CreateBusinessForm({ onBack }: { onBack: () => void }) {
         type="text"
         icon={<ArrowLeftOutlined />}
         onClick={onBack}
-        style={{ marginBottom: 20, color: '#666', padding: 0 }}
+        className="!mb-5 !text-gray-500 !p-0"
       >
         Quay lại
       </Button>
-      <Title level={4} style={{ marginBottom: 20, color: '#1a1a2e' }}>
+      <Title level={4} className="!mb-5 !text-[#1a1a2e]">
         Tạo Business mới
       </Title>
       <Form form={form} layout="vertical" onFinish={onFinish} size="large">
@@ -123,7 +123,7 @@ function CreateBusinessForm({ onBack }: { onBack: () => void }) {
             htmlType="submit"
             block
             loading={loading}
-            style={{ background: BRAND, borderColor: BRAND, height: 44 }}
+            className="!bg-[#D72A44] !border-[#D72A44] !h-11"
           >
             Tạo Business
           </Button>
@@ -153,14 +153,14 @@ function JoinBusinessForm({ onBack }: { onBack: () => void }) {
         type="text"
         icon={<ArrowLeftOutlined />}
         onClick={onBack}
-        style={{ marginBottom: 20, color: '#666', padding: 0 }}
+        className="!mb-5 !text-gray-500 !p-0"
       >
         Quay lại
       </Button>
-      <Title level={4} style={{ marginBottom: 8, color: '#1a1a2e' }}>
+      <Title level={4} className="!mb-2 !text-[#1a1a2e]">
         Tôi có mã mời
       </Title>
-      <Paragraph type="secondary" style={{ marginBottom: 24 }}>
+      <Paragraph type="secondary" className="!mb-6">
         Nhập mã mời 6 ký tự bạn nhận được
       </Paragraph>
 
@@ -176,13 +176,7 @@ function JoinBusinessForm({ onBack }: { onBack: () => void }) {
           <Input
             placeholder="ABC123"
             maxLength={6}
-            style={{
-              textTransform: 'uppercase',
-              letterSpacing: 6,
-              fontSize: 22,
-              textAlign: 'center',
-              fontWeight: 600,
-            }}
+            className="!uppercase !tracking-widest !text-[22px] !text-center !font-semibold"
             onChange={(e) => {
               form.setFieldValue('code', e.target.value.toUpperCase());
             }}
@@ -195,7 +189,7 @@ function JoinBusinessForm({ onBack }: { onBack: () => void }) {
             htmlType="submit"
             block
             loading={loading}
-            style={{ background: BRAND, borderColor: BRAND, height: 44 }}
+            className="!bg-[#D72A44] !border-[#D72A44] !h-11"
           >
             Tham gia
           </Button>
@@ -224,10 +218,9 @@ function OptionCard({ icon, title, description, onClick }: IOptionCardProps) {
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      className="!rounded-xl !cursor-pointer"
       style={{
-        borderRadius: 12,
         border: hovered ? `2px solid ${BRAND}` : '2px solid #e8e8e8',
-        cursor: 'pointer',
         transition: 'border-color 0.2s, box-shadow 0.2s',
         boxShadow: hovered ? '0 4px 16px rgba(215,42,68,0.15)' : '0 1px 4px rgba(0,0,0,0.06)',
         padding: '8px 0',
@@ -235,26 +228,19 @@ function OptionCard({ icon, title, description, onClick }: IOptionCardProps) {
       bodyStyle={{ padding: '20px 24px', textAlign: 'center' }}
     >
       <div
+        className="w-14 h-14 rounded-[14px] flex items-center justify-center mx-auto mb-4 text-2xl"
         style={{
-          width: 56,
-          height: 56,
-          borderRadius: 14,
           background: hovered ? BRAND : '#f5f5f5',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          margin: '0 auto 16px',
-          fontSize: 24,
           color: hovered ? '#fff' : '#666',
           transition: 'background 0.2s, color 0.2s',
         }}
       >
         {icon}
       </div>
-      <Text strong style={{ fontSize: 15, display: 'block', marginBottom: 6, color: '#1a1a2e' }}>
+      <Text strong className="!text-[15px] !block !mb-1.5 !text-[#1a1a2e]">
         {title}
       </Text>
-      <Text type="secondary" style={{ fontSize: 13 }}>
+      <Text type="secondary" className="!text-[13px]">
         {description}
       </Text>
     </Card>
@@ -266,49 +252,22 @@ export default function OnboardingPage() {
   const [step, setStep] = useState<Step>('choose');
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: '#f5f5f5',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 24,
-      }}
-    >
-      <div style={{ width: '100%', maxWidth: 480 }}>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+      <div className="w-full max-w-[480px]">
         {/* Brand header */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 8,
-              marginBottom: 12,
-            }}
-          >
-            <span
-              style={{
-                display: 'inline-block',
-                width: 5,
-                height: 24,
-                background: BRAND,
-                borderRadius: 2,
-              }}
-            />
-            <Text
-              strong
-              style={{ fontSize: 22, color: '#1a1a2e', letterSpacing: 1.5 }}
-            >
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 mb-3">
+            <span className="inline-block w-[5px] h-6 bg-[#D72A44] rounded-sm" />
+            <Text strong className="!text-[22px] !text-[#1a1a2e] !tracking-widest">
               SBRB
             </Text>
           </div>
           {step === 'choose' && (
             <>
-              <Title level={3} style={{ margin: '0 0 6px', color: '#1a1a2e' }}>
+              <Title level={3} className="!mt-0 !mb-1.5 !text-[#1a1a2e]">
                 Bắt đầu
               </Title>
-              <Text type="secondary" style={{ fontSize: 14 }}>
+              <Text type="secondary" className="!text-sm">
                 Thiết lập không gian làm việc của bạn
               </Text>
             </>
@@ -317,15 +276,12 @@ export default function OnboardingPage() {
 
         {/* Card container */}
         <Card
-          style={{
-            borderRadius: 16,
-            boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
-            border: '1px solid #e8e8e8',
-          }}
+          className="!rounded-2xl !border !border-[#e8e8e8]"
+          style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}
           bodyStyle={{ padding: '28px 32px' }}
         >
           {step === 'choose' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div className="flex flex-col gap-4">
               <OptionCard
                 icon={<ShopOutlined />}
                 title="Tạo Business mới"

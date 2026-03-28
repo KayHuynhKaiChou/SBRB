@@ -44,21 +44,12 @@ function NavIcon({ icon, label, active, onClick, disabled }: INavIconProps) {
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         style={{
-          width: 44,
-          height: 44,
-          borderRadius: 10,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: disabled ? 'not-allowed' : 'pointer',
           background: bg,
           color,
-          fontSize: 18,
-          margin: '2px 8px',
-          transition: 'background 0.15s, color 0.15s',
           borderLeft: active ? '3px solid var(--sbrb-accent-coral)' : '3px solid transparent',
           opacity: disabled ? 0.4 : 1,
         }}
+        className={`w-11 h-11 rounded-[10px] flex items-center justify-center text-lg mx-2 my-0.5 transition-[background,color] duration-150 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}
       >
         {icon}
       </div>
@@ -80,43 +71,18 @@ export function Sidebar() {
       collapsedWidth={60}
       collapsed
       trigger={null}
-      style={{
-        background: SIDEBAR_BG,
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100vh',
-        overflow: 'hidden',
-        position: 'fixed',
-        left: 0,
-        top: 0,
-        zIndex: 200,
-      }}
+      style={{ background: SIDEBAR_BG }}
+      className="!flex !flex-col !h-screen !overflow-hidden !fixed !left-0 !top-0 !z-[200]"
     >
       {/* Logo */}
-      <div
-        style={{
-          height: 52,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
-        }}
-      >
-        <span
-          style={{
-            fontSize: 11,
-            fontWeight: 700,
-            color: '#ffffff',
-            letterSpacing: 1,
-            textTransform: 'lowercase',
-          }}
-        >
+      <div className="h-[52px] flex items-center justify-center border-b border-white/[0.08]">
+        <span className="text-[11px] font-bold text-white tracking-[1px] lowercase">
           SBRB
         </span>
       </div>
 
       {/* Top nav icons */}
-      <div style={{ flex: 1, paddingTop: 8, display: 'flex', flexDirection: 'column', gap: 0 }}>
+      <div className="flex-1 pt-2 flex flex-col gap-0">
         <NavIcon
           icon={<AppstoreOutlined />}
           label="Dashboard"
@@ -153,32 +119,12 @@ export function Sidebar() {
       </div>
 
       {/* Bottom icons: settings, bell, avatar */}
-      <div
-        style={{
-          borderTop: '1px solid rgba(255,255,255,0.08)',
-          paddingTop: 8,
-          paddingBottom: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 4,
-        }}
-      >
+      <div className="border-t border-white/[0.08] py-2 flex flex-col items-center gap-1">
         <NavIcon icon={<SettingOutlined />} label="Cài đặt" active={false} disabled onClick={() => undefined} />
         <Tooltip title="Thông báo" placement="right">
           <div
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 10,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              margin: '2px 8px',
-              color: ICON_COLOR,
-              fontSize: 18,
-            }}
+            style={{ color: ICON_COLOR }}
+            className="w-11 h-11 rounded-[10px] flex items-center justify-center cursor-pointer mx-2 my-0.5 text-lg"
           >
             <Badge dot offset={[2, -2]}>
               <BellOutlined style={{ color: ICON_COLOR, fontSize: 18 }} />
@@ -186,18 +132,7 @@ export function Sidebar() {
           </div>
         </Tooltip>
         <Tooltip title={user?.name ?? user?.email ?? 'Profile'} placement="right">
-          <div
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 10,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              margin: '2px 8px',
-            }}
-          >
+          <div className="w-11 h-11 rounded-[10px] flex items-center justify-center cursor-pointer mx-2 my-0.5">
             <Avatar
               size={28}
               src={user?.avatarUrl}

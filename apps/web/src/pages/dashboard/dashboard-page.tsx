@@ -101,15 +101,8 @@ export default function DashboardPage() {
           onOpenDataSelector={handleOpenDataSelector}
         />
       ) : (
-        <div
-          style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Text type="secondary" style={{ fontSize: 14 }}>
+        <div className="flex-1 flex items-center justify-center">
+          <Text type="secondary" className="!text-sm">
             {t('no_tabs_message')}
           </Text>
         </div>

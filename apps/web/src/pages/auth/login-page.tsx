@@ -30,7 +30,7 @@ export default function LoginPage() {
       <Form form={form} layout="vertical" onFinish={onFinish} size="large" requiredMark={false}>
         <Form.Item
           name="email"
-          label={<span style={{ fontWeight: 500, color: '#374151' }}>Email</span>}
+          label={<span className="font-medium text-gray-700">Email</span>}
           rules={[
             { required: true, message: 'Vui lòng nhập email' },
             { type: 'email', message: 'Email không hợp lệ' },
@@ -40,60 +40,49 @@ export default function LoginPage() {
             prefix={<RiMailLine color="#9CA3AF" />}
             placeholder="you@example.com"
             autoComplete="email"
-            style={{ borderRadius: 8, height: 44 }}
+            className="!rounded-lg !h-11"
           />
         </Form.Item>
 
         <Form.Item
           name="password"
-          label={<span style={{ fontWeight: 500, color: '#374151' }}>Mật khẩu</span>}
+          label={<span className="font-medium text-gray-700">Mật khẩu</span>}
           rules={[{ required: true, message: 'Vui lòng nhập mật khẩu' }]}
         >
           <Input.Password
             prefix={<RiLockLine color="#9CA3AF" />}
             placeholder="••••••••"
             autoComplete="current-password"
-            style={{ borderRadius: 8, height: 44 }}
+            className="!rounded-lg !h-11"
           />
         </Form.Item>
 
-        <div className="flex items-center justify-end mb-4" style={{ marginTop: -8 }}>
-          <Link
-            to="/auth/forgot-password"
-            style={{ fontSize: 14, color: '#D72A44', fontWeight: 500 }}
-          >
+        <div className="flex items-center justify-end mb-4 -mt-2">
+          <Link to="/auth/forgot-password" className="!text-sm !text-[#D72A44] !font-medium">
             Quên mật khẩu?
           </Link>
         </div>
 
-        <Form.Item style={{ marginBottom: 12 }}>
+        <Form.Item className="!mb-3">
           <Button
             type="primary"
             htmlType="submit"
             block
             loading={loginLoading}
-            style={{
-              height: 44,
-              borderRadius: 8,
-              background: '#D72A44',
-              border: 'none',
-              fontWeight: 600,
-              fontSize: 15,
-              boxShadow: '0 4px 12px rgba(215,42,68,0.3)',
-            }}
+            className="!h-11 !rounded-lg !bg-[#D72A44] !border-none !font-semibold !text-[15px] ![box-shadow:0_4px_12px_rgba(215,42,68,0.3)]"
           >
             Đăng nhập
           </Button>
         </Form.Item>
 
-        <Divider style={{ color: '#9CA3AF', fontSize: 13, margin: '12px 0' }}>hoặc tiếp tục với</Divider>
+        <Divider className="!text-gray-400 !text-[13px] !my-3">hoặc tiếp tục với</Divider>
 
         <GoogleOAuthButton />
 
         <div className="text-center mt-6">
           <Space size={4}>
-            <Typography.Text style={{ color: '#6B7280', fontSize: 14 }}>Chưa có tài khoản?</Typography.Text>
-            <Link to="/auth/register" style={{ color: '#D72A44', fontWeight: 600, fontSize: 14 }}>
+            <Typography.Text className="!text-gray-500 !text-sm">Chưa có tài khoản?</Typography.Text>
+            <Link to="/auth/register" className="!text-[#D72A44] !font-semibold !text-sm">
               Đăng ký ngay
             </Link>
           </Space>

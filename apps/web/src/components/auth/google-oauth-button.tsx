@@ -17,18 +17,7 @@ export function GoogleOAuthButton({ label = 'Đăng nhập với Google' }: Goog
       block
       size="large"
       onClick={handleClick}
-      style={{
-        height: 44,
-        borderRadius: 8,
-        border: '1.5px solid #E5E7EB',
-        fontWeight: 500,
-        color: '#374151',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 10,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
-      }}
+      className="!h-11 !rounded-lg !border-[1.5px] !border-gray-200 !font-medium !text-gray-700 !flex !items-center !justify-center !gap-2.5 !shadow-sm"
       icon={
         <svg width="18" height="18" viewBox="0 0 18 18">
           <path

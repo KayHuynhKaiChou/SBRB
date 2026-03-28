@@ -27,30 +27,9 @@ export function CanvasControls({ onAddWidget }: ICanvasControlsProps) {
   }, [toggleSnap]);
 
   return (
-    <div
-      style={{
-        position: 'absolute',
-        bottom: 24,
-        right: 24,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 8,
-        zIndex: 10,
-      }}
-    >
+    <div className="absolute bottom-6 right-6 flex flex-col gap-2 z-10">
       {/* Zoom controls */}
-      <div
-        style={{
-          background: '#fff',
-          border: '1px solid #f0f0f0',
-          borderRadius: 8,
-          padding: '6px 10px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 4,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        }}
-      >
+      <div className="bg-white border border-gray-100 rounded-lg px-[10px] py-[6px] flex items-center gap-1 shadow-[0_2px_8px_rgba(0,0,0,0.1)]">
         {ZOOM_LEVELS.map((level) => (
           <Button
             key={level}
@@ -75,7 +54,7 @@ export function CanvasControls({ onAddWidget }: ICanvasControlsProps) {
           type={snapEnabled ? 'primary' : 'default'}
           icon={<AppstoreOutlined />}
           onClick={toggleSnap}
-          style={{ borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+          className="!rounded-lg !shadow-[0_2px_8px_rgba(0,0,0,0.1)]"
         />
       </Tooltip>
 
@@ -83,13 +62,7 @@ export function CanvasControls({ onAddWidget }: ICanvasControlsProps) {
       <Button
         type="primary"
         onClick={onAddWidget}
-        style={{
-          borderRadius: 8,
-          boxShadow: '0 2px 8px rgba(215,42,68,0.35)',
-          background: '#D72A44',
-          borderColor: '#D72A44',
-          fontWeight: 600,
-        }}
+        className="!rounded-lg !shadow-[0_2px_8px_rgba(215,42,68,0.35)] !bg-[#D72A44] !border-[#D72A44] !font-semibold"
       >
         + Widget
       </Button>

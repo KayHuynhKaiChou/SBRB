@@ -21,16 +21,13 @@ interface PasswordStrength {
 function PasswordRequirement({ met, label }: { met: boolean; label: string }) {
   return (
     <div className="flex items-center gap-2">
-      <div
-        className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
-        style={{ background: met ? '#22C55E' : '#E5E7EB' }}
-      >
+      <div className={`w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 ${met ? 'bg-green-500' : 'bg-gray-200'}`}>
         {met
           ? <RiCheckLine size={10} color="white" />
           : <RiCloseLine size={10} color="#9CA3AF" />
         }
       </div>
-      <Typography.Text style={{ fontSize: 12, color: met ? '#16A34A' : '#9CA3AF' }}>
+      <Typography.Text className={`!text-xs ${met ? '!text-green-600' : '!text-gray-400'}`}>
         {label}
       </Typography.Text>
     </div>
@@ -72,23 +69,17 @@ export default function RegisterPage() {
   if (submitted) {
     return (
       <AuthLayout title="Kiểm tra email">
-        <div
-          className="rounded-xl p-6 text-center"
-          style={{ background: '#FFF7F8', border: '1px solid #FECDD3' }}
-        >
-          <div
-            className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
-            style={{ background: '#D72A44' }}
-          >
+        <div className="rounded-xl p-6 text-center bg-[#FFF7F8] border border-rose-200">
+          <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4 bg-[#D72A44]">
             <RiMailLine size={28} color="white" />
           </div>
-          <Typography.Title level={5} style={{ margin: '0 0 8px', color: '#111827' }}>
+          <Typography.Title level={5} className="!mt-0 !mb-2 !text-gray-900">
             Xác nhận email của bạn
           </Typography.Title>
-          <Typography.Text style={{ color: '#6B7280', fontSize: 14, display: 'block', marginBottom: 20 }}>
+          <Typography.Text className="!text-gray-500 !text-sm !block !mb-5">
             Chúng tôi đã gửi link xác nhận tới email của bạn. Vui lòng kiểm tra hộp thư.
           </Typography.Text>
-          <Link to="/auth/login" style={{ color: '#D72A44', fontWeight: 600, fontSize: 14 }}>
+          <Link to="/auth/login" className="!text-[#D72A44] !font-semibold !text-sm">
             Quay lại đăng nhập
           </Link>
         </div>
@@ -101,20 +92,20 @@ export default function RegisterPage() {
       <Form form={form} layout="vertical" onFinish={onFinish} size="large" requiredMark={false}>
         <Form.Item
           name="fullName"
-          label={<span style={{ fontWeight: 500, color: '#374151' }}>Họ và tên</span>}
+          label={<span className="font-medium text-gray-700">Họ và tên</span>}
           rules={[{ required: true, message: 'Vui lòng nhập họ và tên' }]}
         >
           <Input
             prefix={<RiUserLine color="#9CA3AF" />}
             placeholder="Nguyễn Văn A"
             autoComplete="name"
-            style={{ borderRadius: 8, height: 44 }}
+            className="!rounded-lg !h-11"
           />
         </Form.Item>
 
         <Form.Item
           name="email"
-          label={<span style={{ fontWeight: 500, color: '#374151' }}>Email</span>}
+          label={<span className="font-medium text-gray-700">Email</span>}
           rules={[
             { required: true, message: 'Vui lòng nhập email' },
             { type: 'email', message: 'Email không hợp lệ' },
@@ -124,13 +115,13 @@ export default function RegisterPage() {
             prefix={<RiMailLine color="#9CA3AF" />}
             placeholder="you@example.com"
             autoComplete="email"
-            style={{ borderRadius: 8, height: 44 }}
+            className="!rounded-lg !h-11"
           />
         </Form.Item>
 
         <Form.Item
           name="password"
-          label={<span style={{ fontWeight: 500, color: '#374151' }}>Mật khẩu</span>}
+          label={<span className="font-medium text-gray-700">Mật khẩu</span>}
           rules={[
             { required: true, message: 'Vui lòng nhập mật khẩu' },
             {
@@ -149,48 +140,37 @@ export default function RegisterPage() {
             placeholder="••••••••"
             autoComplete="new-password"
             onChange={(e) => checkPassword(e.target.value)}
-            style={{ borderRadius: 8, height: 44 }}
+            className="!rounded-lg !h-11"
           />
         </Form.Item>
 
         {/* Password strength indicators */}
-        <div
-          className="rounded-lg p-3 mb-4 flex flex-col gap-2"
-          style={{ background: '#F9FAFB', border: '1px solid #F3F4F6' }}
-        >
+        <div className="rounded-lg p-3 mb-4 flex flex-col gap-2 bg-gray-50 border border-gray-100">
           <PasswordRequirement met={strength.hasMinLength} label="Tối thiểu 8 ký tự" />
           <PasswordRequirement met={strength.hasUppercase} label="Ít nhất 1 chữ hoa (A-Z)" />
           <PasswordRequirement met={strength.hasDigit} label="Ít nhất 1 chữ số (0-9)" />
         </div>
 
-        <Form.Item style={{ marginBottom: 12 }}>
+        <Form.Item className="!mb-3">
           <Button
             type="primary"
             htmlType="submit"
             block
             loading={registerLoading}
-            style={{
-              height: 44,
-              borderRadius: 8,
-              background: '#D72A44',
-              border: 'none',
-              fontWeight: 600,
-              fontSize: 15,
-              boxShadow: '0 4px 12px rgba(215,42,68,0.3)',
-            }}
+            className="!h-11 !rounded-lg !bg-[#D72A44] !border-none !font-semibold !text-[15px] ![box-shadow:0_4px_12px_rgba(215,42,68,0.3)]"
           >
             Tạo tài khoản
           </Button>
         </Form.Item>
 
-        <Divider style={{ color: '#9CA3AF', fontSize: 13, margin: '12px 0' }}>hoặc tiếp tục với</Divider>
+        <Divider className="!text-gray-400 !text-[13px] !my-3">hoặc tiếp tục với</Divider>
 
         <GoogleOAuthButton label="Đăng ký với Google" />
 
         <div className="text-center mt-6">
           <Space size={4}>
-            <Typography.Text style={{ color: '#6B7280', fontSize: 14 }}>Đã có tài khoản?</Typography.Text>
-            <Link to="/auth/login" style={{ color: '#D72A44', fontWeight: 600, fontSize: 14 }}>
+            <Typography.Text className="!text-gray-500 !text-sm">Đã có tài khoản?</Typography.Text>
+            <Link to="/auth/login" className="!text-[#D72A44] !font-semibold !text-sm">
               Đăng nhập
             </Link>
           </Space>

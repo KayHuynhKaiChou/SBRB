@@ -8,14 +8,15 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
-/** Attempts silent token refresh on page reload before redirecting to login */
+/** Waits for Zustand hydration + silent token refresh before redirecting to login */
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
+  const hasHydrated = useAuthStore((s) => s._hasHydrated);
   const accessToken = useAuthStore((s) => s.accessToken);
   const { loading } = useAuthInit();
 
-  if (loading) {
+  if (!hasHydrated || loading) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+      <div className="flex items-center justify-center h-screen">
         <Spin size="large" />
       </div>
     );
