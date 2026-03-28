@@ -1,7 +1,6 @@
 import React from 'react';
-import { Space, Typography, Button, Dropdown } from 'antd';
-import { MoreOutlined, EditOutlined, DeleteOutlined, HolderOutlined } from '@ant-design/icons';
-import type { MenuProps } from 'antd';
+import { Space, Typography } from 'antd';
+import { HolderOutlined } from '@ant-design/icons';
 import type { IWidgetDto } from '@sbrb/shared-types';
 import type { IChartDataResult } from '../../hooks/use-chart-data';
 
@@ -9,8 +8,6 @@ const { Text } = Typography;
 
 interface IWidgetHeaderProps {
   widget: IWidgetDto;
-  onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
   /** Chart data passed from parent for rendering legend dots */
   chartData?: IChartDataResult | null;
 }
@@ -38,25 +35,8 @@ function LegendRow({ datasets }: { datasets: IChartDataResult['datasets'] }) {
   );
 }
 
-/** Widget card header: drag handle + title + unit + legend + kebab menu */
-export function WidgetHeader({ widget, onEdit, onDelete, chartData }: IWidgetHeaderProps) {
-  const menuItems: MenuProps['items'] = [
-    {
-      key: 'edit',
-      icon: <EditOutlined />,
-      label: 'Chỉnh sửa',
-      onClick: () => onEdit(widget.id),
-    },
-    { type: 'divider' },
-    {
-      key: 'delete',
-      icon: <DeleteOutlined />,
-      label: 'Xóa widget',
-      danger: true,
-      onClick: () => onDelete(widget.id),
-    },
-  ];
-
+/** Widget card header: drag handle + title + unit + legend */
+export function WidgetHeader({ widget, chartData }: IWidgetHeaderProps) {
   const hasLegend = chartData && chartData.datasets.length > 0;
 
   return (
@@ -70,8 +50,8 @@ export function WidgetHeader({ widget, onEdit, onDelete, chartData }: IWidgetHea
         borderBottom: '1px solid #f0f0f5',
       }}
     >
-      {/* Top row: drag handle + title + unit + kebab */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      {/* Top row: drag handle + title + unit */}
+      <div style={{ display: 'flex', alignItems: 'center' }}>
         <Space size={6} style={{ flex: 1, minWidth: 0 }}>
           <HolderOutlined style={{ fontSize: 13, color: '#d9d9d9', cursor: 'grab', flexShrink: 0 }} />
           <Text
@@ -87,16 +67,6 @@ export function WidgetHeader({ widget, onEdit, onDelete, chartData }: IWidgetHea
             </Text>
           )}
         </Space>
-
-        <Dropdown menu={{ items: menuItems }} trigger={['click']} placement="bottomRight">
-          <Button
-            type="text"
-            size="small"
-            icon={<MoreOutlined style={{ fontSize: 15, color: '#8c8c8c' }} />}
-            onClick={(e) => e.stopPropagation()}
-            style={{ borderRadius: 4, flexShrink: 0 }}
-          />
-        </Dropdown>
       </div>
 
       {/* Legend row — only when chart data available */}

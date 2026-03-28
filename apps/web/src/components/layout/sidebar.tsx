@@ -15,7 +15,7 @@ import { useAuthStore } from '../../store/auth.store';
 
 const { Sider } = Layout;
 
-/** kpiee sidebar: 60px icon-only, dark wine red */
+/** sbrb sidebar: 60px icon-only, dark wine red */
 const SIDEBAR_BG = '#7A1528';
 const ICON_COLOR = 'rgba(255,255,255,0.55)';
 const ICON_ACTIVE_COLOR = '#ffffff';
@@ -27,18 +27,20 @@ interface INavIconProps {
   label: string;
   active?: boolean;
   onClick: () => void;
+  /** When true: shows reduced opacity and disables pointer events */
+  disabled?: boolean;
 }
 
-function NavIcon({ icon, label, active, onClick }: INavIconProps) {
+function NavIcon({ icon, label, active, onClick, disabled }: INavIconProps) {
   const [hovered, setHovered] = React.useState(false);
 
-  const bg = active ? ICON_ACTIVE_BG : hovered ? ICON_HOVER_BG : 'transparent';
+  const bg = active ? ICON_ACTIVE_BG : hovered && !disabled ? ICON_HOVER_BG : 'transparent';
   const color = active ? ICON_ACTIVE_COLOR : ICON_COLOR;
 
   return (
-    <Tooltip title={label} placement="right">
+    <Tooltip title={disabled ? `${label} (sắp ra mắt)` : label} placement="right">
       <div
-        onClick={onClick}
+        onClick={disabled ? undefined : onClick}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         style={{
@@ -48,13 +50,14 @@ function NavIcon({ icon, label, active, onClick }: INavIconProps) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          cursor: 'pointer',
+          cursor: disabled ? 'not-allowed' : 'pointer',
           background: bg,
           color,
           fontSize: 18,
           margin: '2px 8px',
           transition: 'background 0.15s, color 0.15s',
-          borderLeft: active ? '3px solid var(--kpiee-accent-coral)' : '3px solid transparent',
+          borderLeft: active ? '3px solid var(--sbrb-accent-coral)' : '3px solid transparent',
+          opacity: disabled ? 0.4 : 1,
         }}
       >
         {icon}
@@ -108,7 +111,7 @@ export function Sidebar() {
             textTransform: 'lowercase',
           }}
         >
-          kpiee
+          SBRB
         </span>
       </div>
 
@@ -118,7 +121,7 @@ export function Sidebar() {
           icon={<AppstoreOutlined />}
           label="Dashboard"
           active={isDashboard}
-          onClick={() => navigate(currentBusinessId ? `/dashboard/${currentBusinessId}` : '/onboarding')}
+          onClick={() => navigate(currentBusinessId ? '/dashboard' : '/onboarding')}
         />
         <NavIcon
           icon={<TableOutlined />}
@@ -130,22 +133,22 @@ export function Sidebar() {
           icon={<BarChartOutlined />}
           label="Benchmark"
           active={false}
-          // eslint-disable-next-line @typescript-eslint/no-empty-function
-          onClick={() => {}}
+          disabled
+          onClick={() => undefined}
         />
         <NavIcon
           icon={<MessageOutlined />}
           label="Talk Room"
           active={false}
-          // eslint-disable-next-line @typescript-eslint/no-empty-function
-          onClick={() => {}}
+          disabled
+          onClick={() => undefined}
         />
         <NavIcon
           icon={<DatabaseOutlined />}
           label="Data Box"
           active={false}
-          // eslint-disable-next-line @typescript-eslint/no-empty-function
-          onClick={() => {}}
+          disabled
+          onClick={() => undefined}
         />
       </div>
 
@@ -161,8 +164,7 @@ export function Sidebar() {
           gap: 4,
         }}
       >
-        {/* eslint-disable-next-line @typescript-eslint/no-empty-function */}
-        <NavIcon icon={<SettingOutlined />} label="Cài đặt" active={false} onClick={() => {}} />
+        <NavIcon icon={<SettingOutlined />} label="Cài đặt" active={false} disabled onClick={() => undefined} />
         <Tooltip title="Thông báo" placement="right">
           <div
             style={{
@@ -200,7 +202,7 @@ export function Sidebar() {
               size={28}
               src={user?.avatarUrl}
               icon={!user?.avatarUrl ? <UserOutlined /> : undefined}
-              style={{ background: 'var(--kpiee-accent-coral)' }}
+              style={{ background: 'var(--sbrb-accent-coral)' }}
             />
           </div>
         </Tooltip>

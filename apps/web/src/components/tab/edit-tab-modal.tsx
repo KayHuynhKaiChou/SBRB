@@ -1,20 +1,9 @@
 import React, { useEffect } from 'react';
-import { Modal, Form, Input, Select, Switch } from 'antd';
+import { Form, Input, Select, Switch } from 'antd';
 import type { ITabDto } from '@sbrb/shared-types';
 import type { IUpdateTabInput } from '../../hooks/use-tabs';
-
-const PRESET_COLORS = [
-  '#1677ff', '#52c41a', '#fa8c16', '#f5222d', '#722ed1',
-  '#13c2c2', '#eb2f96', '#faad14', '#2f54eb', '#a0d911',
-];
-
-const ICON_OPTIONS = [
-  { value: 'chart-bar', label: 'Biểu đồ cột' },
-  { value: 'table', label: 'Bảng' },
-  { value: 'stats', label: 'Thống kê' },
-  { value: 'trending', label: 'Xu hướng' },
-  { value: 'report', label: 'Báo cáo' },
-];
+import { TAB_PRESET_COLORS, TAB_ICON_OPTIONS } from '../../constants/tab-config';
+import { FormModal } from '../common/form-modal';
 
 interface IEditTabModalProps {
   open: boolean;
@@ -37,53 +26,46 @@ export function EditTabModal({ open, tab, onClose, onSubmit }: IEditTabModalProp
     }
   }, [tab, open, form]);
 
-  const handleOk = async () => {
+  const handleSubmit = async (values: IUpdateTabInput) => {
     if (!tab) return;
-    try {
-      const values = await form.validateFields();
-      await onSubmit(tab.id, values);
-      onClose();
-    } catch {
-      // validation errors shown inline
-    }
+    await onSubmit(tab.id, values);
   };
 
   return (
-    <Modal
+    <FormModal<IUpdateTabInput>
       title="Sửa tab"
       open={open}
-      onOk={handleOk}
-      onCancel={onClose}
+      onClose={onClose}
+      onSubmit={handleSubmit}
       okText="Lưu"
       cancelText="Hủy"
       width={480}
+      form={form}
     >
-      <Form form={form} layout="vertical">
-        <Form.Item name="name" label="Tên tab" rules={[{ required: true, message: 'Vui lòng nhập tên tab', max: 30 }]}>
-          <Input placeholder="Nhập tên tab (tối đa 30 ký tự)" maxLength={30} showCount />
-        </Form.Item>
+      <Form.Item name="name" label="Tên tab" rules={[{ required: true, message: 'Vui lòng nhập tên tab', max: 30 }]}>
+        <Input placeholder="Nhập tên tab (tối đa 30 ký tự)" maxLength={30} showCount />
+      </Form.Item>
 
-        <Form.Item name="iconColor" label="Màu sắc">
-          <Select style={{ width: '100%' }}>
-            {PRESET_COLORS.map((c) => (
-              <Select.Option key={c} value={c}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ width: 12, height: 12, borderRadius: '50%', background: c, display: 'inline-block' }} />
-                  {c}
-                </span>
-              </Select.Option>
-            ))}
-          </Select>
-        </Form.Item>
+      <Form.Item name="iconColor" label="Màu sắc">
+        <Select className="w-full">
+          {TAB_PRESET_COLORS.map((c) => (
+            <Select.Option key={c} value={c}>
+              <span className="flex items-center gap-2">
+                <span className="inline-block w-3 h-3 rounded-full" style={{ background: c }} />
+                {c}
+              </span>
+            </Select.Option>
+          ))}
+        </Select>
+      </Form.Item>
 
-        <Form.Item name="iconName" label="Biểu tượng">
-          <Select options={ICON_OPTIONS} />
-        </Form.Item>
+      <Form.Item name="iconName" label="Biểu tượng">
+        <Select options={TAB_ICON_OPTIONS} />
+      </Form.Item>
 
-        <Form.Item name="isPinned" label="Ghim tab" valuePropName="checked">
-          <Switch />
-        </Form.Item>
-      </Form>
-    </Modal>
+      <Form.Item name="isPinned" label="Ghim tab" valuePropName="checked">
+        <Switch />
+      </Form.Item>
+    </FormModal>
   );
 }

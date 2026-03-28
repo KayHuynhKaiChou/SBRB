@@ -1,5 +1,6 @@
 import React from 'react';
-import { Modal, Form, Input } from 'antd';
+import { Form, Input } from 'antd';
+import { FormModal } from '../common/form-modal';
 
 interface IAddWidgetInput {
   name: string;
@@ -14,44 +15,29 @@ interface IAddWidgetModalProps {
 }
 
 export function AddWidgetModal({ open, onClose, onSubmit }: IAddWidgetModalProps) {
-  const [form] = Form.useForm();
-
-  const handleOk = async () => {
-    try {
-      const values = await form.validateFields();
-      await onSubmit(values);
-      form.resetFields();
-      onClose();
-    } catch {
-      // validation errors shown inline
-    }
-  };
-
   return (
-    <Modal
+    <FormModal<IAddWidgetInput>
       title="Thêm widget mới"
       open={open}
-      onOk={handleOk}
-      onCancel={() => { form.resetFields(); onClose(); }}
+      onClose={onClose}
+      onSubmit={onSubmit}
       okText="Thêm"
       cancelText="Hủy"
       width={440}
     >
-      <Form form={form} layout="vertical">
-        <Form.Item
-          name="name"
-          label="Tên widget"
-          rules={[{ required: true, message: 'Vui lòng nhập tên widget' }]}
-        >
-          <Input placeholder="Nhập tên widget" />
-        </Form.Item>
-        <Form.Item name="metricName" label="Chỉ số đo lường">
-          <Input placeholder="Ví dụ: Doanh thu, Chi phí..." />
-        </Form.Item>
-        <Form.Item name="unit" label="Đơn vị">
-          <Input placeholder="Ví dụ: VND, USD, %" />
-        </Form.Item>
-      </Form>
-    </Modal>
+      <Form.Item
+        name="name"
+        label="Tên widget"
+        rules={[{ required: true, message: 'Vui lòng nhập tên widget' }]}
+      >
+        <Input placeholder="Nhập tên widget" />
+      </Form.Item>
+      <Form.Item name="metricName" label="Chỉ số đo lường">
+        <Input placeholder="Ví dụ: Doanh thu, Chi phí..." />
+      </Form.Item>
+      <Form.Item name="unit" label="Đơn vị">
+        <Input placeholder="Ví dụ: VND, USD, %" />
+      </Form.Item>
+    </FormModal>
   );
 }

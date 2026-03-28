@@ -1,20 +1,17 @@
-import React from 'react';
-import { Layout, Button, Tooltip, Dropdown } from 'antd';
-import {
-  PlusOutlined,
-  BarChartOutlined,
-  AppstoreOutlined,
-  PictureOutlined,
-  LogoutOutlined,
-  SettingOutlined,
-} from '@ant-design/icons';
-import type { MenuProps } from 'antd';
+import React, { useEffect } from 'react';
+import { Layout, Select, Tooltip } from 'antd';
+import { PlusOutlined, AppstoreOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import type { ITabDto } from '@sbrb/shared-types';
-import { useAuthStore } from '../../store/auth.store';
+import type { ZoomLevel } from '@sbrb/shared-types';
+import { IconButton } from '@sbrb/ui';
 import { useCanvasStore } from '../../store/canvas.store';
 import { BusinessSwitcher } from './business-switcher';
+import { sortTabsByPinnedThenOrder } from '../../utils/tab-sort';
 
 const { Header: AntHeader } = Layout;
+
+const ZOOM_OPTIONS: ZoomLevel[] = [50, 75, 100, 125];
 
 interface IHeaderProps {
   tabs: ITabDto[];
@@ -23,6 +20,7 @@ interface IHeaderProps {
   onAddTab: () => void;
   onEditTab: (tab: ITabDto) => void;
   onDeleteTab: (id: string) => void;
+  onAddWidget?: () => void;
 }
 
 export function Header({
@@ -32,32 +30,23 @@ export function Header({
   onAddTab,
   onEditTab,
   onDeleteTab,
+  onAddWidget,
 }: IHeaderProps) {
-  const { clearAuth } = useAuthStore();
-  const { zoom } = useCanvasStore();
+  const { t } = useTranslation(['dashboard', 'common']);
+  const { zoom, setZoom, snapEnabled, toggleSnap } = useCanvasStore();
+  const sorted = sortTabsByPinnedThenOrder(tabs);
 
-  // Sort tabs: pinned first, then by order
-  const sorted = [...tabs].sort((a, b) => {
-    if (a.isPinned && !b.isPinned) return -1;
-    if (!a.isPinned && b.isPinned) return 1;
-    return a.order - b.order;
-  });
-
-  const userMenuItems: MenuProps['items'] = [
-    {
-      key: 'profile',
-      icon: <SettingOutlined />,
-      label: 'Cài đặt tài khoản',
-    },
-    { type: 'divider' },
-    {
-      key: 'logout',
-      icon: <LogoutOutlined />,
-      label: 'Đăng xuất',
-      danger: true,
-      onClick: () => clearAuth(),
-    },
-  ];
+  // Alt key toggles snap
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Alt') {
+        e.preventDefault();
+        toggleSnap();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [toggleSnap]);
 
   return (
     <AntHeader
@@ -109,7 +98,7 @@ export function Header({
                   cursor: 'pointer',
                   fontSize: 12,
                   fontWeight: isActive ? 600 : 400,
-                  background: isActive ? 'var(--kpiee-accent-coral)' : 'var(--kpiee-tab-inactive-bg)',
+                  background: isActive ? 'var(--sbrb-accent-coral)' : 'var(--sbrb-tab-inactive-bg)',
                   color: isActive ? '#ffffff' : '#555',
                   transition: 'background 0.15s, color 0.15s',
                   whiteSpace: 'nowrap',
@@ -124,70 +113,43 @@ export function Header({
         })}
 
         {/* Add tab button */}
-        <Tooltip title="Thêm tab mới">
-          <Button
-            type="text"
-            size="small"
-            icon={<PlusOutlined />}
-            onClick={onAddTab}
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: 20,
-              background: 'var(--kpiee-tab-inactive-bg)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              color: '#888',
-            }}
-          />
-        </Tooltip>
+        <IconButton
+          icon={<PlusOutlined />}
+          tooltip={t('dashboard:add_tab_tooltip')}
+          size="small"
+          onClick={onAddTab}
+        />
       </div>
 
-      {/* Right side: widget type icons + zoom */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-        <Tooltip title="Biểu đồ">
-          <Button
-            type="text"
-            icon={<BarChartOutlined />}
-            size="small"
-            style={{ color: '#888', fontSize: 15 }}
-          />
-        </Tooltip>
-        <Tooltip title="Lưới">
-          <Button
-            type="text"
-            icon={<AppstoreOutlined />}
-            size="small"
-            style={{ color: '#888', fontSize: 15 }}
-          />
-        </Tooltip>
-        <Tooltip title="Hình ảnh">
-          <Button
-            type="text"
-            icon={<PictureOutlined />}
-            size="small"
-            style={{ color: '#888', fontSize: 15 }}
-          />
-        </Tooltip>
+      {/* Right side: add widget + snap grid + zoom select */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+        <IconButton
+          icon={<PlusOutlined />}
+          tooltip={t('dashboard:add_widget')}
+          size="small"
+          onClick={onAddWidget}
+        />
+
+        <IconButton
+          icon={<AppstoreOutlined />}
+          tooltip={snapEnabled ? t('dashboard:snap_grid_on') : t('dashboard:snap_grid_off')}
+          size="small"
+          active={snapEnabled}
+          onClick={toggleSnap}
+        />
 
         {/* Divider */}
-        <div style={{ width: 1, height: 18, background: '#e8e8e8', margin: '0 4px' }} />
+        <div style={{ width: 1, height: 18, background: '#e8e8e8' }} />
 
-        {/* Zoom indicator */}
-        <span
-          style={{
-            fontSize: 12,
-            color: '#888',
-            background: 'var(--kpiee-tab-inactive-bg)',
-            padding: '2px 8px',
-            borderRadius: 12,
-            fontVariantNumeric: 'tabular-nums',
-          }}
-        >
-          {zoom}%
-        </span>
+        {/* Zoom select */}
+        <Select
+          value={zoom}
+          onChange={(v) => setZoom(v as ZoomLevel)}
+          size="small"
+          variant="borderless"
+          style={{ width: 80 }}
+          options={ZOOM_OPTIONS.map((z) => ({ value: z, label: `${z}%` }))}
+        />
       </div>
     </AntHeader>
   );

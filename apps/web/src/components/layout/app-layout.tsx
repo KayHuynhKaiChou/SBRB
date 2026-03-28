@@ -14,6 +14,7 @@ interface IAppLayoutProps {
   onAddTab: () => void;
   onEditTab: (tab: ITabDto) => void;
   onDeleteTab: (id: string) => void;
+  onAddWidget?: () => void;
 }
 
 export function AppLayout({
@@ -24,6 +25,7 @@ export function AppLayout({
   onAddTab,
   onEditTab,
   onDeleteTab,
+  onAddWidget,
 }: IAppLayoutProps) {
   return (
     <Layout style={{ height: '100vh', overflow: 'hidden' }}>
@@ -47,6 +49,7 @@ export function AppLayout({
           onAddTab={onAddTab}
           onEditTab={onEditTab}
           onDeleteTab={onDeleteTab}
+          onAddWidget={onAddWidget}
         />
         <Content
           style={{

@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Rnd } from 'react-rnd';
+import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import type { IWidgetDto } from '@sbrb/shared-types';
+import { IconButton } from '@sbrb/ui';
 import { useChartData } from '../../hooks/use-chart-data';
 import { InlineChartPreview } from '../widget/inline-chart-preview';
 import { WidgetHeader } from './widget-header';
@@ -13,7 +16,6 @@ interface IWidgetCardProps {
   onDelete: (id: string) => void;
   onDragStop: (widgetId: string, x: number, y: number) => void;
   onResizeStop: (widgetId: string, pos: { x: number; y: number }, size: { w: number; h: number }) => void;
-  /** Optional: called when user clicks "Chọn dữ liệu" in the widget modal */
   onOpenDataSelector?: (widgetId: string) => void;
 }
 
@@ -27,12 +29,14 @@ export function WidgetCard({
   onOpenDataSelector,
 }: IWidgetCardProps) {
   const { position } = widget;
+  const { t } = useTranslation(['widget', 'common']);
   const [modalOpen, setModalOpen] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const { chartData, loading } = useChartData(widget.id);
 
-  const handleEditClick = (id: string) => {
+  const handleEditClick = () => {
     setModalOpen(true);
-    onEdit(id);
+    onEdit(widget.id);
   };
 
   const handleOpenDataSelector = () => {
@@ -69,23 +73,45 @@ export function WidgetCard({
             height: '100%',
             background: '#ffffff',
             borderRadius: 12,
-            boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+            boxShadow: hovered ? '0 4px 20px rgba(0,0,0,0.12)' : '0 2px 12px rgba(0,0,0,0.06)',
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
             transition: 'box-shadow 0.2s',
+            position: 'relative',
           }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 20px rgba(0,0,0,0.12)';
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLDivElement).style.boxShadow = '0 2px 12px rgba(0,0,0,0.06)';
-          }}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
         >
+          {/* Hover action buttons — top-right corner */}
+          {hovered && (
+            <div
+              style={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                display: 'flex',
+                gap: 4,
+                zIndex: 5,
+              }}
+            >
+              <IconButton
+                icon={<EditOutlined />}
+                tooltip={t('common:edit')}
+                size="small"
+                onClick={handleEditClick}
+              />
+              <IconButton
+                icon={<DeleteOutlined />}
+                tooltip={t('widget:delete_tooltip')}
+                size="small"
+                onClick={() => onDelete(widget.id)}
+              />
+            </div>
+          )}
+
           <WidgetHeader
             widget={widget}
-            onEdit={handleEditClick}
-            onDelete={onDelete}
             chartData={chartData}
           />
 

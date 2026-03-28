@@ -3,7 +3,6 @@ import { Typography } from 'antd';
 import { useCanvas } from '../../hooks/use-canvas';
 import { useCanvasStore } from '../../store/canvas.store';
 import { WidgetCard } from './widget-card';
-import { CanvasControls } from './canvas-controls';
 
 const { Text } = Typography;
 
@@ -96,7 +95,6 @@ export function CanvasContainer({
         </div>
       </div>
 
-      <CanvasControls onAddWidget={onAddWidget} />
     </div>
   );
 }
