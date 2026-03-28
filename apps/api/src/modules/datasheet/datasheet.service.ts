@@ -4,29 +4,29 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bull';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Queue } from 'bull';
 import { Repository } from 'typeorm';
-import { v4 as uuidv4 } from 'uuid';
 import * as ExcelJS from 'exceljs';
-import { MinioService } from '../../common/services/minio.service';
-import { IMPORT_QUEUE } from '../../common/constants/queue.constants';
 import { BusinessMember } from '../business/entities/business-member.entity';
 import { Widget } from '../widget/entities/widget.entity';
 import { DataSheet } from './entities/data-sheet.entity';
 import { DataSeries } from './entities/data-series.entity';
 import { ImportBatch } from './entities/import-batch.entity';
-import { IImportJobData, IUploadResult } from './dto/datasheet.type';
+import { UpdateDatasheetDto } from './dto/update-datasheet.dto';
+import { parseFileBuffer, validateParseResult } from '../../../../worker/src/processors/import-excel-parser';
 
-const MINIO_BUCKET = process.env.MINIO_BUCKET || 'sbrb';
 const ALLOWED_MIMES = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-excel',
+  'application/x-xlsx',
+  'application/x-excel',
+  'application/excel',
   'text/csv',
+  'text/plain',
 ];
 const MANAGER_ROLES = ['owner', 'manager'];
 
-/** DataSheet CRUD + upload service — SRS 4.7 / 4.8 */
+/** DataSheet CRUD + direct-parse import service — SRS 4.7 / 4.8 */
 @Injectable()
 export class DatasheetService {
   constructor(
@@ -40,55 +40,90 @@ export class DatasheetService {
     private readonly memberRepo: Repository<BusinessMember>,
     @InjectRepository(Widget)
     private readonly widgetRepo: Repository<Widget>,
-    @InjectQueue(IMPORT_QUEUE)
-    private readonly importQueue: Queue,
-    private readonly minioService: MinioService,
   ) {}
 
+  /** Upload + parse Excel/CSV synchronously, save series to DB — no MinIO, no queue */
   async upload(
     file: Express.Multer.File,
     businessId: string,
     userId: string,
-  ): Promise<IUploadResult> {
-    if (!ALLOWED_MIMES.includes(file.mimetype)) {
-      throw new BadRequestException('Chỉ chấp nhận file .xlsx hoặc .csv');
+  ): Promise<{ batchId: string; datasheetId: string; status: string }> {
+    // Validate file type by extension or MIME type
+    const ext = file.originalname.toLowerCase().split('.').pop();
+    const isValidExt = ['xlsx', 'xls', 'csv'].includes(ext || '');
+    const isValidMime = ALLOWED_MIMES.includes(file.mimetype);
+
+    if (!isValidExt && !isValidMime) {
+      throw new BadRequestException(`Chỉ chấp nhận file .xlsx hoặc .csv`);
     }
     await this.requireManagerMember(businessId, userId);
 
-    const fileKey = `${businessId}/imports/${uuidv4()}-${file.originalname}`;
-    await this.minioService.upload(MINIO_BUCKET, fileKey, file.buffer, file.mimetype);
+    // Parse and validate
+    const { headers, rows, warnings } = await parseFileBuffer(file.buffer, file.originalname);
+    try {
+      validateParseResult(headers, rows);
+    } catch (e) {
+      throw new BadRequestException(e instanceof Error ? e.message : String(e));
+    }
 
+    // Create DataSheet record
     const sheet = this.sheetRepo.create({
       businessId,
       uploadedBy: userId,
       name: file.originalname,
       originalFilename: file.originalname,
-      fileUrl: fileKey,
+      fileUrl: null,
       status: 'processing',
+      periodHeaders: headers,
+      periodCount: headers.length,
+      seriesCount: rows.length,
     });
     const savedSheet = await this.sheetRepo.save(sheet);
 
+    // Create ImportBatch record
     const batch = this.batchRepo.create({
       businessId,
       uploaderId: userId,
       dataSheetId: savedSheet.id,
       originalFilename: file.originalname,
-      fileUrl: fileKey,
+      fileUrl: null,
       status: 'processing',
     });
     const savedBatch = await this.batchRepo.save(batch);
 
-    const jobData: IImportJobData = {
-      batchId: savedBatch.id,
-      businessId,
-      datasheetId: savedSheet.id,
-      filePath: fileKey,
-      fileName: file.originalname,
-      uploadedBy: userId,
-    };
-    await this.importQueue.add('import-excel', jobData);
+    try {
+      // Save DataSeries records
+      const seriesEntities = rows.map((row, idx) =>
+        this.seriesRepo.create({
+          dataSheetId: savedSheet.id,
+          seriesName: row.name,
+          rowIndex: idx,
+          values: Object.fromEntries(
+            Object.entries(row.values).map(([k, v]) => [k, v ?? 0]),
+          ),
+        }),
+      );
+      await this.seriesRepo.save(seriesEntities);
 
-    return { batchId: savedBatch.id, datasheetId: savedSheet.id, status: 'processing' };
+      // Mark sheet + batch as ready
+      await this.sheetRepo.update(savedSheet.id, {
+        status: 'ready',
+        importedAt: new Date(),
+        errorMessage: warnings.length ? warnings.join('; ') : null,
+      });
+      await this.batchRepo.update(savedBatch.id, {
+        status: 'success',
+        successRows: rows.length,
+        errorRows: 0,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      await this.sheetRepo.update(savedSheet.id, { status: 'error', errorMessage: msg });
+      await this.batchRepo.update(savedBatch.id, { status: 'error', errorMessage: msg });
+      throw new BadRequestException(`Import thất bại: ${msg}`);
+    }
+
+    return { batchId: savedBatch.id, datasheetId: savedSheet.id, status: 'ready' };
   }
 
   async findByBusiness(businessId: string, userId: string): Promise<DataSheet[]> {
@@ -176,42 +211,79 @@ export class DatasheetService {
     return Buffer.from(buf);
   }
 
+  /** Reimport: parse new file, replace all existing series */
   async reimport(
     datasheetId: string,
     file: Express.Multer.File,
     userId: string,
-  ): Promise<IUploadResult> {
+  ): Promise<{ batchId: string; datasheetId: string; status: string }> {
     const sheet = await this.findSheetOrFail(datasheetId);
     await this.requireManagerMember(sheet.businessId, userId);
 
-    if (!ALLOWED_MIMES.includes(file.mimetype)) {
+    // Validate file type by extension or MIME type
+    const ext = file.originalname.toLowerCase().split('.').pop();
+    const isValidExt = ['xlsx', 'xls', 'csv'].includes(ext || '');
+    const isValidMime = ALLOWED_MIMES.includes(file.mimetype);
+
+    if (!isValidExt && !isValidMime) {
       throw new BadRequestException('Chỉ chấp nhận file .xlsx hoặc .csv');
     }
 
-    const fileKey = `${sheet.businessId}/imports/${uuidv4()}-${file.originalname}`;
-    await this.minioService.upload(MINIO_BUCKET, fileKey, file.buffer, file.mimetype);
+    const { headers, rows, warnings } = await parseFileBuffer(file.buffer, file.originalname);
+    try {
+      validateParseResult(headers, rows);
+    } catch (e) {
+      throw new BadRequestException(e instanceof Error ? e.message : String(e));
+    }
 
     const batch = this.batchRepo.create({
       businessId: sheet.businessId,
       uploaderId: userId,
       dataSheetId: datasheetId,
       originalFilename: file.originalname,
-      fileUrl: fileKey,
+      fileUrl: null,
       status: 'processing',
     });
     const savedBatch = await this.batchRepo.save(batch);
 
-    const jobData: IImportJobData = {
-      batchId: savedBatch.id,
-      businessId: sheet.businessId,
-      datasheetId,
-      filePath: fileKey,
-      fileName: file.originalname,
-      uploadedBy: userId,
-    };
-    await this.importQueue.add('import-excel', jobData);
+    try {
+      // Delete existing series then re-insert
+      await this.seriesRepo.delete({ dataSheetId: datasheetId });
 
-    return { batchId: savedBatch.id, datasheetId, status: 'processing' };
+      const seriesEntities = rows.map((row, idx) =>
+        this.seriesRepo.create({
+          dataSheetId: datasheetId,
+          seriesName: row.name,
+          rowIndex: idx,
+          values: Object.fromEntries(
+            Object.entries(row.values).map(([k, v]) => [k, v ?? 0]),
+          ),
+        }),
+      );
+      await this.seriesRepo.save(seriesEntities);
+
+      await this.sheetRepo.update(datasheetId, {
+        status: 'ready',
+        importedAt: new Date(),
+        periodHeaders: headers,
+        periodCount: headers.length,
+        seriesCount: rows.length,
+        originalFilename: file.originalname,
+        errorMessage: warnings.length ? warnings.join('; ') : null,
+      });
+      await this.batchRepo.update(savedBatch.id, {
+        status: 'success',
+        successRows: rows.length,
+        errorRows: 0,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      await this.sheetRepo.update(datasheetId, { status: 'error', errorMessage: msg });
+      await this.batchRepo.update(savedBatch.id, { status: 'error', errorMessage: msg });
+      throw new BadRequestException(`Reimport thất bại: ${msg}`);
+    }
+
+    return { batchId: savedBatch.id, datasheetId, status: 'ready' };
   }
 
   // ---------------------------------------------------------------------------
