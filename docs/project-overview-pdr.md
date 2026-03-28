@@ -4,9 +4,9 @@
 
 **Name:** SBRB — Small Business Report Board
 
-**Version:** 2.3 (Phase 2A-2B Complete)
+**Version:** 2.4 (Phase 2E Complete)
 
-**Status:** Phase 1 ✅ Complete, Phase 2A (Auth) ✅ Complete, Phase 2B (Business) ✅ Complete, Phase 2C (Tabs) Next
+**Status:** Phase 1 ✅ Complete, Phase 2A (Auth) ✅ Complete, Phase 2B (Business) ✅ Complete, Phase 2C (Tabs) ✅ Complete, Phase 2D (Canvas) ✅ Complete, Phase 2E (Data Import) ✅ Complete
 
 **Description:** Free-form canvas dashboard builder for SMEs. Enables businesses to create pixel-based dashboards with draggable widgets showing data visualizations (charts, tables, KPIs). No grid constraints—widgets placed at absolute coordinates (x, y) with collision detection.
 
@@ -85,10 +85,10 @@
 |-------|-------|--------|-----------|
 | 1 | NX scaffold, project setup, CI/CD skeleton | ✅ COMPLETE (2026-03-22) | Repo ready, Docker Compose works |
 | 2A | Auth (JWT+OAuth, email verify, rate limit) | ✅ COMPLETE (2026-03-22) | 80+ tests passing |
-| 2B | Business & multi-tenancy (roles, invites) | ✅ COMPLETE (2026-03-22) | 78+ tests passing (202 total) |
-| 2C | Tab CRUD, reorder, duplicate | → NEXT UP | Target: 2026-05-03 |
-| 2D | Canvas, widget drag+drop, collision detection | → PENDING | Target: 2026-05-17 |
-| 2E | Data import (Excel/CSV), BullMQ processing | → PENDING | Target: 2026-05-31 |
+| 2B | Business & multi-tenancy (roles, invites) | ✅ COMPLETE (2026-03-22) | 78+ tests passing |
+| 2C | Tab CRUD, reorder, duplicate | ✅ COMPLETE (2026-03-28) | Tab colors, icons, pinning |
+| 2D | Canvas, widget drag+drop, collision detection | ✅ COMPLETE (2026-03-28) | 3200×4800px, snap grid, collision |
+| 2E | Data import (Excel/CSV), BullMQ processing | ✅ COMPLETE (2026-03-28) | DataSheet + DataSeries + DataValues |
 | 3 | Export (PNG/PDF), analytics, datasheet editor | → PENDING | Target: 2026-07-15 |
 | 4 | Notifications, Audit log dashboard, email | → PENDING | Target: 2026-08-26 |
 | 5 | Electron desktop, offline sync, SQLite | → PENDING | Target: 2026-10-28 |
@@ -149,10 +149,10 @@
 - Mail service (Gmail SMTP, Handlebars templates)
 - Audit service (mutation tracking)
 
-**Test Coverage:** 202 total tests, 0 failures, all phases passing
+**Test Coverage:** 237 total tests, 32 test suites, 0 failures
 
-**Next Phase (2C):** Tab management (create, rename, delete, reorder, duplicate)
+**Current Phase (3):** Chart display & export (pending)
 
 ---
 
-**Document Version:** 2.3 | **Last Updated:** 2026-03-22 | **Author:** Documentation Team
+**Document Version:** 2.4 | **Last Updated:** 2026-03-28 | **Author:** Documentation Team

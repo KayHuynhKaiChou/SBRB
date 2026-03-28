@@ -5,15 +5,16 @@
 ```
 sbrb/
 ├── apps/
-│   ├── web/                    # ReactJS 18 web app (Vite)
+│   ├── web/                    # ReactJS 18 web app (Vite, SPA)
 │   ├── api/                    # NestJS 10 GraphQL+REST backend
-│   └── worker/                 # BullMQ worker for async jobs
+│   ├── worker/                 # BullMQ worker for async jobs
+│   └── desktop/                # Electron cross-platform app
 ├── libs/
 │   ├── shared/
 │   │   ├── types/              # TypeScript DTOs, interfaces
 │   │   ├── constants/          # CHART_COLORS, SNAP_GRID, sizes
 │   │   └── utils/              # Collision detection, snap calculations
-│   ├── ui/                     # React components (Button, Modal, etc.)
+│   ├── ui/                     # React components (IconButton, ModalActions, FormModal)
 │   └── i18n/                   # i18next translations (vi, en)
 ├── nx.json                     # NX workspace config
 ├── tsconfig.base.json          # Root TypeScript config
@@ -338,20 +339,49 @@ DataSeries {
 
 ---
 
-## Module Implementation Status (2026-03-22)
+## Module Implementation Status (2026-03-28)
 
 | Module | Status | Key Files | Tests |
 |--------|--------|-----------|-------|
-| auth | ✅ IMPLEMENTED | auth.service.ts, jwt.strategy.ts, google.strategy.ts, redis-rate-limit.service.ts | 80+ ✅ |
+| auth | ✅ IMPLEMENTED | auth.service.ts, jwt.strategy.ts, google.strategy.ts | 80+ ✅ |
 | user | ✅ IMPLEMENTED | user.service.ts, user.resolver.ts | Incl. in auth |
-| business | ✅ IMPLEMENTED | business.service.ts, business-crud.service.ts, business-ownership.service.ts, member.service.ts, invitation.service.ts | 78+ ✅ |
-| audit | ✅ IMPLEMENTED | audit.service.ts | Incl. in business |
+| business | ✅ IMPLEMENTED | business.service.ts, business-crud.service.ts, member.service.ts | 78+ ✅ |
+| tab | ✅ IMPLEMENTED | tab.service.ts, tab.resolver.ts (CRUD, reorder, colors) | 15+ ✅ |
+| widget | ✅ IMPLEMENTED | widget.service.ts, widget.resolver.ts (position, collision) | 20+ ✅ |
+| datasheet | ✅ IMPLEMENTED | datasheet.service.ts, import-excel.processor.ts | 15+ ✅ |
+| audit | ✅ IMPLEMENTED | audit.service.ts (mutation tracking) | Incl. in business |
 | mail | ✅ IMPLEMENTED | mail.service.ts (Gmail SMTP + Handlebars) | Incl. in auth |
-| minio | 🔲 STUB | minio.service.ts (mock URLs only; real pkg not installed yet) | N/A |
-| tab | 🔲 SCAFFOLDED | tab.module.ts (services/resolvers commented out) | — |
-| widget | 🔲 SCAFFOLDED | widget.module.ts (services/resolvers commented out) | — |
-| datasheet | 🔲 SCAFFOLDED | datasheet.module.ts (BullMQ queue registered) | — |
 | notification | 🔲 SCAFFOLDED | notification.module.ts (services/resolvers commented out) | — |
+| minio | ✅ IMPLEMENTED | minio.service.ts (S3-compatible storage) | — |
+
+## Desktop Application (Phase 5 - Electron)
+
+```typescript
+// apps/desktop/ — Electron cross-platform app
+├── main.ts                     # Main process (BrowserWindow, IPC)
+├── preload.ts                  # Preload script (secure context isolation)
+├── renderer/                   # React SPA (same as web app)
+│   ├── App.tsx
+│   └── pages/                  # Same routes as web (Login, Dashboard, etc.)
+├── utils/
+│   └── ipc-handlers.ts         # IPC bridge (isOnline, queryOffline, syncToCloud)
+└── package.json
+```
+
+**Key Features (Phase 5):**
+- Main process: Electron BrowserWindow (1440×900), context isolation
+- Renderer: React SPA with TanStack Router (same code as apps/web)
+- Offline: Embedded NestJS + SQLite (Phase 2 stub, Phase 5 full)
+- IPC Bridge: electronAPI (isOnline, queryOffline, syncToCloud, getAppVersion)
+- Auto-updater: electron-updater for background checks
+- Dependencies: better-sqlite3, electron-store, electron-updater
+
+**Build Targets:**
+- Windows: NSIS installer (.exe)
+- macOS: DMG package (.dmg)
+- Linux: AppImage (.AppImage)
+
+---
 
 ## Rate Limiting (IMPLEMENTED)
 
@@ -363,4 +393,4 @@ DataSeries {
 
 ---
 
-**Document Version:** 2.3 | **Last Updated:** 2026-03-22 | **Architecture Owner:** Tech Lead
+**Document Version:** 2.4 | **Last Updated:** 2026-03-28 | **Architecture Owner:** Tech Lead

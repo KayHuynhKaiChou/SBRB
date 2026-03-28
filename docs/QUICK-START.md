@@ -12,7 +12,7 @@
 
 **Tech:** React 18 + NestJS 10 + PostgreSQL + Redis, NX monorepo, TypeScript strict.
 
-**Status:** Phase 1 ✅ COMPLETE | Phase 2A (Auth) ✅ COMPLETE | Phase 2B (Business) ✅ COMPLETE | Phase 2C (Tabs) NEXT
+**Status:** Phase 1 ✅ COMPLETE | Phase 2A-2E ✅ COMPLETE | Phase 3 (Charts & Export) NEXT
 
 ---
 
@@ -54,6 +54,32 @@ docker compose up -d          # Local prod-like stack
 ---
 
 ## Coding Rules (Critical)
+
+### UI Components (Phase 2C+)
+```typescript
+// ✓ ICON-ONLY BUTTONS: Use IconButton
+<IconButton icon={<EditOutlined />} tooltip="Edit" onClick={handleEdit} />
+
+// ✗ BAD: Raw buttons for icons
+<Button icon={<EditOutlined />} />
+
+// ✓ MODAL FOOTERS: Use ModalActions
+const actions = [
+  { icon: <SaveOutlined />, tooltip: 'Save', onClick: handleSave },
+  { icon: <CloseOutlined />, tooltip: 'Close', onClick: handleClose },
+];
+<ModalActions actions={actions} />
+
+// ✗ BAD: Hardcoded buttons in modals
+<footer><Button>Save</Button><Button>Close</Button></footer>
+
+// ✓ ALL TEXT: Use i18n t()
+const { t } = useTranslation('widget');
+<h3>{t('title')}</h3>
+
+// ✗ BAD: Hardcoded text
+<h3>Widget Settings</h3>
+```
 
 ### File Organization
 ```
@@ -321,16 +347,20 @@ describe('hasCollision', () => {
 ```
 ✅ Mar 22 — Phase 2A COMPLETE: Auth (JWT, OAuth, email verify) — 80+ tests
 ✅ Mar 22 — Phase 2B COMPLETE: Business & multi-tenancy — 78+ tests
-→  May 3  — Phase 2C: Tab management (NEXT UP)
-→  May 17 — Phase 2D: Canvas & widget DnD ← Critical
-→  May 31 — Phase 2E: Excel import → PHASE 2 COMPLETE
+✅ Mar 28 — Phase 2C COMPLETE: Tab management (colors, icons, pinning)
+✅ Mar 28 — Phase 2D COMPLETE: Canvas & widget DnD (snap grid, collision)
+✅ Mar 28 — Phase 2E COMPLETE: Excel import (BullMQ worker)
+→  Jul 15 — Phase 3: Chart display & export (NEXT UP)
 ```
 
 ### Test Results Summary
 - **Auth module:** 80+ tests ✅ all passing
-- **Business module:** 78+ tests ✅ all passing (28 dev-1 + 29 dev-2 + 21 dev-3)
-- **Entities:** 44+ tests ✅ all passing
-- **TOTAL:** 202 tests, 0 failures
+- **Business module:** 78+ tests ✅ all passing
+- **Tab module:** 15+ tests ✅ all passing
+- **Widget module:** 20+ tests ✅ all passing
+- **DataSheet module:** 15+ tests ✅ all passing
+- **Other:** 29+ tests ✅ all passing
+- **TOTAL:** 237 tests, 32 suites, 0 failures
 
 ---
 
@@ -345,14 +375,14 @@ describe('hasCollision', () => {
 
 ---
 
-## What's Implemented Now (Phase 2A-2B)
+## What's Implemented Now (Phase 2A-2E)
 
 ✅ **User Authentication**
 - Email/password signup with verification
 - Google OAuth login
 - Password reset via email
 - JWT tokens (15m access, 30d refresh HttpOnly)
-- Rate limiting on auth endpoints
+- Rate limiting on auth endpoints (Redis-backed)
 
 ✅ **Multi-Tenant Business Management**
 - Create business (Owner)
@@ -361,19 +391,53 @@ describe('hasCollision', () => {
 - Member management (add/remove/role update)
 - Row-level security by businessId
 
+✅ **Tab Management (NEW Phase 2C)**
+- Create/rename/delete tabs
+- Reorder tabs (drag handles)
+- Duplicate tab with widgets
+- Tab colors, icons, pinning
+
+✅ **Canvas & Widget Drag+Drop (NEW Phase 2D)**
+- 3200×4800px free-form canvas
+- Widget drag/resize with react-rnd
+- Snap to 20px grid
+- Collision detection (AABB algorithm)
+- Zoom controls (50-125%)
+- Widget chart preview
+
+✅ **Data Import & Excel (NEW Phase 2E)**
+- Upload Excel files (10MB limit)
+- Parse matrix format (rows=series, cols=periods)
+- BullMQ background processing
+- DataSheet + DataSeries + DataValues storage
+- Data Selector modal
+- GraphQL Subscriptions for progress
+
+✅ **New UI Patterns (Phase 2C+)**
+- IconButton (ghost variant, all icon-only buttons)
+- ModalActions (DRY footer, save/cancel buttons)
+- FormModal (generic modal wrapper)
+
+✅ **Internationalization**
+- Vietnamese (vi) default, English (en)
+- i18n namespaces: common, auth, dashboard, widget, datasheet, member
+- No hardcoded text in UI
+
 ✅ **Testing & Quality**
-- 202 tests, all passing, 0 failures
+- 237 tests, 32 test suites, all passing, 0 failures
 - Auth: 80+ tests
 - Business: 78+ tests
-- Entities: 44+ tests
+- Tab: 15+ tests
+- Widget: 20+ tests
+- DataSheet: 15+ tests
+- Other: 29+ tests
 
-🔲 **Not Yet Implemented (Phase 2C+)**
-- Tab management (NEXT UP)
-- Widget drag+drop & canvas (Phase 2D)
-- Excel import & data sheets (Phase 2E)
+🔲 **Not Yet Implemented (Phase 3+)**
+- Chart display (Chart.js rendering)
+- Export dashboard as PNG/PDF
 - Notifications & audit logs (Phase 4)
 - Desktop/Electron (Phase 5)
 
 ---
 
-**Last Updated:** 2026-03-22 | **Save this file for quick reference!**
+**Last Updated:** 2026-03-28 | **Save this file for quick reference!**

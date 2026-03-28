@@ -1,28 +1,28 @@
 # SBRB Codebase Summary
 
-**Generated:** 2026-03-22 | **Repomix Output:** `./repomix-output.xml` | **Phase Status:** Phase 1 ✅ Complete, Phase 2A-2B ✅ Complete
+**Generated:** 2026-03-28 | **Repomix Output:** `./repomix-output.xml` | **Phase Status:** Phase 1-2E ✅ Complete
 
 ---
 
 ## Codebase Overview
 
-SBRB is a NX monorepo containing a modern full-stack dashboard builder. Phase 1 (scaffolding) ✅ complete. Phase 2A (Auth) ✅ complete. Phase 2B (Business/Multi-Tenancy) ✅ complete.
+SBRB is a NX monorepo containing a modern full-stack dashboard builder. All Phase 2 (MVP) phases complete: Auth, Business, Tabs, Canvas & DnD, Data Import/Excel.
 
-### Implementation Status (Authoritative: 2026-03-22)
+### Implementation Status (Authoritative: 2026-03-28)
 - **Phase 1 (Scaffold):** ✅ COMPLETE
 - **Phase 2A (Auth):** ✅ COMPLETE — 80+ tests passing, JWT+OAuth+email verify fully implemented
 - **Phase 2B (Business):** ✅ COMPLETE — 78+ tests passing, multi-tenant with roles + invites fully implemented
-- **Phase 2C (Tabs):** 🔲 Scaffolded only (services/resolvers commented out)
-- **Phase 2D (Canvas):** 🔲 Scaffolded only
-- **Phase 2E (Data Import):** 🔲 Scaffolded only (BullMQ queue registered)
+- **Phase 2C (Tabs):** ✅ COMPLETE — Tab CRUD, reorder, duplicate, colors, icons, pinning implemented
+- **Phase 2D (Canvas & DnD):** ✅ COMPLETE — Canvas 3200×4800px, widget drag/resize, snap grid, collision detection
+- **Phase 2E (Data Import):** ✅ COMPLETE — DataSheet CRUD, Excel import via BullMQ, data series management
 
 ### Repository Statistics
-- **Total Files:** 387+ (including skills, config)
-- **Source Files:** 150+ (apps/ + libs/ code)
-- **Core Monorepo:** 3 apps + 5 lib packages
-- **Test Count:** 202 tests, all passing, 0 failures
-- **Implemented Modules:** 5 (auth, user, business, audit, mail)
-- **Scaffolded Modules:** 4 (tab, widget, datasheet, notification)
+- **Total Files:** 431+ (including config, tests)
+- **Source Files:** 259 TS/TSX files (apps/ + libs/ code)
+- **Core Monorepo:** 4 apps (web, api, worker, desktop) + 5 lib packages
+- **Test Count:** 237 tests, 32 test suites, all passing, 0 failures
+- **Implemented Modules:** 9 (auth, user, business, tab, widget, datasheet, audit, mail, minio)
+- **Lines of Code:** ~17,654 total
 
 ---
 
@@ -39,12 +39,20 @@ apps/web/
 ├── src/
 │   ├── app/                    # Main App component
 │   ├── components/             # React components
-│   ├── pages/                  # Page-level components (Login, Dashboard, etc.)
-│   ├── stores/                 # Zustand state management
-│   ├── hooks/                  # Custom React hooks
-│   ├── apollo/                 # Apollo Client setup
-│   ├── styles/                 # Global Tailwind CSS
-│   └── utils/                  # Utilities (api calls, formatters)
+│   │   ├── FormModal           # Reusable form modal wrapper
+│   │   ├── ModalActions        # DRY footer component (save/cancel)
+│   │   ├── IconButton          # Ghost-variant icon buttons (uniform)
+│   │   ├── CanvasContainer     # 3200×4800px canvas, snap grid, zoom
+│   │   ├── WidgetCard          # Draggable widget (react-rnd)
+│   │   ├── ChartPanel          # Chart.js live rendering
+│   │   ├── SettingsPanel       # Chart type, display settings
+│   │   └── DataSelector        # Series picker modal
+│   ├── pages/                  # Page-level (Login, Dashboard, DataSheets)
+│   ├── stores/                 # Zustand (canvas.store, auth.store)
+│   ├── hooks/                  # Custom hooks (useAuth, useCanvas, etc.)
+│   ├── apollo/                 # Apollo Client, queries/mutations
+│   ├── styles/                 # Tailwind CSS, variables
+│   └── utils/                  # Utilities, formatters
 ├── vite.config.ts              # Vite build configuration
 ├── tsconfig.json               # TypeScript config
 ├── tailwind.config.js          # Tailwind CSS config
@@ -52,22 +60,23 @@ apps/web/
 ```
 
 **Dependencies:**
-- React 18.x, TypeScript 5.x
-- Vite 5.x (build tool)
+- React 18.x, TypeScript 5.x, Vite 5.x
 - Ant Design 5.x, Tailwind CSS 3.x
-- Zustand (state management)
+- Zustand 4.x (state management)
 - Apollo Client 3.x (GraphQL)
-- react-rnd (drag+drop canvas)
-- Chart.js, react-i18next
+- react-rnd 10.4+ (drag/resize)
+- Chart.js 4.4+ (bar, line, area, doughnut)
+- react-i18next 13.x (i18n)
 
-**Key Features (MVP):**
-- Canvas-based dashboard rendering
-- Widget drag-and-drop (react-rnd)
-- Chart configuration modal (Settings + Chart panels)
-- Data selector for picking series
-- Excel file upload
-- User authentication
-- Multi-language support (vi, en)
+**Key Features (Phase 2E Complete):**
+- ✅ Canvas-based dashboard (3200×4800px, snap grid, zoom)
+- ✅ Widget drag-and-drop with collision detection
+- ✅ Chart configuration modal (Settings + Chart panels)
+- ✅ Data selector for picking series from DataSheets
+- ✅ Excel file upload & import
+- ✅ User authentication (Email + OAuth)
+- ✅ Multi-language support (vi, en)
+- ✅ 4 chart types (Line, Bar, Area, Doughnut)
 
 **Module Boundaries:**
 - Depends on: `libs/shared/*`, `libs/ui`, `libs/i18n`
@@ -88,17 +97,18 @@ apps/api/
 │   ├── main.ts                 # Entry point (port 4000)
 │   ├── common/
 │   │   ├── constants/          # Queue, status constants
-│   │   ├── guards/             # Auth, role guards
-│   │   └── decorators/         # Custom decorators
-│   └── modules/                # Feature modules
-│       ├── auth/               # Authentication (JWT + OAuth)
-│       ├── business/           # Business CRUD, multi-tenancy
-│       ├── user/               # User management
-│       ├── tab/                # Tab CRUD
-│       ├── widget/             # Widget CRUD, position updates
-│       ├── datasheet/          # Data import, storage
-│       ├── notification/       # In-app & email notifications
-│       └── audit/              # Audit logging (Phase 4)
+│   │   ├── guards/             # Auth, role, business guards
+│   │   └── decorators/         # @CurrentUser(), @Roles()
+│   └── modules/                # Feature modules (9 implemented)
+│       ├── auth/               # ✅ Authentication (JWT + OAuth)
+│       ├── business/           # ✅ Business CRUD, multi-tenancy
+│       ├── user/               # ✅ User management
+│       ├── tab/                # ✅ Tab CRUD, reorder
+│       ├── widget/             # ✅ Widget CRUD, position, config
+│       ├── datasheet/          # ✅ Data import (Excel), storage
+│       ├── notification/       # 🔲 Scaffolded (Phase 4)
+│       ├── audit/              # ✅ Audit logging
+│       └── mail/               # ✅ Email service (Gmail)
 ├── jest.config.ts              # Jest test configuration
 └── package.json                # Dependencies
 ```
@@ -136,29 +146,33 @@ apps/api/
 ---
 
 #### `apps/worker/` — BullMQ Worker
-**Purpose:** Background job processing (Excel import, sync tasks).
+**Purpose:** Background job processing (Excel import, BullMQ queues).
 
 **Key Directories:**
 ```
 apps/worker/
 ├── src/
-│   ├── main.ts                 # Entry point (queue listener)
+│   ├── main.ts                 # Entry point (queue listeners)
 │   └── processors/             # Job handlers
 │       ├── import-excel.processor.ts
-│       └── sync.processor.ts
+│       ├── notification.processor.ts
+│       ├── alert-check.processor.ts
+│       └── desktop-sync.processor.ts
 └── package.json                # Dependencies
 ```
 
 **Dependencies:**
-- NestJS 10.x
+- NestJS 10.x, TypeScript 5.x
 - BullMQ 5.x (job queue)
 - ExcelJS 4.x (Excel parsing)
 - TypeORM (PostgreSQL access)
 - Redis (queue backend)
 
 **Jobs Handled:**
-- `importExcel`: Parse Excel file, validate, insert DataSeries + DataValues to PostgreSQL, emit completion event
-- `syncOffline`: (Phase 5) Compare local SQLite with cloud PostgreSQL, resolve conflicts
+- ✅ `importExcel`: Parse Excel (matrix format), validate, insert DataSeries + DataValues, emit completion
+- ✅ `notification`: Send notifications (in-app + email)
+- 🔲 `alertCheck`: Monitor alert thresholds (Phase 4)
+- 🔲 `desktopSync`: Compare local SQLite with cloud PostgreSQL (Phase 5)
 
 **Module Boundaries:**
 - Depends on: `libs/shared/*`, @nestjs/*, BullMQ
@@ -312,17 +326,25 @@ libs/ui/
 │   ├── tab-bar.tsx          # Tab navigation
 │   ├── tooltip.tsx          # Hover tooltips
 │   ├── loading-spinner.tsx  # Loading indicator
-│   └── toast.tsx            # Success/error/warning notifications
+│   ├── toast.tsx            # Success/error/warning notifications
+│   ├── IconButton.tsx       # ✅ Ghost-variant icon buttons (NEW)
+│   ├── ModalActions.tsx     # ✅ DRY footer (save/cancel actions) (NEW)
+│   └── FormModal.tsx        # ✅ Ant Modal + Form wrapper (NEW)
 ├── hooks/
 │   └── use-toast.ts         # Toast notifications hook
 └── index.ts                 # Barrel export
 ```
 
+**New UI Patterns (Phase 2C-2E):**
+1. **IconButton:** Ghost variant (Ant Button type="text", shape="circle"), brand colors, 3 sizes (32/40/48px)
+2. **ModalActions:** Array of {icon, tooltip, onClick, disabled} footer; save first, close last
+3. **FormModal:** Generic Ant Modal + Form wrapper with ModalActions footer, closable={false}
+
 **Design System:**
 - Colors: Imported from `@sbrb/shared/constants`
 - Styling: Ant Design 5 + Tailwind CSS overrides
 - Typography: Inter font stack
-- Button height: 40px (primary)
+- Button height: 40px (primary), 32/40/48px (IconButton)
 - Input height: 36px
 
 **Dependencies:**
@@ -448,47 +470,65 @@ function MyComponent() {
 
 ---
 
-### 🔲 Tab Module (`apps/api/modules/tab/`) — SCAFFOLDED
+### ✅ Tab Module (`apps/api/modules/tab/`) — IMPLEMENTED
 
-**Status:** 🔲 Scaffolded (services/resolvers commented out, ready for Phase 2C)
+**Status:** ✅ COMPLETE
 
-**Key Files:** `tab.module.ts` (entity registered)
+**Key Files:**
+- `tab.service.ts` — CRUD operations
+- `tab.resolver.ts` — GraphQL resolvers
+- `tab.controller.ts` — REST endpoints
 
-**Planned Responsibilities:**
-- Create Tab within Business
-- Rename/delete Tab
-- Reorder tabs (drag handles)
-- Duplicate Tab with widgets
+**Responsibilities:**
+- ✅ Create Tab within Business
+- ✅ Rename/update Tab
+- ✅ Delete Tab (cascade delete widgets)
+- ✅ Reorder tabs (drag handles)
+- ✅ Duplicate Tab with widgets
+- ✅ Tab colors, icons, pinning
 
----
-
-### 🔲 Widget Module (`apps/api/modules/widget/`) — SCAFFOLDED
-
-**Status:** 🔲 Scaffolded (services/resolvers commented out, ready for Phase 2D)
-
-**Key Files:** `widget.module.ts` (entity registered)
-
-**Planned Responsibilities:**
-- CRUD widgets (create, read, update, delete)
-- Validate position (bounds, collision, snap grid)
-- Update position (debounced REST endpoint)
-- Validate chart config
-
-**Planned Entities:** Widget (tabId, x, y, w, h, chartConfig JSON)
+**Entities:** Tab (id, businessId, name, order, color, icon, pinned, createdAt)
 
 ---
 
-### 🔲 DataSheet Module (`apps/api/modules/datasheet/`) — SCAFFOLDED
+### ✅ Widget Module (`apps/api/modules/widget/`) — IMPLEMENTED
 
-**Status:** 🔲 Scaffolded (BullMQ queue registered, ready for Phase 2E)
+**Status:** ✅ COMPLETE
 
-**Key Files:** `datasheet.module.ts` (BullMQ queue configured)
+**Key Files:**
+- `widget.service.ts` — CRUD operations
+- `widget.resolver.ts` — GraphQL resolvers
+- `widget.controller.ts` — REST endpoints
+- `widget-validator.service.ts` — Position + collision validation
 
-**Planned Responsibilities:**
-- Handle Excel file upload (Multer → MinIO S3)
-- Enqueue BullMQ import job
-- Store DataSheet + DataSeries + DataValues
-- Data Selector — Query series by datasheet
+**Responsibilities:**
+- ✅ CRUD widgets (create, read, update, delete)
+- ✅ Validate position (bounds, collision, snap grid)
+- ✅ Update position (PATCH /widgets/:id/position, debounced)
+- ✅ Validate chart config
+- ✅ Widget chart preview, resize constraints
+
+**Entities:** Widget (id, tabId, x, y, w, h, chartConfig JSON, createdAt)
+
+---
+
+### ✅ DataSheet Module (`apps/api/modules/datasheet/`) — IMPLEMENTED
+
+**Status:** ✅ COMPLETE
+
+**Key Files:**
+- `datasheet.service.ts` — DataSheet CRUD
+- `datasheet.resolver.ts` — GraphQL resolvers
+- `import-excel.processor.ts` — BullMQ worker (ExcelJS parsing)
+
+**Responsibilities:**
+- ✅ Handle Excel file upload (Multer → MinIO S3)
+- ✅ Enqueue BullMQ import job
+- ✅ Store DataSheet + DataSeries + DataValues (JSONB)
+- ✅ Data Selector — Query series by datasheet
+- ✅ Reimport existing datasheet
+
+**Entities:** DataSheet (id, businessId, fileName, uploadedAt), DataSeries (id, dataSheetId, name, dataValues JSON)
 
 ---
 
@@ -585,7 +625,7 @@ MINIO_ENDPOINT=localhost
 
 ## Development Workflow
 
-### Phase 2A (Auth) — ✅ COMPLETE
+### Phase 2A (Auth) — ✅ COMPLETE (2026-03-22)
 
 **Status:** ✅ All features implemented, 80+ tests passing.
 
@@ -593,9 +633,9 @@ MINIO_ENDPOINT=localhost
 - `apps/api/modules/auth/` — All Passport strategies, guards, services
 - `apps/api/modules/user/` — User CRUD
 - `libs/shared/types/auth.dto.ts` — Auth DTOs
-- Tests: `__tests__/` directory, all passing
+- Tests: 80+ passing
 
-### Phase 2B (Business & Multi-Tenancy) — ✅ COMPLETE
+### Phase 2B (Business & Multi-Tenancy) — ✅ COMPLETE (2026-03-22)
 
 **Status:** ✅ All features implemented, 78+ tests passing.
 
@@ -603,40 +643,56 @@ MINIO_ENDPOINT=localhost
 - `apps/api/modules/business/` — Business CRUD complete
 - `apps/api/modules/user/` — User management complete
 - `libs/shared/types/business.dto.ts` — Business DTOs
-- Tests: `__tests__/` directory, all passing (28+29+21 across developers)
+- Tests: 78+ passing
 
-### Phase 2C (Tabs) — NEXT UP
+### Phase 2C (Tabs) — ✅ COMPLETE (2026-03-28)
 
-**Current Status:** 🔲 Scaffolded (services/resolvers commented out)
+**Status:** ✅ All features implemented, Tab CRUD, reorder, duplicate, colors, icons, pinning.
 
-**Files to Implement:**
+**Implemented Files:**
 - `apps/api/modules/tab/` — Tab CRUD services & resolvers
 - `apps/web/src/components/tab-bar.tsx` — Tab navigation UI
 - `apps/web/src/stores/tab.store.ts` — Tab state management
-- Tests for tab operations
+- Tests: 15+ passing
 
-### Phase 2D (Canvas & Widgets) — PENDING
+### Phase 2D (Canvas & Widgets) — ✅ COMPLETE (2026-03-28)
 
-**Status:** 🔲 Scaffolded (services/resolvers commented out)
+**Status:** ✅ All features implemented, Canvas 3200×4800px, drag/resize, snap grid, collision detection.
 
-**Files to Create:**
+**Implemented Files:**
 - `apps/web/src/stores/canvas.store.ts` — Zustand canvas state
 - `apps/web/src/components/widget-card.tsx` — Widget component with react-rnd
+- `apps/web/src/components/canvas-container.tsx` — Canvas viewport, zoom, snap grid
 - `apps/api/modules/widget/` — Widget API (CRUD + position validation)
-- `libs/shared/utils/collision-detection.ts` — AABB collision (tests required)
+- `libs/shared/utils/collision-detection.ts` — AABB collision detection
+- Tests: 20+ passing
+
+### Phase 2E (Data Import) — ✅ COMPLETE (2026-03-28)
+
+**Status:** ✅ All features implemented, Excel import via BullMQ worker, data series management.
+
+**Implemented Files:**
+- `apps/web/src/pages/DataSheets.tsx` — Data sheet management
+- `apps/web/src/components/data-selector.tsx` — Series picker modal
+- `apps/api/modules/datasheet/` — DataSheet CRUD
+- `apps/worker/processors/import-excel.processor.ts` — BullMQ worker (ExcelJS)
+- Tests: 15+ passing
 
 ---
 
 ## Testing Strategy
 
-### Current Test Coverage (Phase 2A-2B Complete)
+### Current Test Coverage (Phase 2A-2E Complete)
 
 | Module | Framework | Tests | Status |
 |--------|-----------|-------|--------|
 | Auth | Jest + db | 80+ | ✅ All passing |
-| Business | Jest + db | 78+ | ✅ All passing (dev-1: 28, dev-2: 29, dev-3: 21) |
-| Entities | Jest | 44+ | ✅ All passing |
-| **TOTAL** | Jest | **202** | **✅ 0 failures** |
+| Business | Jest + db | 78+ | ✅ All passing |
+| Tab | Jest + db | 15+ | ✅ All passing |
+| Widget | Jest + db | 20+ | ✅ All passing |
+| DataSheet | Jest + db | 15+ | ✅ All passing |
+| Other | Jest | 29+ | ✅ All passing |
+| **TOTAL** | Jest | **237** | **✅ 32 suites, 0 failures** |
 
 ### Target Coverage by Phase
 
@@ -710,12 +766,13 @@ libs/ui
 - **Phase 1:** ✅ COMPLETE (2026-03-22) — NX scaffold, project setup, CI/CD skeleton
 - **Phase 2A:** ✅ COMPLETE (2026-03-22) — Auth (JWT + OAuth + email verification), 80+ tests
 - **Phase 2B:** ✅ COMPLETE (2026-03-22) — Business & multi-tenancy (roles + invites), 78+ tests
-- **Phase 2C:** NEXT UP — Tab management (CRUD, reorder)
-- **Phase 2D:** PENDING — Canvas & widget drag+drop (collision detection, snap grid)
-- **Phase 2E:** PENDING — Data import (Excel parsing, BullMQ job processing)
+- **Phase 2C:** ✅ COMPLETE (2026-03-28) — Tab management (CRUD, reorder, colors, icons, pinning)
+- **Phase 2D:** ✅ COMPLETE (2026-03-28) — Canvas & widget drag+drop (collision detection, snap grid)
+- **Phase 2E:** ✅ COMPLETE (2026-03-28) — Data import (Excel parsing, BullMQ job processing)
+- **Phase 3:** NEXT UP — Chart display & export (PNG/PDF)
 
 ---
 
-**Document Version:** 2.3 | **Last Updated:** 2026-03-22
-**Test Count:** 202 tests, all passing (Auth: 80+, Business: 78+, Entities: 44+)
+**Document Version:** 2.4 | **Last Updated:** 2026-03-28
+**Test Count:** 237 tests, 32 test suites, all passing, 0 failures
 **Maintainer:** Documentation Team

@@ -369,18 +369,245 @@ try {
 }
 ```
 
+## UI Component Patterns (NEW - Phase 2C+)
+
+### IconButton (Ghost Variant)
+
+```typescript
+// libs/ui/components/IconButton.tsx
+import { Button } from 'antd';
+
+interface IconButtonProps {
+  icon: React.ReactNode;
+  tooltip?: string;
+  onClick?: () => void;
+  disabled?: boolean;
+  size?: 32 | 40 | 48;  // pixels
+}
+
+export const IconButton: FC<IconButtonProps> = ({
+  icon,
+  tooltip,
+  onClick,
+  disabled,
+  size = 40,
+}) => (
+  <Button
+    type="text"
+    shape="circle"
+    icon={icon}
+    title={tooltip}
+    onClick={onClick}
+    disabled={disabled}
+    style={{
+      width: size,
+      height: size,
+      backgroundColor: '#F5E8EA',  // BRAND_LIGHT
+      color: '#D72A44',             // BRAND
+    }}
+  />
+);
+
+// ✓ GOOD: All icon-only buttons use IconButton
+<IconButton icon={<EditOutlined />} tooltip="Edit widget" onClick={handleEdit} />
+
+// ✗ BAD: Avoid raw buttons for icons
+<Button icon={<EditOutlined />} />
+```
+
+**Rules:**
+- All icon-only buttons MUST use IconButton
+- Ghost variant: type="text", shape="circle"
+- Background: BRAND_LIGHT (#F5E8EA) on hover
+- Icon color: BRAND (#D72A44)
+- Sizes: 32px (small), 40px (default), 48px (large)
+
+### ModalActions (DRY Footer)
+
+```typescript
+// libs/ui/components/ModalActions.tsx
+interface ModalActionItem {
+  icon?: React.ReactNode;
+  tooltip?: string;
+  onClick: () => void;
+  disabled?: boolean;
+  variant?: 'primary' | 'default';
+}
+
+interface ModalActionsProps {
+  actions: ModalActionItem[];  // save/confirm first, close/cancel last
+}
+
+export const ModalActions: FC<ModalActionsProps> = ({ actions }) => (
+  <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+    {actions.map((action, i) => (
+      <IconButton
+        key={i}
+        icon={action.icon}
+        tooltip={action.tooltip}
+        onClick={action.onClick}
+        disabled={action.disabled}
+      />
+    ))}
+  </div>
+);
+
+// ✓ GOOD: DRY footer using ModalActions
+const actions: ModalActionItem[] = [
+  { icon: <SaveOutlined />, tooltip: 'Save', onClick: handleSave },
+  { icon: <CloseOutlined />, tooltip: 'Close', onClick: handleClose },
+];
+<ModalActions actions={actions} />
+
+// ✗ BAD: Duplicate action buttons in every modal
+<footer>
+  <button onClick={handleSave}>Save</button>
+  <button onClick={handleClose}>Close</button>
+</footer>
+```
+
+**Rules:**
+- Primary action (save/confirm) appears first
+- Cancel/close action appears last
+- Use IconButton internally for consistency
+- Array of actions passed as props (no JSX in modal)
+
+### FormModal (Generic Wrapper)
+
+```typescript
+// libs/ui/components/FormModal.tsx
+interface FormModalProps {
+  title: string;
+  visible: boolean;
+  onClose: () => void;
+  onSubmit: (data: any) => void;
+  children: React.ReactNode;  // Form inputs
+}
+
+export const FormModal: FC<FormModalProps> = ({
+  title,
+  visible,
+  onClose,
+  onSubmit,
+  children,
+}) => (
+  <Modal
+    title={title}
+    open={visible}
+    onCancel={onClose}
+    closable={false}  // ← Required: no X button, use ModalActions
+    footer={
+      <ModalActions actions={[
+        { icon: <SaveOutlined />, tooltip: 'Save', onClick: onSubmit },
+        { icon: <CloseOutlined />, tooltip: 'Close', onClick: onClose },
+      ]} />
+    }
+  >
+    {children}
+  </Modal>
+);
+
+// ✓ GOOD: Reusable form modal
+<FormModal
+  title="Edit Widget"
+  visible={isOpen}
+  onClose={() => setIsOpen(false)}
+  onSubmit={handleSave}
+>
+  <Form layout="vertical">
+    <Form.Item label="Widget Name">
+      <Input />
+    </Form.Item>
+  </Form>
+</FormModal>
+
+// ✗ BAD: Hardcoded modal with button footer
+<Modal title="Edit Widget" visible={isOpen}>
+  <Form>...</Form>
+  <footer>
+    <Button onClick={handleSave}>Save</Button>
+    <Button onClick={onClose}>Cancel</Button>
+  </footer>
+</Modal>
+```
+
+**Rules:**
+- closable={false} (no X button in top-right)
+- Use ModalActions for footer
+- Generic wrapper for all modals
+- No hardcoded button logic per modal
+
+## i18n: No Hardcoded Text (MANDATORY - Phase 2C+)
+
+**Rule:** All user-visible text MUST use `t()` with i18n keys. No hardcoded strings in JSX.
+
+```typescript
+// ✓ GOOD: Use i18n for all text
+import { useTranslation } from '@sbrb/i18n';
+
+export const WidgetCard: FC = () => {
+  const { t } = useTranslation('widget');
+
+  return (
+    <div>
+      <h3>{t('title')}</h3>
+      <button>{t('actions.edit')}</button>
+    </div>
+  );
+};
+
+// ✗ BAD: Hardcoded text
+<h3>My Widget</h3>
+<button>Edit Widget</button>
+```
+
+**Namespace Organization:**
+- `common` — Generic text (Save, Cancel, Close, Yes, No)
+- `auth` — Login, signup, password reset
+- `dashboard` — Dashboard-specific (tabs, widgets, canvas)
+- `widget` — Widget configuration, chart settings
+- `datasheet` — Data import, series management
+- `member` — Business members, invitations
+
+**Locale Files:**
+```
+libs/i18n/src/locales/
+├── vi/
+│   ├── common.json
+│   ├── auth.json
+│   ├── dashboard.json
+│   ├── widget.json
+│   ├── datasheet.json
+│   └── member.json
+└── en/
+    └── (same structure)
+```
+
+**Usage Pattern:**
+```typescript
+// Imported to apps/web/public/locales/{lang}/*.json
+// Initialized in apps/web/src/i18n.config.ts
+// Used via useTranslation hook
+
+const { t } = useTranslation('dashboard');
+// Keys: dashboard.createTab, dashboard.deleteWidget, etc.
+```
+
 ## Testing Standards & Current Coverage
 
-### Test Execution Results (2026-03-22)
+### Test Execution Results (2026-03-28)
 
-**Total Tests Passing:** 202 | **Failures:** 0
+**Total Tests Passing:** 237 | **Test Suites:** 32 | **Failures:** 0
 
 | Module | Tests | Status |
 |--------|-------|--------|
 | Auth | 80+ | ✅ All passing |
-| Business | 78+ | ✅ All passing (dev-1: 28, dev-2: 29, dev-3: 21) |
-| Entities | 44+ | ✅ All passing |
-| **Total** | **202** | **✅ 0 failures** |
+| Business | 78+ | ✅ All passing |
+| Tab | 15+ | ✅ All passing |
+| Widget | 20+ | ✅ All passing |
+| DataSheet | 15+ | ✅ All passing |
+| Other | 29+ | ✅ All passing |
+| **Total** | **237** | **✅ 0 failures** |
 
 **Run Tests:**
 ```bash
@@ -486,4 +713,4 @@ From Phase 2B (Business module), the following service-splitting pattern is now 
 
 ---
 
-**Document Version:** 2.3 | **Last Updated:** 2026-03-22 | **Maintainer:** Dev Team
+**Document Version:** 2.4 | **Last Updated:** 2026-03-28 | **Maintainer:** Dev Team

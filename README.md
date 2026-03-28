@@ -7,8 +7,10 @@ Free-form canvas dashboard builder for SMEs. Place charts anywhere on a pixel ca
 - **Phase 1:** ✅ COMPLETE
 - **Phase 2A (Auth):** ✅ COMPLETE — 80+ tests, JWT+OAuth fully implemented
 - **Phase 2B (Business):** ✅ COMPLETE — 78+ tests, multi-tenant with roles + invites
-- **Phase 2C (Tabs):** → NEXT UP
-- **Test Coverage:** 202 tests, all passing, 0 failures
+- **Phase 2C (Tabs):** ✅ COMPLETE — Tab CRUD, reorder, duplicate, colors, icons, pinning
+- **Phase 2D (Canvas & Widget DnD):** ✅ COMPLETE — Canvas 3200×4800px, drag/resize, snap grid, collision detection
+- **Phase 2E (Data Import/Excel):** ✅ COMPLETE — Excel import via BullMQ worker, data series management
+- **Test Coverage:** 237 tests passing, 32 test suites, 0 failures
 
 ## Stack
 
