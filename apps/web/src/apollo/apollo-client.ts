@@ -9,6 +9,7 @@ import { GraphQLWsLink } from '@apollo/client/link/subscriptions';
 import { getMainDefinition } from '@apollo/client/utilities';
 import { createClient } from 'graphql-ws';
 import { useAuthStore } from '../store/auth.store';
+import { apolloErrorLink } from './apollo-error-link';
 
 const httpLink = createHttpLink({
   uri: import.meta.env.VITE_GRAPHQL_URL || '/graphql',
@@ -41,7 +42,7 @@ const splitLink = split(
     );
   },
   wsLink,
-  authLink.concat(httpLink),
+  apolloErrorLink.concat(authLink.concat(httpLink)),
 );
 
 export const apolloClient = new ApolloClient({

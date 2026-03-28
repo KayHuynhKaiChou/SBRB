@@ -1,10 +1,32 @@
 import { useAuthStore } from '../store/auth.store';
+import { refreshAccessToken } from './token-refresh-manager';
 
-/** Centralized HTTP client that automatically injects the auth Bearer token */
+/**
+ * Centralized HTTP client with automatic 401 refresh.
+ * Token injection + retry on 401 via token-refresh-manager.
+ */
 class ApiClient {
   private getAuthHeaders(): Record<string, string> {
-    const accessToken = useAuthStore.getState().accessToken;
-    return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
+    const token = useAuthStore.getState().accessToken;
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
+
+  private async request<T>(url: string, init: RequestInit, responseType: 'json' | 'blob' = 'json'): Promise<T> {
+    const res = await fetch(url, { ...init, headers: { ...init.headers, ...this.getAuthHeaders() } });
+
+    // 401 → refresh token and retry once
+    if (res.status === 401) {
+      const newToken = await refreshAccessToken();
+      const retryRes = await fetch(url, {
+        ...init,
+        headers: { ...init.headers, Authorization: `Bearer ${newToken}` },
+      });
+      if (!retryRes.ok) throw new Error(await this.getErrorMessage(retryRes));
+      return responseType === 'blob' ? retryRes.blob() as Promise<T> : retryRes.json() as Promise<T>;
+    }
+
+    if (!res.ok) throw new Error(await this.getErrorMessage(res));
+    return responseType === 'blob' ? res.blob() as Promise<T> : res.json() as Promise<T>;
   }
 
   private async getErrorMessage(res: Response): Promise<string> {
@@ -16,26 +38,18 @@ class ApiClient {
     }
   }
 
-  /** Upload multipart/form-data (no Content-Type — let browser set boundary) */
+  /** Upload multipart/form-data */
   async upload<T = unknown>(url: string, formData: FormData): Promise<T> {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { ...this.getAuthHeaders() },
-      body: formData,
-    });
-    if (!res.ok) throw new Error(await this.getErrorMessage(res));
-    return res.json() as Promise<T>;
+    return this.request<T>(url, { method: 'POST', body: formData });
   }
 
   /** POST with JSON body */
   async post<T = unknown>(url: string, body?: unknown): Promise<T> {
-    const res = await fetch(url, {
+    return this.request<T>(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...this.getAuthHeaders() },
+      headers: { 'Content-Type': 'application/json' },
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
-    if (!res.ok) throw new Error(await this.getErrorMessage(res));
-    return res.json() as Promise<T>;
   }
 
   /** PATCH with JSON body — treats 409 as a handled conflict (no throw) */
@@ -45,18 +59,27 @@ class ApiClient {
       headers: { 'Content-Type': 'application/json', ...this.getAuthHeaders() },
       body: JSON.stringify(body),
     });
+
+    if (res.status === 401) {
+      const newToken = await refreshAccessToken();
+      const retryRes = await fetch(url, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${newToken}` },
+        body: JSON.stringify(body),
+      });
+      if (retryRes.status === 409) return { data: null, conflict: true };
+      if (!retryRes.ok) throw new Error(await this.getErrorMessage(retryRes));
+      return { data: (await retryRes.json()) as T, conflict: false };
+    }
+
     if (res.status === 409) return { data: null, conflict: true };
     if (!res.ok) throw new Error(await this.getErrorMessage(res));
     return { data: (await res.json()) as T, conflict: false };
   }
 
-  /** GET with optional blob response (for file downloads) */
+  /** GET with blob response (for file downloads) */
   async getBlob(url: string): Promise<Blob> {
-    const res = await fetch(url, {
-      headers: { ...this.getAuthHeaders() },
-    });
-    if (!res.ok) throw new Error(await this.getErrorMessage(res));
-    return res.blob();
+    return this.request<Blob>(url, { method: 'GET' }, 'blob');
   }
 }
 
