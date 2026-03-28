@@ -41,7 +41,7 @@ export default function App() {
           }
         />
         <Route
-          path="/dashboard/:businessId"
+          path="/dashboard"
           element={
             <ProtectedRoute>
               <DashboardPage />

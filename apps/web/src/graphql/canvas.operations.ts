@@ -1,19 +1,26 @@
 import { gql } from '@apollo/client';
 
+const TAB_FIELDS = gql`
+  fragment TabFields on Tab {
+    id
+    businessId
+    name
+    iconColor
+    iconName
+    order
+    isPinned
+    isProtected
+    createdAt
+  }
+`;
+
 export const TABS_QUERY = gql`
   query Tabs($businessId: ID!) {
     tabs(businessId: $businessId) {
-      id
-      businessId
-      name
-      iconColor
-      iconName
-      order
-      isPinned
-      isProtected
-      createdAt
+      ...TabFields
     }
   }
+  ${TAB_FIELDS}
 `;
 
 export const WIDGETS_QUERY = gql`
@@ -48,29 +55,19 @@ export const WIDGETS_QUERY = gql`
 export const CREATE_TAB_MUTATION = gql`
   mutation CreateTab($input: CreateTabInput!) {
     createTab(input: $input) {
-      id
-      name
-      iconColor
-      iconName
-      order
-      isPinned
-      isProtected
+      ...TabFields
     }
   }
+  ${TAB_FIELDS}
 `;
 
 export const UPDATE_TAB_MUTATION = gql`
   mutation UpdateTab($id: ID!, $input: UpdateTabInput!) {
     updateTab(id: $id, input: $input) {
-      id
-      name
-      iconColor
-      iconName
-      order
-      isPinned
-      isProtected
+      ...TabFields
     }
   }
+  ${TAB_FIELDS}
 `;
 
 export const DELETE_TAB_MUTATION = gql`

@@ -74,7 +74,7 @@ export function App() {
           <Route path="/auth/login"             element={<LoginPage />} />
           <Route path="/auth/register"          element={<RegisterPage />} />
           <Route path="/onboarding"             element={<OnboardingPage />} />
-          <Route path="/dashboard/:businessId"  element={<DashboardPage />} />
+          <Route path="/dashboard"              element={<DashboardPage />} />
           <Route path="/"                       element={<Navigate to="/auth/login" replace />} />
           <Route path="*"                       element={<NotFoundPage />} />
         </Routes>

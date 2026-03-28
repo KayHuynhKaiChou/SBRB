@@ -11,21 +11,21 @@
   --canvas-width: 3200px;
   --canvas-height: 4800px;
 
-  /* kpiee dashboard design tokens */
+  /* SBRB dashboard design tokens */
   --sidebar-width: 60px;
   --header-height: 52px;
-  --kpiee-bg: #EEF2FF;
-  --kpiee-sidebar: #7A1528;
+  --sbrb-bg: #EEF2FF;
+  --sbrb-sidebar: #7A1528;
   --canvas-bg: #EEF2FF;
   --card-bg: #ffffff;
   --accent: #D72A44;
-  --kpiee-accent-blue: #4FA8E8;
-  --kpiee-accent-coral: #D72A44;
-  --kpiee-accent-orange: #F5B96A;
-  --kpiee-card-bg: #ffffff;
-  --kpiee-card-shadow: 0 2px 12px rgba(0,0,0,0.06);
-  --kpiee-tab-active: #D72A44;
-  --kpiee-tab-inactive-bg: #F0F0F5;
+  --sbrb-accent-blue: #4FA8E8;
+  --sbrb-accent-coral: #D72A44;
+  --sbrb-accent-orange: #F5B96A;
+  --sbrb-card-bg: #ffffff;
+  --sbrb-card-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  --sbrb-tab-active: #D72A44;
+  --sbrb-tab-inactive-bg: #F0F0F5;
 }
 
 *,
@@ -39,7 +39,7 @@ body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--kpiee-bg);
+  background-color: var(--sbrb-bg);
   color: #171717;
 }
 

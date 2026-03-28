@@ -8,7 +8,7 @@ interface IAuthStore {
   currentBusinessId: string | null;
   setAuth: (user: IUserDto, token: string) => void;
   clearAuth: () => void;
-  setCurrentBusiness: (id: string) => void;
+  setCurrentBusiness: (id: string | null) => void;
 }
 
 export const useAuthStore = create<IAuthStore>()(
