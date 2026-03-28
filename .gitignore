@@ -9,6 +9,9 @@ build/
 tmp/
 out-tsc/
 
+# i18n locale files — generated from libs/i18n/src/locales/ by vite-plugin-static-copy
+apps/web/public/locales/
+
 # NX cache
 .nx/cache
 .nx/workspace-data
@@ -49,9 +52,11 @@ apps/desktop/release/
 # Uploads (local)
 uploads/
 
-# SRS documents (binary - not tracked)
+# SRS documents & binary assets (not tracked)
 *.docx
 *.xlsx
+*.png
+output.json
 
 # Skills lock (local config)
 skills-lock.json
@@ -61,3 +66,4 @@ skills-lock.json
 repomix-output.xml
 DOCUMENTATION-CREATED.txt
 plans
+.claude

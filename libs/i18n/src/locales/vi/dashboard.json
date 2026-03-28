@@ -1,0 +1,15 @@
+{
+  "add_tab": "Thêm Tab",
+  "add_widget": "Thêm Widget",
+  "canvas_snap_on": "Snap ON",
+  "canvas_snap_off": "Snap OFF",
+  "zoom": "Zoom",
+  "minimap": "Bản đồ thu nhỏ",
+  "import_data": "Import dữ liệu",
+  "export_template": "Tải template mẫu",
+  "tab_protected": "Tab được bảo vệ",
+  "tab_pinned": "Tab ghim",
+  "widget_restricted": "Widget hạn chế",
+  "collision_warning": "Không thể đặt đây — vị trí đã có widget khác",
+  "canvas_boundary_warning": "Widget vượt ra ngoài biên canvas"
+}

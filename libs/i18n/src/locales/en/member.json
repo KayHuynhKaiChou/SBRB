@@ -1,0 +1,20 @@
+{
+  "members_title": "Members",
+  "invite_btn": "Invite member",
+  "invite_email_label": "Email",
+  "invite_role_label": "Role",
+  "role_owner": "Owner",
+  "role_manager": "Manager",
+  "role_staff": "Staff",
+  "role_viewer": "Viewer",
+  "active_tab": "Active",
+  "invited_tab": "Invited",
+  "showing_count": "Showing {{shown}} / {{total}} members",
+  "assigned_widgets_tab": "Assigned widgets",
+  "assign_widget_hint": "Select widgets this Staff member can enter data for",
+  "remove_member": "Remove member",
+  "remove_member_confirm": "Remove {{name}} from this Business?",
+  "change_role": "Change role",
+  "transfer_ownership": "Transfer Ownership",
+  "transfer_ownership_confirm": "Transfer ownership to {{name}}? You will become a Manager."
+}

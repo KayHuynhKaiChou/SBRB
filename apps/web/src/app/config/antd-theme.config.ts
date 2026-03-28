@@ -2,7 +2,7 @@ import type { ThemeConfig } from 'antd';
 
 /**
  * Ant Design v5 theme customization for SBRB
- * Brand primary: #D72A44 (from SRS Section 6.1)
+ * Brand primary: #D72A44 (Primary Red) — all UI components follow this rule
  */
 export const antdTheme: ThemeConfig = {
   token: {

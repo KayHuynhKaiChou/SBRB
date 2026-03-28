@@ -1,0 +1,15 @@
+{
+  "add_tab": "Add Tab",
+  "add_widget": "Add Widget",
+  "canvas_snap_on": "Snap ON",
+  "canvas_snap_off": "Snap OFF",
+  "zoom": "Zoom",
+  "minimap": "Minimap",
+  "import_data": "Import data",
+  "export_template": "Download template",
+  "tab_protected": "Protected tab",
+  "tab_pinned": "Pinned tab",
+  "widget_restricted": "Restricted widget",
+  "collision_warning": "Cannot place here — another widget is already in this position",
+  "canvas_boundary_warning": "Widget exceeds canvas boundary"
+}

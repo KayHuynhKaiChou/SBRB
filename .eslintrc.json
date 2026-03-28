@@ -7,7 +7,7 @@
     ".nx",
     "coverage"
   ],
-  "plugins": ["@nx"],
+  "plugins": ["@nx", "react-hooks"],
   "overrides": [
     {
       "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
