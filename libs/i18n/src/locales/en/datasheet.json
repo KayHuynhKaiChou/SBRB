@@ -81,5 +81,10 @@
   "new_series_name": "New series",
   "rename_success": "Renamed successfully",
   "add_success": "Added successfully",
-  "delete_success": "Deleted successfully"
+  "delete_success": "Deleted successfully",
+  "preview_loading": "Analyzing file...",
+  "preview_rows_hint": "Showing first {{shown}} of {{total}} rows",
+  "preview_warnings": "Warnings",
+  "preview_no_data": "No data found in file",
+  "preview_step": "Preview"
 }

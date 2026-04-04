@@ -40,6 +40,10 @@ export class DatasheetService {
     return this.importService.reimport(datasheetId, file, userId);
   }
 
+  preview(file: Express.Multer.File) {
+    return this.importService.preview(file);
+  }
+
   getImportHistory(businessId: string, userId: string): Promise<ImportBatch[]> {
     return this.importService.getImportHistory(businessId, userId);
   }

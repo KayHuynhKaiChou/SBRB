@@ -31,9 +31,6 @@ export class DataSheetType {
   @Field(() => Int)
   periodCount: number;
 
-  @Field(() => String, { nullable: true })
-  fileUrl: string | null;
-
   @Field(() => String)
   status: string;
 

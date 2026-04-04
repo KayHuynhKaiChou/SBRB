@@ -81,5 +81,10 @@
   "new_series_name": "Chỉ số mới",
   "rename_success": "Đã đổi tên",
   "add_success": "Đã thêm",
-  "delete_success": "Đã xóa"
+  "delete_success": "Đã xóa",
+  "preview_loading": "Đang phân tích file...",
+  "preview_rows_hint": "Hiển thị {{shown}} trong {{total}} hàng",
+  "preview_warnings": "Cảnh báo",
+  "preview_no_data": "Không tìm thấy dữ liệu trong file",
+  "preview_step": "Xem trước"
 }

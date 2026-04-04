@@ -48,7 +48,6 @@ export class DatasheetImportService {
       uploadedBy: userId,
       name: file.originalname,
       originalFilename: file.originalname,
-      fileUrl: null,
       status: 'processing',
       periodHeaders: headers,
       periodCount: headers.length,
@@ -61,7 +60,6 @@ export class DatasheetImportService {
       uploaderId: userId,
       dataSheetId: savedSheet.id,
       originalFilename: file.originalname,
-      fileUrl: null,
       status: 'processing',
     });
     const savedBatch = await this.batchRepo.save(batch);
@@ -120,7 +118,6 @@ export class DatasheetImportService {
       uploaderId: userId,
       dataSheetId: datasheetId,
       originalFilename: file.originalname,
-      fileUrl: null,
       status: 'processing',
     });
     const savedBatch = await this.batchRepo.save(batch);
@@ -165,6 +162,16 @@ export class DatasheetImportService {
     }
 
     return { batchId: savedBatch.id, datasheetId, status: 'ready' };
+  }
+
+  /** Parse file and return preview data WITHOUT saving anything to DB — SRS 4.7 */
+  async preview(file: Express.Multer.File): Promise<{
+    headers: string[];
+    rows: { name: string; values: Record<string, number | null> }[];
+    warnings: string[];
+  }> {
+    this.validateFileType(file);
+    return this.parseFile(file);
   }
 
   async getImportHistory(businessId: string, userId: string): Promise<ImportBatch[]> {

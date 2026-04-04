@@ -70,6 +70,13 @@ export class DatasheetController {
     res.end(buffer);
   }
 
+  /** POST /data-sheets/preview — MUST be before /:id routes to avoid route shadowing */
+  @Post('data-sheets/preview')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: FILE_SIZE_LIMIT } }))
+  async previewFile(@UploadedFile() file: Express.Multer.File) {
+    return this.datasheetService.preview(file);
+  }
+
   /** GET /data-sheets/:id/export — MUST be before /:id to avoid route shadowing */
   @Get('data-sheets/:id/export')
   async exportExcel(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {

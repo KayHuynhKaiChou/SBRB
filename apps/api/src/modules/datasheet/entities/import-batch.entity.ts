@@ -41,9 +41,6 @@ export class ImportBatch {
   @Column({ name: 'original_filename', type: 'varchar', length: 255, nullable: true })
   originalFilename: string | null;
 
-  @Column({ name: 'file_url', type: 'text', nullable: true })
-  fileUrl: string | null;
-
   @Column({ type: 'varchar', length: 20, default: 'processing' })
   status: string;
 

@@ -49,9 +49,6 @@ export class DataSheet {
   @Column({ name: 'period_count', type: 'integer', default: 0 })
   periodCount: number;
 
-  @Column({ name: 'file_url', type: 'text', nullable: true })
-  fileUrl: string | null;
-
   @Column({ type: 'varchar', length: 20, default: 'processing' })
   status: string;
 

@@ -1,15 +1,29 @@
 import React, { useState } from 'react';
-import { Modal, Steps, Upload, Alert, Input, Progress, Typography, Space } from 'antd';
-import { CloseOutlined, CheckOutlined, ArrowLeftOutlined, ArrowRightOutlined, InboxOutlined } from '@ant-design/icons';
+import { Modal, Steps, Upload, Alert, Input, Progress, Typography, Space, Spin } from 'antd';
+import {
+  CloseOutlined,
+  CheckOutlined,
+  ArrowLeftOutlined,
+  ArrowRightOutlined,
+  InboxOutlined,
+} from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { IconButton } from '@sbrb/ui';
 import { message } from 'antd';
 import type { UploadFile } from 'antd';
 import { useImportDataSheet } from '../../hooks/use-datasheet';
 import { validateUploadFile } from '../../utils/file-upload-validator';
+import { useAuthStore } from '../../store/auth.store';
+import { ImportPreviewTable } from '../../components/datasheet/import-preview-table';
 
 const { Dragger } = Upload;
 const { Text } = Typography;
+
+interface IPreviewData {
+  headers: string[];
+  rows: { name: string; values: Record<string, number | null> }[];
+  warnings: string[];
+}
 
 interface IImportDialogProps {
   open: boolean;
@@ -25,6 +39,8 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
   const [importName, setImportName] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
+  const [previewData, setPreviewData] = useState<IPreviewData | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
 
   const { upload, progress, isUploading } = useImportDataSheet(businessId);
 
@@ -34,28 +50,63 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
     setImportName('');
     setError(null);
     setImporting(false);
+    setPreviewData(null);
+    setPreviewLoading(false);
     onClose();
   };
 
   const handleBeforeUpload = (f: File) => {
-    const { valid, error } = validateUploadFile(f);
+    const { valid, error: validationError } = validateUploadFile(f);
     if (!valid) {
-      setError(error!);
+      setError(validationError ?? t('datasheet:import_failed'));
       return Upload.LIST_IGNORE;
     }
     setFile(f);
     setImportName(f.name.replace(/\.(xlsx|csv)$/i, ''));
     setError(null);
+    setPreviewData(null);
     return false; // prevent auto upload
   };
 
-  const handleNext = () => {
-    if (step === 0 && !file) {
-      setError(t('datasheet:select_file_error'));
+  const fetchPreview = async (f: File) => {
+    setPreviewLoading(true);
+    setError(null);
+    try {
+      const token = useAuthStore.getState().accessToken;
+      const formData = new FormData();
+      formData.append('file', f);
+      const response = await fetch('/api/v1/data-sheets/preview', {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body?.message ?? `HTTP ${response.status}`);
+      }
+      const data: IPreviewData = await response.json();
+      setPreviewData(data);
+      setStep(1);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const handleNext = async () => {
+    if (step === 0) {
+      if (!file) {
+        setError(t('datasheet:select_file_error'));
+        return;
+      }
+      await fetchPreview(file);
       return;
     }
-    setError(null);
-    setStep((s) => s + 1);
+    if (step === 1) {
+      setError(null);
+      setStep(2);
+    }
   };
 
   const handleStartImport = async () => {
@@ -67,7 +118,6 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
     setError(null);
     try {
       await upload(file, importName.trim());
-      // Wait for progress to reach complete
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Import thất bại';
       setError(msg);
@@ -103,28 +153,30 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
             accept=".xlsx,.csv"
             beforeUpload={handleBeforeUpload}
             fileList={file ? [{ uid: '1', name: file.name, size: file.size } as UploadFile] : []}
-            onRemove={() => { setFile(null); setImportName(''); }}
+            onRemove={() => { setFile(null); setImportName(''); setPreviewData(null); }}
             maxCount={1}
+            disabled={previewLoading}
           >
             <p className="ant-upload-drag-icon">
               <InboxOutlined />
             </p>
-            <p className="ant-upload-text">Kéo thả hoặc click để chọn file</p>
-            <p className="ant-upload-hint">Hỗ trợ .xlsx, .csv — tối đa 10 MB</p>
+            <p className="ant-upload-text">{t('datasheet:upload_label')}</p>
+            <p className="ant-upload-hint">{t('datasheet:upload_hint')}</p>
           </Dragger>
         );
       case 1:
         return (
-          <div className="py-4">
-            <Space direction="vertical" className="!w-full">
-              <Text strong>{t('datasheet:file_info')}:</Text>
-              <Text>{t('datasheet:file_name')}: {file?.name}</Text>
-              <Text>{t('datasheet:file_size')}: {file ? (file.size / 1024).toFixed(1) + ' KB' : '-'}</Text>
-              <Text type="secondary">
-                {t('datasheet:server_analyze_hint')}
-              </Text>
-            </Space>
-          </div>
+          <Spin spinning={previewLoading} tip={t('datasheet:preview_loading')}>
+            <div className="py-2" style={{ minHeight: 120 }}>
+              {previewData && (
+                <ImportPreviewTable
+                  headers={previewData.headers}
+                  rows={previewData.rows}
+                  warnings={previewData.warnings}
+                />
+              )}
+            </div>
+          </Spin>
         );
       case 2:
         return (
@@ -155,23 +207,58 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
     if (step === 0) {
       return (
         <div className="flex justify-end gap-2">
-          <IconButton icon={<ArrowRightOutlined />} tooltip={t('common:next')} size="small" onClick={handleNext} disabled={!file} />
-          <IconButton icon={<CloseOutlined />} tooltip={t('common:cancel')} size="small" onClick={handleClose} />
+          <IconButton
+            icon={<ArrowRightOutlined />}
+            tooltip={t('common:next')}
+            size="small"
+            onClick={handleNext}
+            disabled={!file || previewLoading}
+          />
+          <IconButton
+            icon={<CloseOutlined />}
+            tooltip={t('common:cancel')}
+            size="small"
+            onClick={handleClose}
+          />
         </div>
       );
     }
     if (step === 1) {
       return (
         <div className="flex justify-end gap-2">
-          <IconButton icon={<ArrowRightOutlined />} tooltip={t('common:next')} size="small" onClick={handleNext} />
-          <IconButton icon={<ArrowLeftOutlined />} tooltip={t('common:back')} size="small" onClick={() => setStep(0)} />
+          <IconButton
+            icon={<ArrowRightOutlined />}
+            tooltip={t('common:next')}
+            size="small"
+            onClick={handleNext}
+            disabled={previewLoading}
+          />
+          <IconButton
+            icon={<ArrowLeftOutlined />}
+            tooltip={t('common:back')}
+            size="small"
+            onClick={() => setStep(0)}
+            disabled={previewLoading}
+          />
         </div>
       );
     }
     return (
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-        <IconButton icon={<CheckOutlined />} tooltip={t('common:start_import')} size="small" onClick={handleStartImport} disabled={!importName.trim() || importing || isUploading} />
-        <IconButton icon={<ArrowLeftOutlined />} tooltip={t('common:back')} size="small" onClick={() => setStep(1)} disabled={importing || isUploading} />
+      <div className="flex justify-end gap-2">
+        <IconButton
+          icon={<CheckOutlined />}
+          tooltip={t('common:start_import')}
+          size="small"
+          onClick={handleStartImport}
+          disabled={!importName.trim() || importing || isUploading}
+        />
+        <IconButton
+          icon={<ArrowLeftOutlined />}
+          tooltip={t('common:back')}
+          size="small"
+          onClick={() => setStep(1)}
+          disabled={importing || isUploading}
+        />
       </div>
     );
   };
@@ -183,7 +270,7 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
       onCancel={importing || isUploading ? undefined : handleClose}
       closable={false}
       footer={renderFooter()}
-      width={520}
+      width={600}
     >
       <Steps current={step} items={stepItems} className="!mb-6" />
       {error && (
