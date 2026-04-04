@@ -30,10 +30,10 @@ export function DataTable({
   const formatter = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language]);
 
   const columns = useMemo<ColumnsType<IDataSeriesRow>>(() => {
-    const periodCols = periodHeaders.map((period) => ({
+    const periodCols: ColumnsType<IDataSeriesRow> = periodHeaders.map((period) => ({
       title: onDeletePeriod ? (
-        <Space size={4}>
-          <span>{period}</span>
+        <div className="group/header flex items-center justify-end gap-1">
+          <span className="font-medium">{period}</span>
           <Popconfirm
             title={t('confirm_delete_period')}
             onConfirm={() => onDeletePeriod(period)}
@@ -45,14 +45,18 @@ export function DataTable({
               size="small"
               danger
               icon={<DeleteOutlined />}
-              className="!h-4 !w-4 !min-w-0 !p-0 opacity-40 hover:!opacity-100"
+              className="!h-5 !w-5 !min-w-0 !p-0 opacity-0 group-hover/header:!opacity-60 hover:!opacity-100 transition-opacity"
               onClick={(e) => e.stopPropagation()}
             />
           </Popconfirm>
-        </Space>
-      ) : period,
+        </div>
+      ) : (
+        <span className="font-medium">{period}</span>
+      ),
       key: period,
+      align: 'right' as const,
       width: 120,
+      onHeaderCell: () => ({ className: 'text-right' }),
       render: (_: unknown, record: IDataSeriesRow) => (
         <EditableCell
           value={record.values?.[period] ?? null}
@@ -64,8 +68,9 @@ export function DataTable({
     const actionCol: ColumnsType<IDataSeriesRow>[number] | null = onDeleteSeries
       ? {
           key: 'actions',
-          width: 48,
+          width: 40,
           fixed: 'right' as const,
+          onHeaderCell: () => ({ className: 'bg-gray-50/80!' }),
           render: (_: unknown, record: IDataSeriesRow) => (
             <Popconfirm
               title={t('confirm_delete_series')}
@@ -77,7 +82,8 @@ export function DataTable({
                 type="text"
                 size="small"
                 danger
-                icon={<DeleteOutlined />}
+                icon={<DeleteOutlined className="text-xs" />}
+                className="!h-6 !w-6 !min-w-0 !p-0 opacity-30 hover:!opacity-100 transition-opacity"
               />
             </Popconfirm>
           ),
@@ -86,11 +92,11 @@ export function DataTable({
 
     return [
       {
-        title: t('series_name_col'),
+        title: <span className="font-semibold">{t('series_name_col')}</span>,
         dataIndex: 'seriesName',
         key: 'seriesName',
         fixed: 'left' as const,
-        width: 200,
+        width: 180,
         ellipsis: true,
         render: (_: unknown, record: IDataSeriesRow) => (
           <SeriesNameCell
@@ -124,9 +130,14 @@ export function DataTable({
       dataSource={series}
       columns={columns}
       rowKey="id"
-      size="small"
-      scroll={{ x: 'max-content' }}
-      pagination={{ pageSize: 50, showSizeChanger: true }}
+      bordered
+      size="middle"
+      tableLayout="fixed"
+      scroll={periodHeaders.length > 6 ? { x: 180 + periodHeaders.length * 120 + 40 } : undefined}
+      rowHoverable
+      className="[&_.ant-table-thead>tr>th]:!bg-gray-50 [&_.ant-table-thead>tr>th]:!font-semibold [&_.ant-table-summary>tr>td]:!border-t-2"
+      rowClassName="group/row hover:!bg-blue-50/40 transition-colors"
+      pagination={{ pageSize: 50, showSizeChanger: true, hideOnSinglePage: true }}
       locale={{
         emptyText: (
           <Empty
@@ -137,18 +148,22 @@ export function DataTable({
       }}
       summary={() => (
         <Table.Summary fixed="bottom">
-          <Table.Summary.Row>
-            <Table.Summary.Cell index={0} className="font-semibold">
+          <Table.Summary.Row className="bg-blue-50/30 font-semibold border-t-2 border-gray-200">
+            <Table.Summary.Cell index={0} className="font-bold text-gray-700 !bg-blue-50/50">
               {t('total_row')}
             </Table.Summary.Cell>
             {periodHeaders.map((period, i) => (
-              <Table.Summary.Cell key={period} index={i + 1} className="text-right">
+              <Table.Summary.Cell
+                key={period}
+                index={i + 1}
+                className="text-right font-mono text-gray-700 !bg-blue-50/50"
+              >
                 {totals[period] !== 0 ? formatter.format(totals[period]) : '–'}
               </Table.Summary.Cell>
             ))}
             {/* Placeholder cell to align with optional actions column */}
             {onDeleteSeries && (
-              <Table.Summary.Cell index={summaryColCount} />
+              <Table.Summary.Cell index={summaryColCount} className="!bg-blue-50/50" />
             )}
           </Table.Summary.Row>
         </Table.Summary>

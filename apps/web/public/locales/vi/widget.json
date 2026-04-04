@@ -58,5 +58,13 @@
   "series_select_all": "Chọn tất cả",
   "series_deselect_all": "Bỏ chọn tất cả",
   "no_datasheet_linked": "Liên kết nguồn dữ liệu trước",
-  "series_color": "Màu"
+  "series_color": "Màu",
+  "create_step_info": "Thông tin",
+  "create_step_series": "Chọn chuỗi",
+  "create_datasheet_label": "Nguồn dữ liệu",
+  "create_datasheet_placeholder": "Chọn bộ dữ liệu (tuỳ chọn)",
+  "create_datasheet_hint": "Bỏ qua để tạo widget trống",
+  "unit_custom": "Tuỳ chỉnh",
+  "unit_custom_placeholder": "Nhập đơn vị...",
+  "create_success": "Đã tạo Widget"
 }

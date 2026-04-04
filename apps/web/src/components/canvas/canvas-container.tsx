@@ -28,7 +28,7 @@ export function CanvasContainer({
   const { zoom } = useCanvasStore();
 
   return (
-    <div className="relative flex-1 overflow-auto bg-[#EEF2FF]">
+    <div data-canvas-scroll className="relative flex-1 overflow-auto bg-[#EEF2FF]">
       {/* Scrollable canvas area — width/height are dynamic (zoom-computed), kept as inline */}
       <div
         style={{

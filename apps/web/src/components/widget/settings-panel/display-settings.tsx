@@ -1,5 +1,5 @@
 import React from 'react';
-import { Switch, Input, Typography, Space, Segmented } from 'antd';
+import { Switch, Typography, Space, Segmented } from 'antd';
 import { useTranslation } from 'react-i18next';
 import type { IChartConfig } from '@sbrb/shared-types';
 
@@ -77,30 +77,6 @@ export function DisplaySettings({ config, onChange }: IDisplaySettingsProps) {
             className="!mt-1"
           />
         </div>
-        {config.type !== 'pie' && (
-          <>
-            <div>
-              <Text className="!text-[11px] !text-[#888]">{t('x_axis_name')}</Text>
-              <Input
-                size="small"
-                value={config.xAxisName ?? ''}
-                onChange={(e) => onChange({ xAxisName: e.target.value })}
-                placeholder={t('x_axis_placeholder')}
-                className="!mt-1"
-              />
-            </div>
-            <div>
-              <Text className="!text-[11px] !text-[#888]">{t('y_axis_name')}</Text>
-              <Input
-                size="small"
-                value={config.yAxisName ?? ''}
-                onChange={(e) => onChange({ yAxisName: e.target.value })}
-                placeholder={t('y_axis_placeholder')}
-                className="!mt-1"
-              />
-            </div>
-          </>
-        )}
       </Space>
     </div>
   );

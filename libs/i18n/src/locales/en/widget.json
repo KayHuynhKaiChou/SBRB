@@ -58,5 +58,13 @@
   "series_select_all": "Select all",
   "series_deselect_all": "Deselect all",
   "no_datasheet_linked": "Link a data source first",
-  "series_color": "Color"
+  "series_color": "Color",
+  "create_step_info": "Info",
+  "create_step_series": "Select series",
+  "create_datasheet_label": "Data source",
+  "create_datasheet_placeholder": "Select a dataset (optional)",
+  "create_datasheet_hint": "Skip to create an empty widget",
+  "unit_custom": "Custom",
+  "unit_custom_placeholder": "Type custom unit...",
+  "create_success": "Widget created successfully"
 }

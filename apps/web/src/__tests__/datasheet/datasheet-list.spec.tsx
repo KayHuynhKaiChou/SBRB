@@ -72,7 +72,14 @@ vi.mock('antd', () => ({
       const Tag = `h${level ?? 1}` as keyof JSX.IntrinsicElements;
       return <Tag>{children}</Tag>;
     },
+    Text: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
   },
+  Upload: Object.assign(
+    ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
+    {
+      Dragger: ({ children }: { children?: React.ReactNode }) => <div data-testid="upload-dragger">{children}</div>,
+    }
+  ),
   Tag: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
   Tooltip: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   Empty: Object.assign(
@@ -90,6 +97,10 @@ vi.mock('antd', () => ({
     }
   ),
   Dropdown: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Alert: ({ message: msg }: { message?: React.ReactNode }) => <div>{msg}</div>,
+  Progress: () => <div />,
+  Steps: () => <div />,
+  Spin: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   Form: Object.assign(
     ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
     {

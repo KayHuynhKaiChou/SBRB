@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Typography } from 'antd';
+import { Typography, message } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { useMutation } from '@apollo/client';
+import { useMutation, useApolloClient } from '@apollo/client';
 import { useAuthStore } from '../../store/auth.store';
 import { useTabs } from '../../hooks/use-tabs';
 import { AppLayout } from '../../components/layout/app-layout';
@@ -19,7 +19,7 @@ import type { ITabDto } from '@sbrb/shared-types';
 const { Text } = Typography;
 
 export default function DashboardPage() {
-  const { t } = useTranslation('dashboard');
+  const { t } = useTranslation(['dashboard', 'widget']);
   const { currentBusinessId } = useAuthStore();
 
   if (!currentBusinessId) {
@@ -36,7 +36,8 @@ export default function DashboardPage() {
   const [dataSelectorOpen, setDataSelectorOpen] = useState(false);
   const [dataSelectorWidgetId, setDataSelectorWidgetId] = useState<string | null>(null);
 
-  const { activeTabId: storeActiveTabId } = useCanvasStore();
+  const { activeTabId: storeActiveTabId, zoom } = useCanvasStore();
+  const apolloClient = useApolloClient();
   const [createWidgetMutation] = useMutation(CREATE_WIDGET_MUTATION);
   const { updateDataLink } = useWidgetConfig();
 
@@ -65,21 +66,49 @@ export default function DashboardPage() {
     setDataSelectorWidgetId(null);
   };
 
-  const handleAddWidget = async (input: { name: string; metricName?: string; unit?: string }) => {
+  const handleAddWidget = async (input: {
+    name: string;
+    unit: string;
+    dataSheetId: string | null;
+    selectedSeries: string[];
+  }) => {
     if (!storeActiveTabId) return;
-    await createWidgetMutation({
+    const result = await createWidgetMutation({
       variables: {
         input: {
           tabId: storeActiveTabId,
           businessId: currentBusinessId,
           name: input.name,
-          metricName: input.metricName ?? '',
           unit: input.unit ?? '',
-          position: { x: 20, y: 20, w: 800, h: 400 },
         },
       },
-      refetchQueries: [{ query: WIDGETS_QUERY, variables: { tabId: storeActiveTabId } }],
     });
+    // Link data source if selected during creation
+    const widgetId = result.data?.createWidget?.id;
+    if (widgetId && input.dataSheetId && input.selectedSeries.length > 0) {
+      await updateDataLink(widgetId, {
+        dataSheetId: input.dataSheetId,
+        selectedSeries: input.selectedSeries,
+        selectedPeriods: null,
+      });
+    }
+    // Single refetch after all mutations complete — widget appears with data ready
+    await apolloClient.refetchQueries({ include: ['Widgets'] });
+
+    // Scroll canvas to new widget position + toast
+    const pos = result.data?.createWidget?.position;
+    if (pos) {
+      requestAnimationFrame(() => {
+        const container = document.querySelector('[data-canvas-scroll]');
+        const scale = zoom / 100;
+        container?.scrollTo({
+          left: Math.max(0, pos.x * scale - 40),
+          top: Math.max(0, pos.y * scale - 40),
+          behavior: 'smooth',
+        });
+      });
+    }
+    message.success(t('widget:create_success'));
   };
 
   return (
@@ -123,6 +152,7 @@ export default function DashboardPage() {
 
       <AddWidgetModal
         open={addWidgetOpen}
+        businessId={currentBusinessId}
         onClose={() => setAddWidgetOpen(false)}
         onSubmit={handleAddWidget}
       />

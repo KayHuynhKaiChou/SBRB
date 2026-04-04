@@ -87,6 +87,9 @@ vi.mock('antd', () => {
     Input: ({ placeholder, value, onChange }: { placeholder?: string; value?: string; onChange?: (e: { target: { value: string } }) => void }) => (
       <input placeholder={placeholder} value={value ?? ''} onChange={onChange} />
     ),
+    Typography: {
+      Text: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
+    },
     Form,
   };
 });

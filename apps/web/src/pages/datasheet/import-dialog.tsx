@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Modal, Steps, Upload, Alert, Input, Progress, Typography, Space, Spin } from 'antd';
 import {
   CloseOutlined,
@@ -15,6 +15,7 @@ import { useImportDataSheet } from '../../hooks/use-datasheet';
 import { validateUploadFile } from '../../utils/file-upload-validator';
 import { useAuthStore } from '../../store/auth.store';
 import { ImportPreviewTable } from '../../components/datasheet/import-preview-table';
+import { DepartmentSelect } from '../../components/department/department-select';
 
 const { Dragger } = Upload;
 const { Text } = Typography;
@@ -33,21 +34,32 @@ interface IImportDialogProps {
 }
 
 export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDialogProps) {
-  const { t } = useTranslation(['datasheet', 'common']);
+  const { t } = useTranslation(['datasheet', 'common', 'department']);
   const [step, setStep] = useState(0);
   const [file, setFile] = useState<File | null>(null);
   const [importName, setImportName] = useState('');
+  const [departmentId, setDepartmentId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [previewData, setPreviewData] = useState<IPreviewData | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
 
   const { upload, progress, isUploading } = useImportDataSheet(businessId);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const clearPoll = useCallback(() => {
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+  }, []);
 
   const handleClose = () => {
+    clearPoll();
     setStep(0);
     setFile(null);
     setImportName('');
+    setDepartmentId(null);
     setError(null);
     setImporting(false);
     setPreviewData(null);
@@ -109,6 +121,14 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
     }
   };
 
+  const handleImportDone = useCallback(() => {
+    clearPoll();
+    message.success(t('datasheet:import_complete'));
+    setImporting(false);
+    onSuccess();
+    handleClose();
+  }, [onSuccess, clearPoll]);
+
   const handleStartImport = async () => {
     if (!file || !importName.trim()) {
       setError(t('datasheet:dataset_name_error'));
@@ -117,13 +137,34 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
     setImporting(true);
     setError(null);
     try {
-      await upload(file, importName.trim());
+      const datasheetId = await upload(file, importName.trim(), departmentId);
+      // REST polling fallback (WebSocket may miss if job completes before subscription)
+      clearPoll();
+      pollRef.current = setInterval(async () => {
+        try {
+          const token = useAuthStore.getState().accessToken;
+          const res = await fetch(`/api/v1/data-sheets/${datasheetId}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+          if (!res.ok) return;
+          const sheet = await res.json();
+          if (sheet.status === 'ready') handleImportDone();
+          else if (sheet.status === 'error') {
+            clearPoll();
+            setError(sheet.errorMessage ?? t('datasheet:import_failed'));
+            setImporting(false);
+          }
+        } catch { /* ignore poll errors */ }
+      }, 2000);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Import thất bại';
+      const msg = err instanceof Error ? err.message : t('datasheet:import_failed');
       setError(msg);
       setImporting(false);
     }
   };
+
+  // Cleanup polling on unmount
+  React.useEffect(() => clearPoll, [clearPoll]);
 
   // Watch progress completion
   React.useEffect(() => {
@@ -133,7 +174,7 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
       onSuccess();
       handleClose();
     } else if (progress?.status === 'error') {
-      setError(progress.errorMessage ?? 'Import thất bại');
+      setError(progress.errorMessage ?? t('datasheet:import_failed'));
       setImporting(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -182,6 +223,12 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
         return (
           <div className="py-4">
             <Space direction="vertical" className="!w-full">
+              <DepartmentSelect
+                businessId={businessId}
+                value={departmentId}
+                onChange={setDepartmentId}
+                disabled={importing || isUploading}
+              />
               <Text strong>{t('datasheet:dataset_name_label')}:</Text>
               <Input
                 value={importName}

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useMemo } from 'react';
-import { InputNumber, Tooltip } from 'antd';
+import { InputNumber } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 interface IEditableCellProps {
@@ -60,13 +60,12 @@ export const EditableCell = React.memo(function EditableCell({ value, onSave }: 
   const display = value == null ? '–' : formatter.format(value);
 
   return (
-    <Tooltip title={t('click_to_edit')}>
-      <span
-        className="block w-full cursor-pointer hover:bg-blue-50 rounded px-1 text-right"
-        onClick={startEdit}
-      >
-        {display}
-      </span>
-    </Tooltip>
+    <span
+      className="block w-full cursor-pointer rounded px-2 py-0.5 text-right font-mono text-gray-700 tabular-nums hover:bg-blue-100/60 hover:ring-1 hover:ring-blue-300/50 transition-all"
+      onClick={startEdit}
+      title={t('click_to_edit')}
+    >
+      {display}
+    </span>
   );
 });

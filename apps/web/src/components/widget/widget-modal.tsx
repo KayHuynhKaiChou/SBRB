@@ -36,8 +36,6 @@ export function WidgetModal({ widget, open, onClose, onOpenDataSelector }: IWidg
       showLabels: widget.chartConfig.showLabels,
       showLegend: widget.chartConfig.showLegend,
       yAxisFromZero: widget.chartConfig.yAxisFromZero,
-      xAxisName: widget.chartConfig.xAxisName,
-      yAxisName: widget.chartConfig.yAxisName,
       numberFormat: widget.chartConfig.numberFormat,
       seriesColors: widget.chartConfig.seriesColors ?? {},
       stacked: widget.chartConfig.stacked,
@@ -45,7 +43,7 @@ export function WidgetModal({ widget, open, onClose, onOpenDataSelector }: IWidg
     });
   }, [widget, form]);
 
-  const { chartData, loading, refetch } = useChartData(widget.id);
+  const { chartData, loading } = useChartData(widget.id);
   const { series: availableSeries } = useAvailableSeries(widget.dataLink?.datasheetId ? widget.id : null);
   const watchedSeriesIds: string[] = Form.useWatch('selectedSeriesIds', form) ?? [];
 
@@ -73,8 +71,6 @@ export function WidgetModal({ widget, open, onClose, onOpenDataSelector }: IWidg
       showLabels: values.showLabels,
       showLegend: values.showLegend,
       yAxisFromZero: values.yAxisFromZero,
-      xAxisName: values.xAxisName,
-      yAxisName: values.yAxisName,
       numberFormat: values.numberFormat,
       seriesColors: values.seriesColors,
       stacked: values.stacked,
@@ -119,7 +115,7 @@ export function WidgetModal({ widget, open, onClose, onOpenDataSelector }: IWidg
             />
           </Form.Item>
           <div className="flex gap-2">
-            <IconButton icon={<CheckOutlined />} tooltip={t('common:save')} size="small" onClick={handleSave} disabled={saving} />
+            <IconButton icon={<CheckOutlined />} tooltip={t('common:save')} size="small" onClick={handleSave} disabled={saving} loading={saving} />
             <IconButton icon={<CloseOutlined />} tooltip={t('common:close')} size="small" onClick={onClose} />
           </div>
         </div>
@@ -133,8 +129,6 @@ export function WidgetModal({ widget, open, onClose, onOpenDataSelector }: IWidg
               showLabels: getFieldValue('showLabels') ?? false,
               showLegend: getFieldValue('showLegend') ?? false,
               yAxisFromZero: getFieldValue('yAxisFromZero') ?? false,
-              xAxisName: getFieldValue('xAxisName'),
-              yAxisName: getFieldValue('yAxisName'),
               numberFormat: getFieldValue('numberFormat'),
               seriesColors: getFieldValue('seriesColors') ?? {},
               stacked: getFieldValue('stacked'),
@@ -180,7 +174,7 @@ export function WidgetModal({ widget, open, onClose, onOpenDataSelector }: IWidg
                     loading={loading}
                     chartType={localConfig.type}
                     config={localConfig}
-                    onRefresh={refetch}
+
                     unit={widget.unit}
                   />
                 </div>

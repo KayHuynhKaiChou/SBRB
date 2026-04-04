@@ -20,6 +20,7 @@ interface IIconButtonProps {
   size?: IconButtonSize;
   active?: boolean;
   disabled?: boolean;
+  loading?: boolean;
   onClick?: () => void;
   className?: string;
   style?: React.CSSProperties;
@@ -82,6 +83,7 @@ export function IconButton({
   size = 'default',
   active = false,
   disabled = false,
+  loading = false,
   onClick,
   className,
   style,
@@ -95,7 +97,8 @@ export function IconButton({
       type="text"
       shape="circle"
       icon={icon}
-      disabled={disabled}
+      disabled={disabled || loading}
+      loading={loading}
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}

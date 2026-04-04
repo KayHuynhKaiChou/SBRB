@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Input, Tooltip } from 'antd';
+import { Input } from 'antd';
 import { EditOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 
@@ -63,16 +63,15 @@ export const SeriesNameCell = React.memo(function SeriesNameCell({
   }
 
   return (
-    <Tooltip title={onRename ? t('rename_series') : undefined}>
-      <span
-        className={`flex items-center gap-1 group ${onRename ? 'cursor-pointer' : ''}`}
-        onClick={startEdit}
-      >
-        <span className="flex-1 truncate">{name}</span>
-        {onRename && (
-          <EditOutlined className="opacity-0 group-hover:opacity-50 text-xs shrink-0" />
-        )}
-      </span>
-    </Tooltip>
+    <span
+      className={`flex items-center gap-1.5 group/name font-medium text-gray-800 ${onRename ? 'cursor-pointer' : ''}`}
+      onClick={startEdit}
+      title={onRename ? t('rename_series') : undefined}
+    >
+      <span className="flex-1 truncate">{name}</span>
+      {onRename && (
+        <EditOutlined className="opacity-0 group-hover/name:opacity-50 text-xs shrink-0 transition-opacity" />
+      )}
+    </span>
   );
 });

@@ -1,8 +1,6 @@
 import React from 'react';
 import { Skeleton, Typography } from 'antd';
-import { ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { IconButton } from '@sbrb/ui';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -45,8 +43,7 @@ export interface IChartPreviewProps {
   loading: boolean;
   chartType: ChartType;
   config: IChartConfig;
-  onRefresh: () => void;
-  /** When true: hides refresh button and trend badge, reduces padding */
+  /** When true: hides trend badge, reduces padding */
   compact?: boolean;
   unit?: string;
 }
@@ -124,13 +121,11 @@ function buildOptions(config: IChartConfig, unit?: string) {
       : {
           x: {
             stacked: isStacked,
-            title: { display: !!config.xAxisName, text: config.xAxisName },
             grid: { color: 'rgba(0,0,0,0.04)' },
           },
           y: {
             stacked: isStacked,
             beginAtZero: config.yAxisFromZero,
-            title: { display: !!config.yAxisName, text: config.yAxisName },
             grid: { color: 'rgba(0,0,0,0.04)' },
             ticks: {
               callback: (value: number | string) =>
@@ -143,13 +138,13 @@ function buildOptions(config: IChartConfig, unit?: string) {
   };
 }
 
-export function ChartPreview({ chartData, loading, chartType: rawChartType, config, onRefresh, compact = false, unit }: IChartPreviewProps) {
+export function ChartPreview({ chartData, loading, chartType: rawChartType, config, compact = false, unit }: IChartPreviewProps) {
   const { t } = useTranslation(['widget', 'datasheet']);
   const chartType = rawChartType || 'bar';
   if (loading) {
     return (
-      <div style={{ padding: compact ? 4 : 16 }}>
-        <Skeleton.Node active className="!w-full" style={{ height: compact ? 120 : 340 }} />
+      <div className="flex-1 flex items-center justify-center p-4">
+        <Skeleton.Node active className="!w-full !h-full" style={{ minHeight: compact ? 120 : 200 }} />
       </div>
     );
   }
@@ -158,16 +153,10 @@ export function ChartPreview({ chartData, loading, chartType: rawChartType, conf
 
   return (
     <div className="flex flex-col h-full">
-      {/* header row — hidden in compact mode */}
-      {!compact && (
-        <div className="flex items-center justify-between mb-2">
-          {chartData?.trend ? <TrendBadge trend={chartData.trend} /> : <span />}
-          <IconButton
-            icon={<ReloadOutlined />}
-            tooltip={t('widget:refresh_chart')}
-            size="small"
-            onClick={onRefresh}
-          />
+      {/* trend badge — hidden in compact mode */}
+      {!compact && chartData?.trend && (
+        <div className="mb-2">
+          <TrendBadge trend={chartData.trend} />
         </div>
       )}
 
@@ -197,10 +186,7 @@ export function ChartPreview({ chartData, loading, chartType: rawChartType, conf
   );
 }
 
-/** Stable no-op for onRefresh in compact mode (avoids new function on every render) */
-const noOp = () => undefined;
-
-/** Compact inline chart for use inside widget cards — no refresh button or trend badge */
-export function InlineChartPreview(props: Omit<IChartPreviewProps, 'onRefresh'>) {
-  return <ChartPreview {...props} compact onRefresh={noOp} />;
+/** Compact inline chart for use inside widget cards — no trend badge */
+export function InlineChartPreview(props: IChartPreviewProps) {
+  return <ChartPreview {...props} compact />;
 }
