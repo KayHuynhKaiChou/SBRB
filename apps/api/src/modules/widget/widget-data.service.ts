@@ -7,6 +7,7 @@ import { Widget } from './entities/widget.entity';
 import { ChartData, ChartDataset, TrendBadge } from './dto/chart-data.dto';
 import { UpdateDataLinkDto } from './dto/update-data-link.dto';
 import { WidgetType } from './dto/widget.type';
+import { AvailableSeriesType } from './dto/available-series.type';
 import { WidgetAuthService } from './widget-auth.service';
 
 /** 20-color standard chart palette */
@@ -66,14 +67,9 @@ export class WidgetDataService {
       return { labels: [], datasets: [], trend: null };
     }
 
-    // Load matching series
-    const seriesQuery =
-      widget.selectedSeries.length > 0
-        ? { dataSheetId: widget.dataSheetId, id: In(widget.selectedSeries) }
-        : { dataSheetId: widget.dataSheetId };
-
+    // Always load ALL series — frontend handles filtering by selectedSeries
     const allSeries = await this.dataSeriesRepo.find({
-      where: seriesQuery,
+      where: { dataSheetId: widget.dataSheetId },
       order: { rowIndex: 'ASC' },
     });
 
@@ -127,7 +123,14 @@ export class WidgetDataService {
   /** Update widget chart config JSONB — SRS 4.5.3 */
   async updateConfig(widgetId: string, userId: string, config: Record<string, unknown>): Promise<WidgetType> {
     const { widget, businessId } = await this.widgetAuth.assertManagerByWidgetId(widgetId, userId);
-    widget.config = config;
+    // Extract name (separate column) from config payload
+    if (config.name !== undefined) {
+      widget.name = config.name as string;
+      const { name: _, ...chartConfig } = config;
+      widget.config = chartConfig;
+    } else {
+      widget.config = config;
+    }
     const saved = await this.widgetRepo.save(widget);
     return this.mapWidget(saved, businessId);
   }
@@ -166,6 +169,18 @@ export class WidgetDataService {
 
     const saved = await this.widgetRepo.save(widget);
     return this.mapWidget(saved, businessId);
+  }
+
+  /** Fetch all series for the widget's linked datasheet (for settings panel checkboxes) */
+  async getAvailableSeries(widgetId: string, userId: string): Promise<AvailableSeriesType[]> {
+    const { widget } = await this.widgetAuth.assertMemberByWidgetId(widgetId, userId);
+    if (!widget.dataSheetId) return [];
+    const series = await this.dataSeriesRepo.find({
+      where: { dataSheetId: widget.dataSheetId },
+      order: { rowIndex: 'ASC' },
+      select: ['id', 'seriesName'],
+    });
+    return series.map(s => ({ id: s.id, name: s.seriesName }));
   }
 
   /** Clear all data link fields from a widget — SRS 4.5.5 */

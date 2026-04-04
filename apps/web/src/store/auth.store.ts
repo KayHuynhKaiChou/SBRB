@@ -30,9 +30,16 @@ export const useAuthStore = create<IAuthStore>()(
         user: state.user,
         currentBusinessId: state.currentBusinessId,
       }),
-      onRehydrateStorage: () => () => {
-        useAuthStore.setState({ _hasHydrated: true });
-      },
     },
   ),
 );
+
+// Subscribe to future hydrations (e.g. manual rehydrate calls)
+useAuthStore.persist.onFinishHydration(() => {
+  useAuthStore.setState({ _hasHydrated: true });
+});
+// Hydration from localStorage is synchronous — may have already completed
+// during create(), before the subscription above was registered.
+if (useAuthStore.persist.hasHydrated()) {
+  useAuthStore.setState({ _hasHydrated: true });
+}

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Switch, Input, Typography, Space } from 'antd';
+import { Switch, Input, Typography, Space, Segmented } from 'antd';
+import { useTranslation } from 'react-i18next';
 import type { IChartConfig } from '@sbrb/shared-types';
 
 const { Text } = Typography;
@@ -20,13 +21,15 @@ function SettingRow({ label, children }: { label: string; children: React.ReactN
 }
 
 export function DisplaySettings({ config, onChange }: IDisplaySettingsProps) {
+  const { t } = useTranslation('widget');
+
   return (
     <div>
       <Text type="secondary" className="!text-[11px] !block !mb-2">
-        Hiển thị
+        {t('display_section')}
       </Text>
 
-      <SettingRow label="Hiện nhãn giá trị">
+      <SettingRow label={t('show_labels')}>
         <Switch
           size="small"
           checked={config.showLabels}
@@ -34,7 +37,7 @@ export function DisplaySettings({ config, onChange }: IDisplaySettingsProps) {
         />
       </SettingRow>
 
-      <SettingRow label="Hiện chú thích">
+      <SettingRow label={t('show_legend')}>
         <Switch
           size="small"
           checked={config.showLegend}
@@ -42,35 +45,62 @@ export function DisplaySettings({ config, onChange }: IDisplaySettingsProps) {
         />
       </SettingRow>
 
-      <SettingRow label="Trục Y bắt đầu từ 0">
-        <Switch
-          size="small"
-          checked={config.yAxisFromZero}
-          onChange={(v) => onChange({ yAxisFromZero: v })}
-        />
-      </SettingRow>
+      {config.type !== 'pie' && (
+        <SettingRow label={t('y_axis_from_zero')}>
+          <Switch
+            size="small"
+            checked={config.yAxisFromZero}
+            onChange={(v) => onChange({ yAxisFromZero: v })}
+          />
+        </SettingRow>
+      )}
+
+      {config.type === 'bar' && (
+        <SettingRow label={t('stacked_chart')}>
+          <Switch size="small" checked={config.stacked ?? false} onChange={(v) => onChange({ stacked: v })} />
+        </SettingRow>
+      )}
 
       <Space direction="vertical" className="!w-full" size={8}>
         <div>
-          <Text className="!text-[11px] !text-[#888]">Nhãn trục X</Text>
-          <Input
+          <Text className="!text-[11px] !text-[#888]">{t('number_format_label')}</Text>
+          <Segmented
             size="small"
-            value={config.xAxisName ?? ''}
-            onChange={(e) => onChange({ xAxisName: e.target.value })}
-            placeholder="Trục X"
+            block
+            options={[
+              { label: t('number_format_auto'), value: 'auto' },
+              { label: t('number_format_short'), value: 'short' },
+              { label: t('number_format_full'), value: 'full' },
+            ]}
+            value={config.numberFormat ?? 'auto'}
+            onChange={(v) => onChange({ numberFormat: v as 'auto' | 'full' | 'short' })}
             className="!mt-1"
           />
         </div>
-        <div>
-          <Text className="!text-[11px] !text-[#888]">Nhãn trục Y</Text>
-          <Input
-            size="small"
-            value={config.yAxisName ?? ''}
-            onChange={(e) => onChange({ yAxisName: e.target.value })}
-            placeholder="Trục Y"
-            className="!mt-1"
-          />
-        </div>
+        {config.type !== 'pie' && (
+          <>
+            <div>
+              <Text className="!text-[11px] !text-[#888]">{t('x_axis_name')}</Text>
+              <Input
+                size="small"
+                value={config.xAxisName ?? ''}
+                onChange={(e) => onChange({ xAxisName: e.target.value })}
+                placeholder={t('x_axis_placeholder')}
+                className="!mt-1"
+              />
+            </div>
+            <div>
+              <Text className="!text-[11px] !text-[#888]">{t('y_axis_name')}</Text>
+              <Input
+                size="small"
+                value={config.yAxisName ?? ''}
+                onChange={(e) => onChange({ yAxisName: e.target.value })}
+                placeholder={t('y_axis_placeholder')}
+                className="!mt-1"
+              />
+            </div>
+          </>
+        )}
       </Space>
     </div>
   );

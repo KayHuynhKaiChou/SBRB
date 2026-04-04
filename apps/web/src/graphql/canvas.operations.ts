@@ -38,6 +38,7 @@ export const WIDGETS_QUERY = gql`
         w
         h
       }
+      config
       chartConfig {
         type
         colorIndex
@@ -45,6 +46,9 @@ export const WIDGETS_QUERY = gql`
         yAxisFromZero
         showLegend
       }
+      dataSheetId
+      selectedSeries
+      selectedPeriods
       isRestricted
       createdAt
       updatedAt

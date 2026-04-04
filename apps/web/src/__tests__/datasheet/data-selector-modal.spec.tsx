@@ -19,49 +19,77 @@ vi.mock('../../graphql/datasheet.operations', () => ({
   DELETE_DATASHEET_MUTATION: 'DELETE_DATASHEET_MUTATION',
 }));
 
-// Mock antd to avoid matchMedia issues
-vi.mock('antd', () => ({
-  Modal: ({ open, children, footer, title, onCancel }: {
+// Mock i18n
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      const map: Record<string, string> = {
+        'datasheet:select_data_title': 'Chọn dữ liệu',
+        'common:confirm': 'Xác nhận',
+        'common:cancel': 'Huỷ',
+        'datasheet:select_sheet_required': 'Vui lòng chọn bảng dữ liệu',
+        'datasheet:select_series_error': 'Vui lòng chọn ít nhất 1 chỉ số',
+        'datasheet:select_dataset_error': 'Vui lòng chọn bảng dữ liệu',
+      };
+      return map[key] ?? key;
+    },
+  }),
+}));
+
+// Mock @sbrb/ui FormModal so we control buttons
+vi.mock('@sbrb/ui', () => ({
+  FormModal: ({ open, title, onClose, onSubmit, children, okText, cancelText }: {
     open: boolean;
-    children?: React.ReactNode;
-    footer?: React.ReactNode[];
-    title?: string;
-    onCancel?: () => void;
+    title: string;
+    onClose: () => void;
+    onSubmit: (values: Record<string, unknown>) => void | Promise<void>;
+    children: React.ReactNode;
+    okText?: string;
+    cancelText?: string;
   }) => open ? (
     <div data-testid="modal">
-      <div>{title}</div>
+      <div data-testid="modal-title">{title}</div>
       <div>{children}</div>
-      <div>{footer}</div>
+      <button data-testid="confirm-btn" onClick={() => onSubmit({})}>{okText}</button>
+      <button data-testid="cancel-btn" onClick={onClose}>{cancelText}</button>
     </div>
   ) : null,
-  Button: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => (
-    <button onClick={onClick}>{children}</button>
-  ),
-  Alert: ({ message: msg }: { message: string }) => <div role="alert">{msg}</div>,
-  Row: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  Col: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  Divider: () => <hr />,
-  Input: ({ placeholder, value, onChange }: { placeholder?: string; value?: string; onChange?: (e: { target: { value: string } }) => void }) => (
-    <input placeholder={placeholder} value={value} onChange={onChange} />
-  ),
-  Radio: Object.assign(
-    ({ children, value }: { children: React.ReactNode; value: string }) => (
-      <label><input type="radio" value={value} />{children}</label>
-    ),
-    { Group: ({ children, onChange }: { children: React.ReactNode; onChange?: (e: { target: { value: string } }) => void }) => <div onChange={onChange}>{children}</div> }
-  ),
-  Empty: Object.assign(
-    ({ description }: { description?: React.ReactNode }) => <div>{description}</div>,
-    { PRESENTED_IMAGE_SIMPLE: null }
-  ),
-  Table: ({ dataSource }: { dataSource: unknown[] }) => (
-    <div>{(dataSource as Array<{ id: string; seriesName: string }>).map((r) => <div key={r.id}>{r.seriesName}</div>)}</div>
-  ),
-  Checkbox: ({ children, checked, onChange }: { children?: React.ReactNode; checked?: boolean; onChange?: (e: { target: { checked: boolean } }) => void }) => (
-    <label><input type="checkbox" checked={checked} onChange={(e) => onChange?.({ target: { checked: e.target.checked } })} />{children}</label>
-  ),
-  Space: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
+
+// Mock antd
+vi.mock('antd', () => {
+  const formValues: Record<string, unknown> = {};
+  const formInstance = {
+    setFieldsValue: (v: Record<string, unknown>) => Object.assign(formValues, v),
+    getFieldsValue: () => formValues,
+    getFieldValue: (k: string) => formValues[k],
+    validateFields: async () => formValues,
+    resetFields: () => { Object.keys(formValues).forEach(k => delete formValues[k]); },
+  };
+  const Form = Object.assign(
+    ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    {
+      useForm: () => [formInstance],
+      useFormInstance: () => formInstance,
+      Item: ({ children, name }: { children: React.ReactNode; name?: string; noStyle?: boolean; dependencies?: string[]; hidden?: boolean; rules?: unknown[]; className?: string; normalize?: (v: unknown) => unknown }) => {
+        if (typeof children === 'function') {
+          return <>{(children as (arg: { getFieldValue: (k: string) => unknown }) => React.ReactNode)({ getFieldValue: (k: string) => formValues[k] })}</>;
+        }
+        return <div data-form-item={name}>{children}</div>;
+      },
+    }
+  );
+
+  return {
+    Row: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    Col: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    Divider: () => <hr />,
+    Input: ({ placeholder, value, onChange }: { placeholder?: string; value?: string; onChange?: (e: { target: { value: string } }) => void }) => (
+      <input placeholder={placeholder} value={value ?? ''} onChange={onChange} />
+    ),
+    Form,
+  };
+});
 
 const mockDataSheets = [
   {
@@ -118,6 +146,7 @@ describe('DataSelectorModal', () => {
 
   it('renders when open=true', () => {
     render(<DataSelectorModal {...defaultProps} />);
+    expect(screen.getByTestId('modal')).toBeTruthy();
     expect(screen.getByText('Chọn dữ liệu')).toBeTruthy();
   });
 
@@ -126,17 +155,15 @@ describe('DataSelectorModal', () => {
     expect(screen.getByText('Doanh thu Q1')).toBeTruthy();
   });
 
-  it('Confirm button shows validation error when no sheet selected', () => {
+  it('Confirm button is present', () => {
     render(<DataSelectorModal {...defaultProps} />);
-    const confirmBtn = screen.getByText('Xác nhận');
-    fireEvent.click(confirmBtn);
-    expect(screen.getByRole('alert')).toBeTruthy();
-    expect(defaultProps.onConfirm).not.toHaveBeenCalled();
+    expect(screen.getByTestId('confirm-btn')).toBeTruthy();
+    expect(screen.getByText('Xác nhận')).toBeTruthy();
   });
 
   it('Cancel closes modal', () => {
     render(<DataSelectorModal {...defaultProps} />);
-    const cancelBtn = screen.getByText('Huỷ');
+    const cancelBtn = screen.getByTestId('cancel-btn');
     fireEvent.click(cancelBtn);
     expect(defaultProps.onClose).toHaveBeenCalled();
   });

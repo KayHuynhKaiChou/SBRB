@@ -145,11 +145,7 @@ export class WidgetService {
     const snapped = snapPosition(dto);
     const newPosition = { x: snapped.x, y: snapped.y, w: snapped.w, h: snapped.h };
 
-    // Validate bounds and size constraints
-    const errors = validatePosition(newPosition, business.canvasWidth, business.canvasHeight);
-    if (errors.length > 0) {
-      throw new BadRequestException(errors);
-    }
+    // Position/size validation handled by FE — BE just persists
 
     // Load sibling widgets for collision check
     const siblings = await this.widgetRepo.find({ where: { tabId: widget.tabId, id: Not(id) } });

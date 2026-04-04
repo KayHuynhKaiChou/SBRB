@@ -1,7 +1,7 @@
 import type { IWidgetPosition } from './canvas.types';
 
 /** Supported chart types — SRS 4.6.2 */
-export type ChartType = 'bar' | 'line' | 'area' | 'doughnut';
+export type ChartType = 'bar' | 'line' | 'pie';
 
 /** Chart display configuration */
 export interface IChartConfig {
@@ -12,6 +12,9 @@ export interface IChartConfig {
   showLegend: boolean;
   xAxisName?: string;
   yAxisName?: string;
+  numberFormat?: 'auto' | 'full' | 'short'; // Number display format for labels/axis
+  stacked?: boolean;     // Stack bars/areas
+  seriesColors?: Record<string, string>; // Maps seriesId → hex color override
 }
 
 /** Widget data linking */

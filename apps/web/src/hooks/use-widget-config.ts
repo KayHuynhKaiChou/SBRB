@@ -1,5 +1,6 @@
 import { useMutation } from '@apollo/client';
 import { message } from 'antd';
+import { t } from 'i18next';
 import {
   UPDATE_WIDGET_CONFIG_MUTATION,
   UPDATE_WIDGET_DATA_LINK_MUTATION,
@@ -27,19 +28,9 @@ export function useWidgetConfig() {
 
   const updateConfig = async (id: string, config: Partial<IChartConfig> & { name?: string }) => {
     try {
-      await updateConfigMutation({
-        variables: { id, config },
-        optimisticResponse: {
-          updateWidgetConfig: {
-            __typename: 'Widget',
-            id,
-            name: config.name,
-            chartConfig: config,
-          },
-        },
-      });
+      await updateConfigMutation({ variables: { id, config } });
     } catch {
-      message.error('Không thể cập nhật cấu hình widget');
+      message.error(t('widget:update_config_error'));
     }
   };
 
@@ -47,7 +38,7 @@ export function useWidgetConfig() {
     try {
       await updateDataLinkMutation({ variables: { id, input: dataLink } });
     } catch {
-      message.error('Không thể cập nhật liên kết dữ liệu');
+      message.error(t('widget:update_link_error'));
     }
   };
 
@@ -55,7 +46,7 @@ export function useWidgetConfig() {
     try {
       await removeDataLinkMutation({ variables: { id } });
     } catch {
-      message.error('Không thể xoá liên kết dữ liệu');
+      message.error(t('widget:remove_link_error'));
     }
   };
 

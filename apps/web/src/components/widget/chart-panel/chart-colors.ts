@@ -1,16 +1,11 @@
-/** SBRB chart color palette */
-export const SBRB_CHART_COLORS = [
-  '#4FA8E8', // blue (primary)
-  '#E87F6A', // coral
-  '#F5B96A', // orange
-  '#6BCB8B', // green
-  '#B07FE8', // purple
-  '#E8C44F', // yellow
-];
+import { CHART_COLORS } from '@sbrb/shared-constants';
+
+/** SBRB chart color palette — backwards compat alias */
+export const SBRB_CHART_COLORS = CHART_COLORS;
 
 /** Returns a chart color by cycling through the palette */
 export function getChartColor(index: number): string {
-  return SBRB_CHART_COLORS[index % SBRB_CHART_COLORS.length];
+  return CHART_COLORS[index % CHART_COLORS.length];
 }
 
 /** Returns a chart color with alpha transparency */

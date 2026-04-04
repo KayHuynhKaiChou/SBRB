@@ -1,15 +1,15 @@
 import React from 'react';
 import { Typography } from 'antd';
-import { BarChartOutlined, LineChartOutlined, PieChartOutlined, AreaChartOutlined } from '@ant-design/icons';
+import { BarChartOutlined, LineChartOutlined, PieChartOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import type { ChartType } from '@sbrb/shared-types';
 
 const { Text } = Typography;
 
-const CHART_TYPES: { type: ChartType; label: string; icon: React.ReactNode }[] = [
-  { type: 'bar', label: 'Cột', icon: <BarChartOutlined /> },
-  { type: 'line', label: 'Đường', icon: <LineChartOutlined /> },
-  { type: 'area', label: 'Diện tích', icon: <AreaChartOutlined /> },
-  { type: 'doughnut', label: 'Vòng', icon: <PieChartOutlined /> },
+const CHART_TYPES: { type: ChartType; labelKey: string; icon: React.ReactNode }[] = [
+  { type: 'bar', labelKey: 'chart_bar', icon: <BarChartOutlined /> },
+  { type: 'line', labelKey: 'chart_line', icon: <LineChartOutlined /> },
+  { type: 'pie', labelKey: 'chart_pie', icon: <PieChartOutlined /> },
 ];
 
 interface IChartTypeSelectorProps {
@@ -18,10 +18,11 @@ interface IChartTypeSelectorProps {
 }
 
 export function ChartTypeSelector({ value, onChange }: IChartTypeSelectorProps) {
+  const { t } = useTranslation('widget');
   return (
     <div>
       <Text type="secondary" className="!text-[11px] !block !mb-2">
-        Loại biểu đồ
+        {t('chart_type_label')}
       </Text>
       <div className="grid grid-cols-2 gap-2">
         {CHART_TYPES.map((item) => {
@@ -40,7 +41,7 @@ export function ChartTypeSelector({ value, onChange }: IChartTypeSelectorProps) 
                 {item.icon}
               </span>
               <Text style={{ fontSize: 11, color: isSelected ? '#D72A44' : '#666' }}>
-                {item.label}
+                {t(item.labelKey)}
               </Text>
             </div>
           );

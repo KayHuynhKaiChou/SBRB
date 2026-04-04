@@ -1,20 +1,16 @@
-import { IsInt, IsPositive, Min } from 'class-validator';
+import { IsNumber } from 'class-validator';
 
-/** SRS 4.4.3/4.4.5 — Widget position update payload (REST only — high-frequency) */
+/** Widget position update payload (REST only — high-frequency). Validation handled by FE. */
 export class UpdateWidgetPositionDto {
-  @IsInt()
-  @Min(0)
+  @IsNumber()
   x: number;
 
-  @IsInt()
-  @Min(0)
+  @IsNumber()
   y: number;
 
-  @IsInt()
-  @IsPositive()
+  @IsNumber()
   w: number;
 
-  @IsInt()
-  @IsPositive()
+  @IsNumber()
   h: number;
 }

@@ -49,3 +49,12 @@ export const REMOVE_WIDGET_DATA_LINK_MUTATION = gql`
     }
   }
 `;
+
+export const AVAILABLE_SERIES_QUERY = gql`
+  query AvailableSeries($widgetId: ID!) {
+    availableSeries(widgetId: $widgetId) {
+      id
+      name
+    }
+  }
+`;

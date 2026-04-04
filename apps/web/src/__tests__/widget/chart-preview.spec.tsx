@@ -4,6 +4,16 @@ import { render, screen } from '@testing-library/react';
 import type { IChartConfig } from '@sbrb/shared-types';
 import type { IChartDataResult } from '../../hooks/use-chart-data';
 
+// Mock i18n
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      const map: Record<string, string> = { 'datasheet:no_data_hint': 'Chưa có dữ liệu', 'widget:refresh_chart': 'Làm mới' };
+      return map[key] ?? key;
+    },
+  }),
+}));
+
 // Mock chart.js registration to avoid canvas issues in test env
 vi.mock('chart.js', () => ({
   Chart: { register: vi.fn() },
@@ -22,7 +32,7 @@ vi.mock('chart.js', () => ({
 vi.mock('react-chartjs-2', () => ({
   Bar: ({ 'data-testid': testId }: { 'data-testid'?: string }) => <canvas data-testid={testId ?? 'bar-chart'} />,
   Line: ({ 'data-testid': testId }: { 'data-testid'?: string }) => <canvas data-testid={testId ?? 'line-chart'} />,
-  Doughnut: ({ 'data-testid': testId }: { 'data-testid'?: string }) => <canvas data-testid={testId ?? 'doughnut-chart'} />,
+  Pie: ({ 'data-testid': testId }: { 'data-testid'?: string }) => <canvas data-testid={testId ?? 'pie-chart'} />,
 }));
 
 vi.mock('antd', () => ({
@@ -35,6 +45,7 @@ vi.mock('antd', () => ({
   Button: ({ children, onClick }: { children?: React.ReactNode; onClick?: () => void }) => (
     <button onClick={onClick}>{children}</button>
   ),
+  Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 vi.mock('@ant-design/icons', () => ({

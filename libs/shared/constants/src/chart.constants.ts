@@ -30,7 +30,7 @@ export function getChartColor(index: number): string {
   return CHART_COLORS[index % CHART_COLORS.length];
 }
 
-export const CHART_TYPES = ['bar', 'line', 'area', 'doughnut'] as const;
+export const CHART_TYPES = ['bar', 'line', 'pie'] as const;
 
 /** Bar chart: 80% opacity fill */
 export const BAR_FILL_OPACITY = 'CC';

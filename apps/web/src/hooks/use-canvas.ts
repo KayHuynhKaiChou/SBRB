@@ -26,8 +26,25 @@ export function useCanvas(tabId: string) {
 
   useEffect(() => {
     if (data?.widgets) {
-      setWidgets(data.widgets);
-      data.widgets.forEach((w: { id: string; position: IWidgetPosition }) => {
+      // Map flat GraphQL fields to nested IWidgetDto structure
+      const mapped = data.widgets.map((w: Record<string, unknown>) => {
+        // Merge raw config JSONB into typed chartConfig (raw has all fields including new ones)
+        const rawConfig = (w.config as Record<string, unknown>) ?? {};
+        const typedConfig = (w.chartConfig as Record<string, unknown>) ?? {};
+        return {
+          ...w,
+          chartConfig: { ...typedConfig, ...rawConfig },
+          dataLink: w.dataSheetId
+            ? {
+                datasheetId: w.dataSheetId as string,
+                selectedSeriesIds: (w.selectedSeries as string[]) ?? [],
+                selectedPeriods: (w.selectedPeriods as string[] | null) ?? null,
+              }
+            : null,
+        };
+      });
+      setWidgets(mapped);
+      mapped.forEach((w: { id: string; position: IWidgetPosition }) => {
         lastValidPositions.current.set(w.id, w.position);
       });
     }
