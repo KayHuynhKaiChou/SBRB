@@ -66,5 +66,14 @@
   "create_datasheet_hint": "Skip to create an empty widget",
   "unit_custom": "Custom",
   "unit_custom_placeholder": "Type custom unit...",
-  "create_success": "Widget created successfully"
+  "create_success": "Widget created successfully",
+  "series_chart_type": "Chart type",
+  "series_y_axis": "Y-axis",
+  "y_axis_left": "L",
+  "y_axis_right": "R",
+  "y_axis_name_right": "Right Y-axis label",
+  "y_axis_right_placeholder": "Right Y-axis",
+  "unit_right": "Right Y-axis unit",
+  "unit_right_placeholder": "e.g. %, units",
+  "combo_mode_hint": "Per-series type is available for Bar/Line charts"
 }

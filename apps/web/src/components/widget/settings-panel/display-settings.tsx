@@ -1,5 +1,5 @@
 import React from 'react';
-import { Switch, Typography, Space, Segmented } from 'antd';
+import { Switch, Typography, Space, Segmented, Input } from 'antd';
 import { useTranslation } from 'react-i18next';
 import type { IChartConfig } from '@sbrb/shared-types';
 
@@ -8,6 +8,7 @@ const { Text } = Typography;
 interface IDisplaySettingsProps {
   config: IChartConfig;
   onChange: (updated: Partial<IChartConfig>) => void;
+  hasRightAxis?: boolean;
 }
 
 /** Row helper for label + control */
@@ -20,7 +21,7 @@ function SettingRow({ label, children }: { label: string; children: React.ReactN
   );
 }
 
-export function DisplaySettings({ config, onChange }: IDisplaySettingsProps) {
+export function DisplaySettings({ config, onChange, hasRightAxis }: IDisplaySettingsProps) {
   const { t } = useTranslation('widget');
 
   return (
@@ -78,6 +79,29 @@ export function DisplaySettings({ config, onChange }: IDisplaySettingsProps) {
           />
         </div>
       </Space>
+
+      {hasRightAxis && (
+        <div className="mt-3">
+          <SettingRow label={t('y_axis_name_right')}>
+            <Input
+              size="small"
+              placeholder={t('y_axis_right_placeholder')}
+              value={config.yAxisNameRight ?? ''}
+              onChange={(e) => onChange({ yAxisNameRight: e.target.value })}
+              className="!w-[120px]"
+            />
+          </SettingRow>
+          <SettingRow label={t('unit_right')}>
+            <Input
+              size="small"
+              placeholder={t('unit_right_placeholder')}
+              value={config.unitRight ?? ''}
+              onChange={(e) => onChange({ unitRight: e.target.value })}
+              className="!w-[120px]"
+            />
+          </SettingRow>
+        </div>
+      )}
     </div>
   );
 }

@@ -3,7 +3,9 @@ import { Checkbox, Typography, Popover, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { CheckOutlined } from '@ant-design/icons';
 import { CHART_COLORS } from '@sbrb/shared-constants';
+import type { ChartType, ISeriesConfig } from '@sbrb/shared-types';
 import { useAvailableSeries } from '../../../hooks/use-chart-data';
+import { SeriesTypeAxisToggle } from './series-type-axis-toggle';
 
 const { Text } = Typography;
 
@@ -14,6 +16,9 @@ interface ISeriesColorPickerProps {
   onChange?: (ids: string[]) => void; // Form.Item injects handler
   seriesColors: Record<string, string>;
   onColorsChange: (colors: Record<string, string>) => void;
+  widgetChartType: ChartType;
+  seriesConfig: Record<string, ISeriesConfig>;
+  onSeriesConfigChange: (config: Record<string, ISeriesConfig>) => void;
 }
 
 interface IColorGridProps {
@@ -53,6 +58,9 @@ export function SeriesColorPicker({
   onChange,
   seriesColors,
   onColorsChange,
+  widgetChartType,
+  seriesConfig,
+  onSeriesConfigChange,
 }: ISeriesColorPickerProps) {
   const { t } = useTranslation('widget');
   const { series, loading } = useAvailableSeries(hasDataLink ? widgetId : null);
@@ -154,6 +162,21 @@ export function SeriesColorPicker({
                 <Text className="!text-xs flex-1 truncate" title={s.name}>
                   {s.name}
                 </Text>
+                {widgetChartType !== 'pie' && (
+                  <SeriesTypeAxisToggle
+                    chartType={seriesConfig[s.name]?.type ?? (widgetChartType as 'bar' | 'line')}
+                    yAxis={seriesConfig[s.name]?.yAxis ?? 'left'}
+                    disabled={!isSeriesSelected(s.id)}
+                    onTypeChange={(type) => {
+                      const current = seriesConfig[s.name] ?? { type: widgetChartType as 'bar' | 'line', yAxis: 'left' as const };
+                      onSeriesConfigChange({ ...seriesConfig, [s.name]: { ...current, type } });
+                    }}
+                    onAxisChange={(axis) => {
+                      const current = seriesConfig[s.name] ?? { type: widgetChartType as 'bar' | 'line', yAxis: 'left' as const };
+                      onSeriesConfigChange({ ...seriesConfig, [s.name]: { ...current, yAxis: axis } });
+                    }}
+                  />
+                )}
                 <Popover
                   content={
                     <ColorGrid

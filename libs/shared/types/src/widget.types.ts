@@ -3,6 +3,12 @@ import type { IWidgetPosition } from './canvas.types';
 /** Supported chart types — SRS 4.6.2 */
 export type ChartType = 'bar' | 'line' | 'pie';
 
+/** Per-series chart type and Y-axis override for combo/mixed charts */
+export interface ISeriesConfig {
+  type: 'bar' | 'line';
+  yAxis: 'left' | 'right';
+}
+
 /** Chart display configuration */
 export interface IChartConfig {
   type: ChartType;
@@ -15,6 +21,9 @@ export interface IChartConfig {
   numberFormat?: 'auto' | 'full' | 'short'; // Number display format for labels/axis
   stacked?: boolean;     // Stack bars/areas
   seriesColors?: Record<string, string>; // Maps seriesId → hex color override
+  seriesConfig?: Record<string, ISeriesConfig>; // Maps seriesName → per-series type/axis overrides
+  unitRight?: string;      // Right Y-axis unit (e.g. "%" or "units"), independent from widget.unit
+  yAxisNameRight?: string; // Right Y-axis label (dual axis mode)
 }
 
 /** Widget data linking */

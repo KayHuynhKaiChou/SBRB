@@ -33,6 +33,7 @@ vi.mock('react-chartjs-2', () => ({
   Bar: ({ 'data-testid': testId }: { 'data-testid'?: string }) => <canvas data-testid={testId ?? 'bar-chart'} />,
   Line: ({ 'data-testid': testId }: { 'data-testid'?: string }) => <canvas data-testid={testId ?? 'line-chart'} />,
   Pie: ({ 'data-testid': testId }: { 'data-testid'?: string }) => <canvas data-testid={testId ?? 'pie-chart'} />,
+  Chart: ({ 'data-testid': testId }: { 'data-testid'?: string }) => <canvas data-testid={testId ?? 'mixed-chart'} />,
 }));
 
 vi.mock('antd', () => ({
@@ -53,6 +54,16 @@ vi.mock('@ant-design/icons', () => ({
   ArrowUpOutlined: () => <span>↑</span>,
   ArrowDownOutlined: () => <span>↓</span>,
   MinusOutlined: () => <span>-</span>,
+}));
+
+vi.mock('chartjs-plugin-datalabels', () => ({ default: {} }));
+
+vi.mock('@sbrb/shared-utils', () => ({
+  formatChartNumber: (v: number) => `${v}`,
+}));
+
+vi.mock('../../components/widget/chart-panel/chart-colors', () => ({
+  getChartColor: (i: number) => `#color${i}`,
 }));
 
 import { ChartPreview } from '../../components/widget/chart-panel/chart-preview';
@@ -81,7 +92,7 @@ describe('ChartPreview', () => {
         loading={true}
         chartType="bar"
         config={baseConfig}
-        onRefresh={vi.fn()}
+
       />,
     );
     expect(screen.getByTestId('skeleton')).toBeDefined();
@@ -94,7 +105,7 @@ describe('ChartPreview', () => {
         loading={false}
         chartType="bar"
         config={baseConfig}
-        onRefresh={vi.fn()}
+
       />,
     );
     expect(screen.getByText('Chưa có dữ liệu')).toBeDefined();
@@ -108,7 +119,7 @@ describe('ChartPreview', () => {
         loading={false}
         chartType="bar"
         config={baseConfig}
-        onRefresh={vi.fn()}
+
       />,
     );
     expect(screen.getByText('Chưa có dữ liệu')).toBeDefined();
@@ -121,7 +132,7 @@ describe('ChartPreview', () => {
         loading={false}
         chartType="bar"
         config={baseConfig}
-        onRefresh={vi.fn()}
+
       />,
     );
     expect(screen.getByTestId('bar-chart')).toBeDefined();
@@ -134,7 +145,7 @@ describe('ChartPreview', () => {
         loading={false}
         chartType="bar"
         config={baseConfig}
-        onRefresh={vi.fn()}
+
       />,
     );
     expect(screen.getByText('12.5%')).toBeDefined();
@@ -149,9 +160,45 @@ describe('ChartPreview', () => {
         loading={false}
         chartType="bar"
         config={baseConfig}
-        onRefresh={vi.fn()}
+
       />,
     );
     expect(screen.queryByText('vs T3')).toBeNull();
+  });
+
+  it('renders Chart (generic) when mixed types detected', () => {
+    const mixedConfig: IChartConfig = {
+      ...baseConfig,
+      seriesConfig: { 'Series A': { type: 'line', yAxis: 'left' } },
+    };
+    const twoSeriesData: IChartDataResult = {
+      ...mockChartData,
+      datasets: [
+        ...mockChartData.datasets,
+        { label: 'Series B', data: [50, 60, 70], backgroundColor: '#f28e2b', borderColor: '#f28e2b' },
+      ],
+    };
+    render(
+      <ChartPreview
+        chartData={twoSeriesData}
+        loading={false}
+        chartType="bar"
+        config={mixedConfig}
+      />,
+    );
+    expect(screen.getByTestId('mixed-chart')).toBeDefined();
+  });
+
+  it('renders Line chart when chartType=line and not mixed', () => {
+    const lineConfig: IChartConfig = { ...baseConfig, type: 'line' };
+    render(
+      <ChartPreview
+        chartData={mockChartData}
+        loading={false}
+        chartType="line"
+        config={lineConfig}
+      />,
+    );
+    expect(screen.getByTestId('line-chart')).toBeDefined();
   });
 });

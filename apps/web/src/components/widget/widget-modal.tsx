@@ -39,6 +39,9 @@ export function WidgetModal({ widget, open, onClose, onOpenDataSelector }: IWidg
       numberFormat: widget.chartConfig.numberFormat,
       seriesColors: widget.chartConfig.seriesColors ?? {},
       stacked: widget.chartConfig.stacked,
+      seriesConfig: widget.chartConfig.seriesConfig ?? {},
+      unitRight: widget.chartConfig.unitRight,
+      yAxisNameRight: widget.chartConfig.yAxisNameRight,
       selectedSeriesIds: widget.dataLink?.selectedSeriesIds ?? [],
     });
   }, [widget, form]);
@@ -74,6 +77,9 @@ export function WidgetModal({ widget, open, onClose, onOpenDataSelector }: IWidg
       numberFormat: values.numberFormat,
       seriesColors: values.seriesColors,
       stacked: values.stacked,
+      seriesConfig: values.seriesConfig,
+      unitRight: values.unitRight,
+      yAxisNameRight: values.yAxisNameRight,
     } as Parameters<typeof updateConfig>[1]);
     // Save series selection (separate field on widget entity)
     if (widget.dataLink?.datasheetId) {
@@ -132,6 +138,9 @@ export function WidgetModal({ widget, open, onClose, onOpenDataSelector }: IWidg
               numberFormat: getFieldValue('numberFormat'),
               seriesColors: getFieldValue('seriesColors') ?? {},
               stacked: getFieldValue('stacked'),
+              seriesConfig: getFieldValue('seriesConfig') ?? {},
+              unitRight: getFieldValue('unitRight'),
+              yAxisNameRight: getFieldValue('yAxisNameRight'),
             };
 
             return (
@@ -142,7 +151,11 @@ export function WidgetModal({ widget, open, onClose, onOpenDataSelector }: IWidg
                     <ChartTypeSelector />
                   </Form.Item>
                   <Divider className="!m-0" />
-                  <DisplaySettings config={localConfig} onChange={(partial) => form.setFieldsValue(partial)} />
+                  <DisplaySettings
+                    config={localConfig}
+                    onChange={(partial) => form.setFieldsValue(partial)}
+                    hasRightAxis={Object.values(localConfig.seriesConfig ?? {}).some(sc => sc.yAxis === 'right')}
+                  />
                   <Divider className="!m-0" />
                   <div>
                     <Text type="secondary" className="!text-[11px] block mb-2">
@@ -161,6 +174,9 @@ export function WidgetModal({ widget, open, onClose, onOpenDataSelector }: IWidg
                       hasDataLink={!!widget.dataLink?.datasheetId}
                       seriesColors={localConfig.seriesColors ?? {}}
                       onColorsChange={(colors) => form.setFieldsValue({ seriesColors: colors })}
+                      widgetChartType={localConfig.type}
+                      seriesConfig={localConfig.seriesConfig ?? {}}
+                      onSeriesConfigChange={(sc) => form.setFieldsValue({ seriesConfig: sc })}
                     />
                   </Form.Item>
                   <Divider className="!m-0" />
