@@ -53,3 +53,62 @@ export const DELETE_DATASHEET_MUTATION = gql`
     deleteDataSheet(id: $id)
   }
 `;
+
+export const DATASHEET_DETAIL_QUERY = gql`
+  query DataSheetDetail($id: ID!) {
+    dataSheet(id: $id) {
+      id
+      name
+      periodHeaders
+      status
+      periodType
+      seriesCount
+      periodCount
+    }
+    dataSeries(datasheetId: $id) {
+      id
+      seriesName
+      rowIndex
+      values
+    }
+  }
+`;
+
+export const UPDATE_SERIES_VALUE_MUTATION = gql`
+  mutation UpdateSeriesValue($input: UpdateSeriesValueDto!) {
+    updateSeriesValue(input: $input) {
+      id
+      values
+    }
+  }
+`;
+
+export const ADD_SERIES_MUTATION = gql`
+  mutation AddSeries($input: AddSeriesDto!) {
+    addSeries(input: $input) { id seriesName rowIndex values }
+  }
+`;
+
+export const DELETE_SERIES_MUTATION = gql`
+  mutation DeleteSeries($seriesId: ID!) {
+    deleteSeries(seriesId: $seriesId)
+  }
+`;
+
+export const ADD_PERIOD_MUTATION = gql`
+  mutation AddPeriod($input: AddPeriodDto!) {
+    addPeriod(input: $input) { id periodHeaders periodCount }
+  }
+`;
+
+export const DELETE_PERIOD_MUTATION = gql`
+  mutation DeletePeriod($datasheetId: ID!, $periodName: String!) {
+    deletePeriod(datasheetId: $datasheetId, periodName: $periodName) { id periodHeaders periodCount }
+  }
+`;
+
+export const RENAME_SERIES_MUTATION = gql`
+  mutation RenameSeries($seriesId: ID!, $name: String!) {
+    renameSeries(seriesId: $seriesId, name: $name) { id seriesName }
+  }
+`;

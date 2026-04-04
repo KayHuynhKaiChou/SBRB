@@ -1,0 +1,147 @@
+import React, { useCallback, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Layout, Button, Typography, Skeleton, Alert, Space, Result } from 'antd';
+import { ArrowLeftOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
+import { Sidebar } from '../../components/layout/sidebar';
+import { DataTable } from '../../components/datasheet/data-table';
+import { TableToolbar } from '../../components/datasheet/table-toolbar';
+import {
+  useDataSheetDetail,
+  useUpdateSeriesValue,
+} from '../../hooks/use-datasheet-detail';
+import {
+  useAddSeries,
+  useDeleteSeries,
+  useAddPeriod,
+  useDeletePeriod,
+  useRenameSeries,
+  useExportDataSheet,
+} from '../../hooks/use-datasheet-mutations';
+
+const { Title } = Typography;
+
+export default function DataSheetDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { t } = useTranslation('datasheet');
+
+  const { sheet, series, loading, error } = useDataSheetDetail(id);
+  const { updateValue } = useUpdateSeriesValue();
+  const { addSeries, loading: addSeriesLoading } = useAddSeries();
+  const { deleteSeries } = useDeleteSeries();
+  const { addPeriod, loading: addPeriodLoading } = useAddPeriod();
+  const { deletePeriod } = useDeletePeriod();
+  const { renameSeries } = useRenameSeries();
+  const { exportSheet } = useExportDataSheet();
+
+  // Index for O(1) lookups during cell edits
+  const seriesMap = useMemo(
+    () => new Map(series.map((s) => [s.id, s])),
+    [series],
+  );
+
+  const handleCellEdit = useCallback(
+    (seriesId: string, period: string, value: number | null) => {
+      const row = seriesMap.get(seriesId);
+      if (!row) return;
+      updateValue(seriesId, period, value, row.values);
+    },
+    [seriesMap, updateValue],
+  );
+
+  const handleAddSeries = useCallback(() => {
+    if (!id) return;
+    addSeries(id, t('new_series_name'));
+  }, [id, addSeries, t]);
+
+  const handleAddPeriod = useCallback(
+    (periodName: string) => {
+      if (!id) return;
+      addPeriod(id, periodName);
+    },
+    [id, addPeriod],
+  );
+
+  const handleExport = useCallback(() => {
+    if (!id) return;
+    exportSheet(id);
+  }, [id, exportSheet]);
+
+  const handleDeleteSeries = useCallback(
+    (seriesId: string) => deleteSeries(seriesId),
+    [deleteSeries],
+  );
+
+  const handleDeletePeriod = useCallback(
+    (periodName: string) => {
+      if (!id) return;
+      deletePeriod(id, periodName);
+    },
+    [id, deletePeriod],
+  );
+
+  const handleRenameSeries = useCallback(
+    (seriesId: string, newName: string) => renameSeries(seriesId, newName),
+    [renameSeries],
+  );
+
+  const isReady = sheet?.status === 'ready';
+  const mutationLoading = addSeriesLoading || addPeriodLoading;
+
+  return (
+    <Layout className="!min-h-screen">
+      <Sidebar />
+      <Layout className="!ml-[60px]">
+        <div className="p-6 h-full overflow-y-auto">
+          <div className="flex items-center gap-3 mb-4">
+            <Button
+              icon={<ArrowLeftOutlined />}
+              type="text"
+              onClick={() => navigate('/data-sheets')}
+            >
+              {t('back_to_list')}
+            </Button>
+          </div>
+
+          <Space direction="vertical" className="w-full" size="middle">
+            <Title level={4} className="!m-0">
+              {sheet?.name ?? t('detail_title')}
+            </Title>
+
+            {loading && <Skeleton active paragraph={{ rows: 8 }} />}
+
+            {error && !loading && (
+              <Alert type="error" message={t('load_error')} showIcon />
+            )}
+
+            {!loading && !error && sheet && !isReady && (
+              <Result status="info" title={t('sheet_not_ready')} />
+            )}
+
+            {!loading && !error && isReady && (
+              <>
+                <TableToolbar
+                  datasheetId={id!}
+                  onAddSeries={handleAddSeries}
+                  onAddPeriod={handleAddPeriod}
+                  onExport={handleExport}
+                  existingPeriods={sheet!.periodHeaders ?? []}
+                  loading={mutationLoading}
+                />
+                <DataTable
+                  series={series}
+                  periodHeaders={sheet!.periodHeaders ?? []}
+                  onCellEdit={handleCellEdit}
+                  onDeleteSeries={handleDeleteSeries}
+                  onDeletePeriod={handleDeletePeriod}
+                  onRenameSeries={handleRenameSeries}
+                />
+              </>
+            )}
+          </Space>
+        </div>
+      </Layout>
+    </Layout>
+  );
+}

@@ -7,6 +7,8 @@ import { Widget } from '../widget/entities/widget.entity';
 import { DataSheet } from './entities/data-sheet.entity';
 import { DataSeries } from './entities/data-series.entity';
 import { ImportBatch } from './entities/import-batch.entity';
+import { DatasheetEditService } from './datasheet-edit.service';
+import { DatasheetExportService } from './datasheet-export.service';
 import { DatasheetImportService } from './datasheet-import.service';
 import { DatasheetTemplateService } from './datasheet-template.service';
 import { DatasheetService } from './datasheet.service';
@@ -25,6 +27,8 @@ import { DatasheetResolver } from './datasheet.resolver';
     CommonModule,
   ],
   providers: [
+    DatasheetEditService,
+    DatasheetExportService,
     DatasheetImportService,
     DatasheetTemplateService,
     DatasheetService,

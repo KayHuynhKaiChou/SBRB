@@ -12,6 +12,7 @@ const ResetPasswordPage = React.lazy(() => import('../pages/auth/reset-password-
 const OnboardingPage = React.lazy(() => import('../pages/onboarding/onboarding-page'));
 const DashboardPage = React.lazy(() => import('../pages/dashboard/dashboard-page'));
 const DataSheetListPage = React.lazy(() => import('../pages/datasheet/datasheet-list-page'));
+const DataSheetDetailPage = React.lazy(() => import('../pages/datasheet/datasheet-detail-page'));
 const NotFoundPage = React.lazy(() => import('../pages/not-found-page'));
 
 const AppLoading = () => (
@@ -54,6 +55,15 @@ export default function App() {
           element={
             <ProtectedRoute>
               <DataSheetListPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/data-sheets/:id"
+          element={
+            <ProtectedRoute>
+              <DataSheetDetailPage />
             </ProtectedRoute>
           }
         />

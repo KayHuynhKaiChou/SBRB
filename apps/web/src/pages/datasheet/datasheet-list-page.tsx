@@ -26,7 +26,7 @@ import {
 import { IconButton } from '@sbrb/ui';
 import { useTranslation } from 'react-i18next';
 import { message } from 'antd';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/auth.store';
 import {
   useDataSheets,
@@ -50,6 +50,7 @@ const STATUS_CONFIG: Record<string, { color: string; label: string }> = {
 export default function DataSheetListPage() {
   const { currentBusinessId } = useAuthStore();
   const { t } = useTranslation(['datasheet', 'common']);
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [importOpen, setImportOpen] = useState(false);
   const [reimportTarget, setReimportTarget] = useState<IDataSheetDto | null>(null);
@@ -237,6 +238,15 @@ export default function DataSheetListPage() {
         columns={columns}
         rowKey="id"
         loading={loading}
+        onRow={(record) => ({
+          onClick: (e) => {
+            // Don't navigate when clicking action buttons
+            const target = e.target as HTMLElement;
+            if (target.closest('.ant-space')) return;
+            navigate(`/data-sheets/${record.id}`);
+          },
+          style: { cursor: 'pointer' },
+        })}
         pagination={{
           pageSize: 20,
           current: page,

@@ -1,4 +1,5 @@
 import { Field, ID, Int, ObjectType, Float } from '@nestjs/graphql';
+import GraphQLJSON from 'graphql-type-json';
 
 /** GraphQL ObjectType for DataSheet */
 @ObjectType()
@@ -63,6 +64,9 @@ export class DataSeriesType {
 
   @Field(() => Int)
   rowIndex: number;
+
+  @Field(() => GraphQLJSON, { nullable: true })
+  values: Record<string, number>;
 }
 
 /** GraphQL ObjectType for import progress subscription */

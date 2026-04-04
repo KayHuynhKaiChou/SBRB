@@ -2,6 +2,36 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
+// Mock i18n
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, opts?: Record<string, unknown>) => {
+      const map: Record<string, string> = {
+        'datasheet:no_data_empty': 'Chưa có dữ liệu nào. Hãy import file Excel.',
+        'datasheet:import_title': 'Import dữ liệu',
+        'datasheet:search_placeholder': 'Tìm kiếm bộ dữ liệu...',
+        'datasheet:manage_title': 'Quản lý dữ liệu',
+        'datasheet:page_title': 'Dữ liệu',
+        'datasheet:import_success': 'Import thành công',
+        'datasheet:delete_confirm': 'Bạn có chắc muốn xóa?',
+        'datasheet:delete_success': 'Đã xóa',
+        'datasheet:rename_success': 'Đã đổi tên',
+        'common:confirm': 'Xác nhận',
+        'common:cancel': 'Huỷ',
+        'common:edit': 'Chỉnh sửa',
+        'common:delete': 'Xóa',
+        'common:save': 'Lưu',
+        'common:close': 'Đóng',
+      };
+      if (opts) {
+        return (map[key] ?? key).replace(/\{\{(\w+)\}\}/g, (_: string, k: string) => String(opts[k] ?? k));
+      }
+      return map[key] ?? key;
+    },
+    i18n: { language: 'vi' },
+  }),
+}));
+
 // Mock react-router-dom
 vi.mock('react-router-dom', () => ({
   Navigate: ({ to }: { to: string }) => <div data-testid="navigate">{to}</div>,
@@ -50,6 +80,23 @@ vi.mock('antd', () => ({
     { PRESENTED_IMAGE_SIMPLE: null }
   ),
   message: { success: vi.fn(), error: vi.fn() },
+  Avatar: ({ children }: { children?: React.ReactNode }) => <span>{children}</span>,
+  Layout: Object.assign(
+    ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    {
+      Header: ({ children }: { children: React.ReactNode }) => <header>{children}</header>,
+      Content: ({ children }: { children: React.ReactNode }) => <main>{children}</main>,
+      Sider: ({ children }: { children: React.ReactNode }) => <aside>{children}</aside>,
+    }
+  ),
+  Dropdown: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Form: Object.assign(
+    ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    {
+      useForm: () => [{ setFieldsValue: vi.fn(), getFieldsValue: vi.fn(() => ({})), getFieldValue: vi.fn(), validateFields: async () => ({}), resetFields: vi.fn() }],
+      Item: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+    }
+  ),
 }));
 
 // Mock auth store
@@ -140,7 +187,7 @@ describe('DataSheetListPage', () => {
 
   it('import button opens import dialog', () => {
     render(<DataSheetListPage />);
-    const importBtn = screen.getByText('Import mới');
+    const importBtn = screen.getByText('Import dữ liệu');
     fireEvent.click(importBtn);
     expect(screen.getByTestId('import-dialog')).toBeTruthy();
   });

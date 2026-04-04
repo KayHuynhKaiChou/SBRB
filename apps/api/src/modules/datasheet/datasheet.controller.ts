@@ -19,6 +19,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { Response, Request } from 'express';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { IJwtPayload } from '../auth/jwt.strategy';
+import { DatasheetExportService } from './datasheet-export.service';
 import { DatasheetService } from './datasheet.service';
 import { ImportFilterDto } from './dto/import-filter.dto';
 import { UpdateDatasheetDto } from './dto/update-datasheet.dto';
@@ -29,7 +30,10 @@ const FILE_SIZE_LIMIT = 10 * 1024 * 1024; // 10MB
 @Controller()
 @UseGuards(JwtAuthGuard)
 export class DatasheetController {
-  constructor(private readonly datasheetService: DatasheetService) {}
+  constructor(
+    private readonly datasheetService: DatasheetService,
+    private readonly exportService: DatasheetExportService,
+  ) {}
 
   /** POST /businesses/:businessId/data-sheets/upload */
   @Post('businesses/:businessId/data-sheets/upload')
@@ -62,6 +66,20 @@ export class DatasheetController {
       'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'Content-Disposition': `attachment; filename=sbrb_template_${periodType}_${date}.xlsx`,
       'Content-Length': buffer.length,
+    });
+    res.end(buffer);
+  }
+
+  /** GET /data-sheets/:id/export — MUST be before /:id to avoid route shadowing */
+  @Get('data-sheets/:id/export')
+  async exportExcel(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
+    const user = req.user as IJwtPayload;
+    const { buffer, fileName } = await this.exportService.exportToExcel(id, user.sub);
+    const encodedName = encodeURIComponent(fileName);
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename="${fileName}"; filename*=UTF-8''${encodedName}`,
+      'Content-Length': String(buffer.length),
     });
     res.end(buffer);
   }
