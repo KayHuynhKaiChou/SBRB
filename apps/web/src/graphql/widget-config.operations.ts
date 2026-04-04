@@ -15,6 +15,8 @@ export const WIDGET_CHART_DATA_QUERY = gql`
         direction
         vsLabel
       }
+      departmentId
+      departmentName
     }
   }
 `;

@@ -42,17 +42,22 @@ export class DatasheetController {
   async upload(
     @Param('businessId') businessId: string,
     @UploadedFile() file: Express.Multer.File,
+    @Query('departmentId') departmentId: string | undefined,
     @Req() req: Request,
   ) {
     const user = req.user as IJwtPayload;
-    return this.datasheetService.upload(file, businessId, user.sub);
+    return this.datasheetService.upload(file, businessId, user.sub, departmentId);
   }
 
   /** GET /businesses/:businessId/data-sheets */
   @Get('businesses/:businessId/data-sheets')
-  async findByBusiness(@Param('businessId') businessId: string, @Req() req: Request) {
+  async findByBusiness(
+    @Param('businessId') businessId: string,
+    @Query('departmentId') departmentId: string | undefined,
+    @Req() req: Request,
+  ) {
     const user = req.user as IJwtPayload;
-    return this.datasheetService.findByBusiness(businessId, user.sub);
+    return this.datasheetService.findByBusiness(businessId, user.sub, departmentId);
   }
 
   /** GET /data-sheets/export-template — MUST be before /:id */
@@ -111,13 +116,13 @@ export class DatasheetController {
 
   /** PATCH /data-sheets/:id */
   @Patch('data-sheets/:id')
-  async rename(
+  async update(
     @Param('id') id: string,
     @Body() body: UpdateDatasheetDto,
     @Req() req: Request,
   ) {
     const user = req.user as IJwtPayload;
-    return this.datasheetService.rename(id, user.sub, body.name);
+    return this.datasheetService.update(id, user.sub, body.name, body.departmentId);
   }
 
   /** DELETE /data-sheets/:id */

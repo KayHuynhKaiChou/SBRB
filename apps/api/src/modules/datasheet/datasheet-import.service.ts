@@ -37,6 +37,7 @@ export class DatasheetImportService {
     file: Express.Multer.File,
     businessId: string,
     userId: string,
+    departmentId?: string,
   ): Promise<{ batchId: string; datasheetId: string; status: string }> {
     this.validateFileType(file);
     await this.authorizationService.requireManager(businessId, userId);
@@ -52,6 +53,7 @@ export class DatasheetImportService {
       periodHeaders: headers,
       periodCount: headers.length,
       seriesCount: rows.length,
+      ...(departmentId ? { departmentId } : {}),
     });
     const savedSheet = await this.sheetRepo.save(sheet);
 

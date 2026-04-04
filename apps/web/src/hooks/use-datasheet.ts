@@ -36,10 +36,10 @@ export interface IImportProgress {
   errorMessage?: string;
 }
 
-/** Fetch all datasheets for a business */
-export function useDataSheets(businessId: string) {
+/** Fetch all datasheets for a business, optionally filtered by department */
+export function useDataSheets(businessId: string, departmentId?: string | null) {
   const { data, loading, error, refetch } = useQuery(DATA_SHEETS_QUERY, {
-    variables: { businessId },
+    variables: { businessId, ...(departmentId ? { departmentId } : {}) },
     skip: !businessId,
     fetchPolicy: 'cache-and-network',
   });
@@ -68,12 +68,13 @@ export function useImportDataSheet(businessId: string) {
     },
   });
 
-  const upload = async (file: File, name: string): Promise<string> => {
+  const upload = async (file: File, name: string, departmentId?: string | null): Promise<string> => {
     setIsUploading(true);
     setProgress(null);
     const formData = new FormData();
     formData.append('file', file);
     formData.append('name', name);
+    if (departmentId) formData.append('departmentId', departmentId);
 
     try {
       const result = await apiClient.upload<{ datasheetId: string }>(

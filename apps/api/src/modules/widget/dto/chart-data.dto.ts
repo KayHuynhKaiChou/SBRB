@@ -40,4 +40,10 @@ export class ChartData {
 
   @Field(() => TrendBadge, { nullable: true })
   trend: TrendBadge | null;
+
+  @Field(() => String, { nullable: true })
+  departmentId: string | null;
+
+  @Field(() => String, { nullable: true })
+  departmentName: string | null;
 }

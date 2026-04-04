@@ -13,6 +13,9 @@ export class DataSheetType {
   @Field(() => ID)
   uploadedBy: string;
 
+  @Field(() => String, { nullable: true })
+  departmentId: string | null;
+
   @Field(() => String)
   name: string;
 

@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
+import { Department } from '../department/entities/department.entity';
 import { DataSheet } from '../datasheet/entities/data-sheet.entity';
 import { DataSeries } from '../datasheet/entities/data-series.entity';
 import { Widget } from './entities/widget.entity';
@@ -28,6 +29,8 @@ export class WidgetDataService {
     private readonly dataSheetRepo: Repository<DataSheet>,
     @InjectRepository(DataSeries)
     private readonly dataSeriesRepo: Repository<DataSeries>,
+    @InjectRepository(Department)
+    private readonly departmentRepo: Repository<Department>,
     private readonly widgetAuth: WidgetAuthService,
   ) {}
 
@@ -59,12 +62,19 @@ export class WidgetDataService {
     const { widget } = await this.widgetAuth.assertMemberByWidgetId(widgetId, userId);
 
     if (!widget.dataSheetId) {
-      return { labels: [], datasets: [], trend: null };
+      return { labels: [], datasets: [], trend: null, departmentId: null, departmentName: null };
     }
 
     const dataSheet = await this.dataSheetRepo.findOne({ where: { id: widget.dataSheetId } });
     if (!dataSheet) {
-      return { labels: [], datasets: [], trend: null };
+      return { labels: [], datasets: [], trend: null, departmentId: null, departmentName: null };
+    }
+
+    // Resolve department info from linked datasheet
+    let departmentName: string | null = null;
+    if (dataSheet.departmentId) {
+      const dept = await this.departmentRepo.findOne({ where: { id: dataSheet.departmentId } });
+      departmentName = dept?.name ?? null;
     }
 
     // Always load ALL series — frontend handles filtering by selectedSeries
@@ -88,7 +98,13 @@ export class WidgetDataService {
 
     const trend = this.computeTrend(allSeries, labels);
 
-    return { labels, datasets, trend };
+    return {
+      labels,
+      datasets,
+      trend,
+      departmentId: dataSheet.departmentId,
+      departmentName,
+    };
   }
 
   /** Map Widget entity to GraphQL WidgetType contract */

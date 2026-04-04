@@ -57,6 +57,8 @@ type ChartConfig {
 
 type ChartData {
   datasets: [ChartDataset!]!
+  departmentId: String
+  departmentName: String
   labels: [String!]!
   trend: TrendBadge
 }
@@ -74,6 +76,12 @@ input CreateBusinessDto {
   name: String!
   primary_color: String
   timezone: String = "Asia/Ho_Chi_Minh"
+}
+
+input CreateDepartmentDto {
+  businessId: ID!
+  name: String!
+  parentId: ID
 }
 
 input CreateTabInput {
@@ -106,8 +114,8 @@ type DataSeriesType {
 type DataSheetType {
   businessId: ID!
   createdAt: DateTime!
+  departmentId: String
   errorMessage: String
-  fileUrl: String
   id: ID!
   importedAt: DateTime
   name: String!
@@ -125,6 +133,15 @@ type DataSheetType {
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
 scalar DateTime
+
+type DepartmentType {
+  businessId: String!
+  createdAt: DateTime!
+  id: ID!
+  name: String!
+  parentId: String
+  updatedAt: DateTime!
+}
 
 type ImportProgressType {
   datasheetId: ID!
@@ -178,12 +195,14 @@ type Mutation {
   changeMemberRole(businessId: ID!, input: UpdateMemberRoleDto!, targetUserId: ID!): MemberType!
   changePassword(input: ChangePasswordDto!): Boolean!
   createBusiness(input: CreateBusinessDto!): BusinessType!
+  createDepartment(input: CreateDepartmentDto!): DepartmentType!
   createTab(input: CreateTabInput!): Tab!
   createWidget(input: CreateWidgetInput!): Widget!
   declineInvitation(token: String!): Boolean!
   deleteAccount: Boolean!
   deleteBusiness(confirmName: String!, id: ID!): Boolean!
   deleteDataSheet(id: ID!): Boolean!
+  deleteDepartment(id: ID!): Boolean!
   deletePeriod(datasheetId: ID!, periodName: String!): DataSheetType!
   deleteSeries(seriesId: ID!): Boolean!
   deleteSession(id: ID!): Boolean!
@@ -203,6 +222,7 @@ type Mutation {
   resetPassword(input: ResetPasswordDto!): Boolean!
   transferOwnership(id: ID!, newOwnerId: ID!): Boolean!
   updateBusiness(id: ID!, input: UpdateBusinessDto!): BusinessType!
+  updateDepartment(id: ID!, input: UpdateDepartmentDto!): DepartmentType!
   updateMe(input: UpdateProfileDto!): User!
   updateSeriesValue(input: UpdateSeriesValueDto!): DataSeriesType!
   updateTab(id: ID!, input: UpdateTabInput!): Tab!
@@ -217,7 +237,8 @@ type Query {
   business(id: ID!): BusinessType!
   dataSeries(datasheetId: ID!, search: String): [DataSeriesType!]!
   dataSheet(id: ID!): DataSheetType!
-  dataSheets(businessId: ID!): [DataSheetType!]!
+  dataSheets(businessId: ID!, departmentId: ID): [DataSheetType!]!
+  departments(businessId: ID!): [DepartmentType!]!
   me: User!
   members(businessId: ID!, filter: String): [MemberType!]!
   myBusinesses: [BusinessType!]!
@@ -295,7 +316,13 @@ input UpdateDataLinkDto {
 }
 
 input UpdateDatasheetDto {
+  departmentId: ID
   name: String!
+}
+
+input UpdateDepartmentDto {
+  name: String
+  parentId: ID
 }
 
 input UpdateMemberRoleDto {

@@ -1,10 +1,11 @@
 import { gql } from '@apollo/client';
 
 export const DATA_SHEETS_QUERY = gql`
-  query DataSheets($businessId: ID!) {
-    dataSheets(businessId: $businessId) {
+  query DataSheets($businessId: ID!, $departmentId: ID) {
+    dataSheets(businessId: $businessId, departmentId: $departmentId) {
       id
       name
+      departmentId
       status
       periodHeaders
       seriesCount

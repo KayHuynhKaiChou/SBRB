@@ -14,6 +14,7 @@ import { WidgetModule } from '../modules/widget/widget.module';
 import { DatasheetModule } from '../modules/datasheet/datasheet.module';
 import { NotificationModule } from '../modules/notification/notification.module';
 import { AuditModule } from '../modules/audit/audit.module';
+import { DepartmentModule } from '../modules/department/department.module';
 import { MailModule } from '../modules/mail/mail.module';
 import { UserModule } from '../modules/user/user.module';
 
@@ -79,6 +80,7 @@ import { UserModule } from '../modules/user/user.module';
     AuthModule,
     UserModule,
     BusinessModule,
+    DepartmentModule,
     TabModule,
     WidgetModule,
     DatasheetModule,

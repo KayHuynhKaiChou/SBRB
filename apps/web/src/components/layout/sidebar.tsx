@@ -3,6 +3,7 @@ import { Layout, Tooltip, Avatar, Badge } from 'antd';
 import {
   AppstoreOutlined,
   TableOutlined,
+  ApartmentOutlined,
   BarChartOutlined,
   MessageOutlined,
   DatabaseOutlined,
@@ -64,6 +65,7 @@ export function Sidebar() {
 
   const isDashboard = location.pathname.startsWith('/dashboard');
   const isDataSheets = location.pathname === '/data-sheets';
+  const isDepartments = location.pathname === '/departments';
 
   return (
     <Sider
@@ -94,6 +96,12 @@ export function Sidebar() {
           label="Dữ liệu"
           active={isDataSheets}
           onClick={() => navigate('/data-sheets')}
+        />
+        <NavIcon
+          icon={<ApartmentOutlined />}
+          label="Phòng ban"
+          active={isDepartments}
+          onClick={() => navigate('/departments')}
         />
         <NavIcon
           icon={<BarChartOutlined />}

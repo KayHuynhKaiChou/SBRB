@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { User } from '../../auth/entities/user.entity';
 import { Business } from '../../business/entities/business.entity';
+import { Department } from '../../department/entities/department.entity';
 
 @Entity('data_sheets')
 export class DataSheet {
@@ -23,6 +24,14 @@ export class DataSheet {
   @ManyToOne(() => Business, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'business_id' })
   business: Business;
+
+  @Column({ name: 'department_id', type: 'uuid', nullable: true })
+  @Index()
+  departmentId: string | null;
+
+  @ManyToOne(() => Department, { onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'department_id' })
+  department: Department;
 
   @Column({ name: 'uploaded_by', type: 'uuid' })
   uploadedBy: string;

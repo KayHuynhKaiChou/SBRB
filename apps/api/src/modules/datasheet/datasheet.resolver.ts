@@ -29,9 +29,10 @@ export class DatasheetResolver {
   @Query(() => [DataSheetType], { name: 'dataSheets' })
   async getDataSheets(
     @Args('businessId', { type: () => ID }) businessId: string,
+    @Args('departmentId', { type: () => ID, nullable: true }) departmentId: string | undefined,
     @CurrentUser() user: IJwtPayload,
   ): Promise<DataSheetType[]> {
-    return this.datasheetService.findByBusiness(businessId, user.sub);
+    return this.datasheetService.findByBusiness(businessId, user.sub, departmentId);
   }
 
   @Query(() => DataSheetType, { name: 'dataSheet' })
@@ -57,7 +58,7 @@ export class DatasheetResolver {
     @Args('input') input: UpdateDatasheetDto,
     @CurrentUser() user: IJwtPayload,
   ): Promise<DataSheetType> {
-    return this.datasheetService.rename(id, user.sub, input.name);
+    return this.datasheetService.update(id, user.sub, input.name, input.departmentId);
   }
 
   @Mutation(() => Boolean)

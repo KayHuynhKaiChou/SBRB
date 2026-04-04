@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CommonModule } from '../../common/common.module';
 import { Business } from '../business/entities/business.entity';
+import { Department } from '../department/entities/department.entity';
 import { DataSheet } from '../datasheet/entities/data-sheet.entity';
 import { DataSeries } from '../datasheet/entities/data-series.entity';
 import { Tab } from '../tab/entities/tab.entity';
@@ -22,7 +23,7 @@ import { WidgetService } from './widget.service';
  */
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Widget, AlertThreshold, Tab, Business, DataSheet, DataSeries]),
+    TypeOrmModule.forFeature([Widget, AlertThreshold, Tab, Business, Department, DataSheet, DataSeries]),
     CommonModule,
   ],
   providers: [WidgetAuthService, WidgetService, WidgetResolver, WidgetDataService, WidgetDataResolver],

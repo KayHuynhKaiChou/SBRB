@@ -13,6 +13,7 @@ const OnboardingPage = React.lazy(() => import('../pages/onboarding/onboarding-p
 const DashboardPage = React.lazy(() => import('../pages/dashboard/dashboard-page'));
 const DataSheetListPage = React.lazy(() => import('../pages/datasheet/datasheet-list-page'));
 const DataSheetDetailPage = React.lazy(() => import('../pages/datasheet/datasheet-detail-page'));
+const DepartmentPage = React.lazy(() => import('../pages/department/department-page'));
 const NotFoundPage = React.lazy(() => import('../pages/not-found-page'));
 
 const AppLoading = () => (
@@ -64,6 +65,15 @@ export default function App() {
           element={
             <ProtectedRoute>
               <DataSheetDetailPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/departments"
+          element={
+            <ProtectedRoute>
+              <DepartmentPage />
             </ProtectedRoute>
           }
         />

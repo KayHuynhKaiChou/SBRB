@@ -32,8 +32,8 @@ export class DatasheetService {
   // Delegated: import operations
   // ---------------------------------------------------------------------------
 
-  upload(file: Express.Multer.File, businessId: string, userId: string) {
-    return this.importService.upload(file, businessId, userId);
+  upload(file: Express.Multer.File, businessId: string, userId: string, departmentId?: string) {
+    return this.importService.upload(file, businessId, userId, departmentId);
   }
 
   reimport(datasheetId: string, file: Express.Multer.File, userId: string) {
@@ -67,10 +67,14 @@ export class DatasheetService {
   // CRUD operations
   // ---------------------------------------------------------------------------
 
-  async findByBusiness(businessId: string, userId: string): Promise<DataSheet[]> {
+  async findByBusiness(businessId: string, userId: string, departmentId?: string): Promise<DataSheet[]> {
     await this.authorizationService.requireMember(businessId, userId);
+    const where: Record<string, unknown> = { businessId };
+    if (departmentId) {
+      where.departmentId = departmentId;
+    }
     return this.sheetRepo.find({
-      where: { businessId },
+      where,
       order: { createdAt: 'DESC' },
     });
   }
@@ -96,10 +100,13 @@ export class DatasheetService {
     return qb.getMany();
   }
 
-  async rename(id: string, userId: string, name: string): Promise<DataSheet> {
+  async update(id: string, userId: string, name: string, departmentId?: string | null): Promise<DataSheet> {
     const sheet = await this.findSheetOrFail(id);
     await this.authorizationService.requireManager(sheet.businessId, userId);
     sheet.name = name;
+    if (departmentId !== undefined) {
+      sheet.departmentId = departmentId ?? null;
+    }
     return this.sheetRepo.save(sheet);
   }
 
