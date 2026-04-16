@@ -6,6 +6,7 @@ export interface IChartDataset {
   data: number[];
   backgroundColor: string;
   borderColor: string;
+  departmentName?: string | null;
 }
 
 export interface IChartTrend {
@@ -18,11 +19,16 @@ export interface IChartDataResult {
   labels: string[];
   datasets: IChartDataset[];
   trend: IChartTrend | null;
+  departmentId?: string | null;
+  departmentName?: string | null;
+  allPeriods?: string[];
 }
 
 export interface IAvailableSeries {
   id: string;
   name: string;
+  templateType?: string;
+  departmentName?: string | null;
 }
 
 export function useAvailableSeries(widgetId: string | null) {

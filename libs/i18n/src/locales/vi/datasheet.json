@@ -86,5 +86,14 @@
   "preview_rows_hint": "Hiển thị {{shown}} trong {{total}} hàng",
   "preview_warnings": "Cảnh báo",
   "preview_no_data": "Không tìm thấy dữ liệu trong file",
-  "preview_step": "Xem trước"
+  "preview_step": "Xem trước",
+  "template_type_label": "Loại mẫu",
+  "template_simple": "Đơn giản (bảng phẳng)",
+  "template_department": "Theo bộ phận",
+  "template_pnl": "Báo cáo lãi lỗ",
+  "template_simple_desc": "Hàng = chỉ số, cột = kỳ thời gian",
+  "template_department_desc": "Nhóm theo bộ phận với các chỉ số con",
+  "template_pnl_desc": "Doanh thu / Giá vốn / Chi phí với mục con",
+  "download_sample": "Tải mẫu",
+  "combo_mode_hint": "Chọn loại mẫu phù hợp với cấu trúc file Excel"
 }

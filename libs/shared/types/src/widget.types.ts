@@ -24,6 +24,7 @@ export interface IChartConfig {
   seriesConfig?: Record<string, ISeriesConfig>; // Maps seriesName → per-series type/axis overrides
   unitRight?: string;      // Right Y-axis unit (e.g. "%" or "units"), independent from widget.unit
   yAxisNameRight?: string; // Right Y-axis label (dual axis mode)
+  xAxisGroup?: 'time' | 'criteria' | 'department'; // Pivot X-axis mapping
 }
 
 /** Widget data linking */

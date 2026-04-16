@@ -4,6 +4,7 @@ import { message } from 'antd';
 import { apiClient } from '../services/api-client';
 import {
   DATA_SHEETS_QUERY,
+  DATA_SERIES_QUERY,
   IMPORT_PROGRESS_SUBSCRIPTION,
   RENAME_DATASHEET_MUTATION,
   DELETE_DATASHEET_MUTATION,
@@ -27,6 +28,8 @@ export interface IDataSeriesDto {
   seriesName: string;
   dataSheetId: string;
   rowIndex: number;
+  departmentId?: string | null;
+  department?: { id: string; name: string } | null;
 }
 
 export interface IImportProgress {
@@ -37,15 +40,30 @@ export interface IImportProgress {
 }
 
 /** Fetch all datasheets for a business, optionally filtered by department */
-export function useDataSheets(businessId: string, departmentId?: string | null) {
+export function useDataSheets(businessId: string) {
   const { data, loading, error, refetch } = useQuery(DATA_SHEETS_QUERY, {
-    variables: { businessId, ...(departmentId ? { departmentId } : {}) },
+    variables: { businessId },
     skip: !businessId,
     fetchPolicy: 'cache-and-network',
   });
 
   return {
     dataSheets: (data?.dataSheets ?? []) as IDataSheetDto[],
+    loading,
+    error,
+    refetch,
+  };
+}
+
+export function useDataSeries(datasheetId: string | undefined | null) {
+  const { data, loading, error, refetch } = useQuery(DATA_SERIES_QUERY, {
+    variables: { datasheetId },
+    skip: !datasheetId,
+    fetchPolicy: 'cache-and-network',
+  });
+
+  return {
+    dataSeries: (data?.dataSeries ?? []) as IDataSeriesDto[],
     loading,
     error,
     refetch,
@@ -68,7 +86,12 @@ export function useImportDataSheet(businessId: string) {
     },
   });
 
-  const upload = async (file: File, name: string, departmentId?: string | null): Promise<string> => {
+  const upload = async (
+    file: File,
+    name: string,
+    departmentId?: string | null,
+    templateType: string = 'simple',
+  ): Promise<string> => {
     setIsUploading(true);
     setProgress(null);
     const formData = new FormData();
@@ -76,9 +99,13 @@ export function useImportDataSheet(businessId: string) {
     formData.append('name', name);
     if (departmentId) formData.append('departmentId', departmentId);
 
+    const urlParams = new URLSearchParams();
+    if (templateType) urlParams.append('templateType', templateType);
+    if (departmentId) urlParams.append('departmentId', departmentId);
+
     try {
       const result = await apiClient.upload<{ datasheetId: string }>(
-        `/api/v1/businesses/${businessId}/data-sheets/upload`,
+        `/api/v1/businesses/${businessId}/data-sheets/upload?${urlParams.toString()}`,
         formData,
       );
       setUploadedDatasheetId(result.datasheetId);

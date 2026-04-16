@@ -9,6 +9,7 @@ export const WIDGET_CHART_DATA_QUERY = gql`
         data
         backgroundColor
         borderColor
+        departmentName
       }
       trend {
         value
@@ -17,6 +18,7 @@ export const WIDGET_CHART_DATA_QUERY = gql`
       }
       departmentId
       departmentName
+      allPeriods
     }
   }
 `;
@@ -57,6 +59,8 @@ export const AVAILABLE_SERIES_QUERY = gql`
     availableSeries(widgetId: $widgetId) {
       id
       name
+      templateType
+      departmentName
     }
   }
 `;

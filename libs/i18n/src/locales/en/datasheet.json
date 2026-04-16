@@ -86,5 +86,14 @@
   "preview_rows_hint": "Showing first {{shown}} of {{total}} rows",
   "preview_warnings": "Warnings",
   "preview_no_data": "No data found in file",
-  "preview_step": "Preview"
+  "preview_step": "Preview",
+  "template_type_label": "Template type",
+  "template_simple": "Simple (flat table)",
+  "template_department": "By Department",
+  "template_pnl": "P&L Statement",
+  "template_simple_desc": "Rows = series, columns = periods",
+  "template_department_desc": "Grouped by department with sub-series",
+  "template_pnl_desc": "Revenue / COGS / OpEx with sub-items",
+  "download_sample": "Download sample",
+  "combo_mode_hint": "Select template type matching your Excel file structure"
 }
