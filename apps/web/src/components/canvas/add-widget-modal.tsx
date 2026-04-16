@@ -88,9 +88,23 @@ export function AddWidgetModal({
       (seriesData?.dataSeries ?? []) as {
         id: string;
         seriesName: string;
+        departmentId?: string | null;
+        department?: { id: string; name: string } | null;
       }[],
     [seriesData],
   );
+
+  // For departmental data: deduplicate by criteria name
+  const isDeptTemplate = seriesList.some((s) => s.departmentId);
+  const criteriaNames = useMemo(() => {
+    if (!isDeptTemplate) return [];
+    const seen = new Set<string>();
+    return seriesList.filter((s) => {
+      if (seen.has(s.seriesName)) return false;
+      seen.add(s.seriesName);
+      return true;
+    });
+  }, [seriesList, isDeptTemplate]);
 
   const handleClose = () => {
     setStep(0);
@@ -148,6 +162,17 @@ export function AddWidgetModal({
     setSelectedSeriesIds((prev) =>
       prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id],
     );
+  };
+
+  /** For dept template: toggle all series with a given criteria name */
+  const toggleCriteria = (criteriaName: string) => {
+    const matchingIds = seriesList.filter((s) => s.seriesName === criteriaName).map((s) => s.id);
+    const allSelected = matchingIds.every((id) => selectedSeriesIds.includes(id));
+    if (allSelected) {
+      setSelectedSeriesIds((prev) => prev.filter((id) => !matchingIds.includes(id)));
+    } else {
+      setSelectedSeriesIds((prev) => [...new Set([...prev, ...matchingIds])]);
+    }
   };
 
   const toggleAll = () => {
@@ -313,15 +338,29 @@ export function AddWidgetModal({
             <Empty description={t('datasheet:no_series')} image={Empty.PRESENTED_IMAGE_SIMPLE} />
           ) : (
             <Space direction="vertical" className="!w-full max-h-60 overflow-y-auto">
-              {seriesList.map((s) => (
-                <Checkbox
-                  key={s.id}
-                  checked={selectedSeriesIds.includes(s.id)}
-                  onChange={() => toggleSeries(s.id)}
-                >
-                  {s.seriesName}
-                </Checkbox>
-              ))}
+              {isDeptTemplate
+                ? criteriaNames.map((s) => {
+                    const matchingIds = seriesList.filter((r) => r.seriesName === s.seriesName).map((r) => r.id);
+                    const allChecked = matchingIds.every((id) => selectedSeriesIds.includes(id));
+                    return (
+                      <Checkbox
+                        key={s.seriesName}
+                        checked={allChecked}
+                        onChange={() => toggleCriteria(s.seriesName)}
+                      >
+                        {s.seriesName}
+                      </Checkbox>
+                    );
+                  })
+                : seriesList.map((s) => (
+                    <Checkbox
+                      key={s.id}
+                      checked={selectedSeriesIds.includes(s.id)}
+                      onChange={() => toggleSeries(s.id)}
+                    >
+                      {s.seriesName}
+                    </Checkbox>
+                  ))}
             </Space>
           )}
         </div>

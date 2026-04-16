@@ -13,6 +13,7 @@ import { DataSelectorButton } from './settings-panel/data-selector-button';
 import { AlertThresholdPanel } from './settings-panel/alert-threshold-panel';
 import { SeriesColorPicker } from './settings-panel/series-color-picker';
 import { ChartPreview } from './chart-panel/chart-preview';
+import { PeriodCheckboxList } from './settings-panel/shared/period-checkbox-list';
 
 const { Text } = Typography;
 
@@ -42,12 +43,14 @@ export function WidgetModal({ widget, open, onClose, onOpenDataSelector }: IWidg
       seriesConfig: widget.chartConfig.seriesConfig ?? {},
       unitRight: widget.chartConfig.unitRight,
       yAxisNameRight: widget.chartConfig.yAxisNameRight,
+      xAxisGroup: widget.chartConfig.xAxisGroup,
       selectedSeriesIds: widget.dataLink?.selectedSeriesIds ?? [],
     });
   }, [widget, form]);
 
   const { chartData, loading } = useChartData(widget.id);
   const { series: availableSeries } = useAvailableSeries(widget.dataLink?.datasheetId ? widget.id : null);
+  const templateType = useMemo(() => availableSeries[0]?.templateType ?? 'simple', [availableSeries]) as 'simple' | 'department' | 'pnl';
   const watchedSeriesIds: string[] = Form.useWatch('selectedSeriesIds', form) ?? [];
 
   // Filter chart datasets client-side based on selected series
@@ -80,6 +83,7 @@ export function WidgetModal({ widget, open, onClose, onOpenDataSelector }: IWidg
       seriesConfig: values.seriesConfig,
       unitRight: values.unitRight,
       yAxisNameRight: values.yAxisNameRight,
+      xAxisGroup: values.xAxisGroup,
     } as Parameters<typeof updateConfig>[1]);
     // Save series selection (separate field on widget entity)
     if (widget.dataLink?.datasheetId) {
@@ -141,20 +145,26 @@ export function WidgetModal({ widget, open, onClose, onOpenDataSelector }: IWidg
               seriesConfig: getFieldValue('seriesConfig') ?? {},
               unitRight: getFieldValue('unitRight'),
               yAxisNameRight: getFieldValue('yAxisNameRight'),
+              xAxisGroup: getFieldValue('xAxisGroup') ?? widget.chartConfig.xAxisGroup,
             };
 
             return (
               <div className="flex flex-1 min-h-0 overflow-hidden">
                 {/* Left panel — settings */}
                 <div className="w-[260px] shrink-0 border-r border-gray-100 overflow-y-auto p-4 pl-3.5 flex flex-col gap-4">
-                  <Form.Item name="type" noStyle>
-                    <ChartTypeSelector />
-                  </Form.Item>
-                  <Divider className="!m-0" />
+                  {templateType !== 'department' && (
+                    <>
+                      <Form.Item name="type" noStyle>
+                        <ChartTypeSelector />
+                      </Form.Item>
+                      <Divider className="!m-0" />
+                    </>
+                  )}
                   <DisplaySettings
                     config={localConfig}
                     onChange={(partial) => form.setFieldsValue(partial)}
                     hasRightAxis={Object.values(localConfig.seriesConfig ?? {}).some(sc => sc.yAxis === 'right')}
+                    templateType={templateType}
                   />
                   <Divider className="!m-0" />
                   <div>
@@ -177,8 +187,18 @@ export function WidgetModal({ widget, open, onClose, onOpenDataSelector }: IWidg
                       widgetChartType={localConfig.type}
                       seriesConfig={localConfig.seriesConfig ?? {}}
                       onSeriesConfigChange={(sc) => form.setFieldsValue({ seriesConfig: sc })}
+                      xAxisGroup={localConfig.xAxisGroup ?? 'time'}
+                      periodHeaders={chartData?.labels ?? []}
                     />
                   </Form.Item>
+                  {widget.dataLink?.datasheetId && (
+                    <PeriodCheckboxList
+                      widgetId={widget.id}
+                      selectedPeriods={widget.dataLink.selectedPeriods}
+                      selectedSeries={widget.dataLink.selectedSeriesIds}
+                      dataSheetId={widget.dataLink.datasheetId}
+                    />
+                  )}
                   <Divider className="!m-0" />
                   <AlertThresholdPanel />
                 </div>

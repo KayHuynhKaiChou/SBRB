@@ -9,6 +9,7 @@ interface IDisplaySettingsProps {
   config: IChartConfig;
   onChange: (updated: Partial<IChartConfig>) => void;
   hasRightAxis?: boolean;
+  templateType?: 'simple' | 'department' | 'pnl';
 }
 
 /** Row helper for label + control */
@@ -21,7 +22,8 @@ function SettingRow({ label, children }: { label: string; children: React.ReactN
   );
 }
 
-export function DisplaySettings({ config, onChange, hasRightAxis }: IDisplaySettingsProps) {
+export function DisplaySettings({ config, onChange, hasRightAxis, templateType = 'simple' }: IDisplaySettingsProps) {
+  const isDept = templateType === 'department';
   const { t } = useTranslation('widget');
 
   return (
@@ -56,13 +58,35 @@ export function DisplaySettings({ config, onChange, hasRightAxis }: IDisplaySett
         </SettingRow>
       )}
 
-      {config.type === 'bar' && (
+      {config.type === 'bar' && !isDept && (
         <SettingRow label={t('stacked_chart')}>
           <Switch size="small" checked={config.stacked ?? false} onChange={(v) => onChange({ stacked: v })} />
         </SettingRow>
       )}
 
       <Space direction="vertical" className="!w-full" size={8}>
+        <div>
+          <Text className="!text-[11px] !text-[#888]">Nhóm Trục X</Text>
+          <Segmented
+            size="small"
+            block
+            options={
+              isDept
+                ? [
+                    { label: 'Thời gian', value: 'time' },
+                    { label: 'Phòng ban', value: 'department' },
+                    { label: 'Tiêu chí', value: 'criteria' },
+                  ]
+                : [
+                    { label: 'Thời gian', value: 'time' },
+                    { label: 'Tiêu chí', value: 'criteria' },
+                  ]
+            }
+            value={config.xAxisGroup ?? 'time'}
+            onChange={(v) => onChange({ xAxisGroup: v as 'time' | 'criteria' | 'department' })}
+            className="!mt-1 !mb-2"
+          />
+        </div>
         <div>
           <Text className="!text-[11px] !text-[#888]">{t('number_format_label')}</Text>
           <Segmented
