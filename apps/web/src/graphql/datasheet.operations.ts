@@ -1,11 +1,10 @@
 import { gql } from '@apollo/client';
 
 export const DATA_SHEETS_QUERY = gql`
-  query DataSheets($businessId: ID!, $departmentId: ID) {
-    dataSheets(businessId: $businessId, departmentId: $departmentId) {
+  query DataSheets($businessId: ID!) {
+    dataSheets(businessId: $businessId) {
       id
       name
-      departmentId
       status
       periodHeaders
       seriesCount
@@ -25,6 +24,11 @@ export const DATA_SERIES_QUERY = gql`
       seriesName
       dataSheetId
       rowIndex
+      departmentId
+      department {
+        id
+        name
+      }
     }
   }
 `;
@@ -63,6 +67,7 @@ export const DATASHEET_DETAIL_QUERY = gql`
       periodHeaders
       status
       periodType
+      templateType
       seriesCount
       periodCount
     }
@@ -71,6 +76,11 @@ export const DATASHEET_DETAIL_QUERY = gql`
       seriesName
       rowIndex
       values
+      departmentId
+      department {
+        id
+        name
+      }
     }
   }
 `;

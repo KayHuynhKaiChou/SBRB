@@ -11,6 +11,8 @@ export interface IDataSeriesRow {
   seriesName: string;
   rowIndex: number;
   values: Record<string, number | null>;
+  departmentId?: string | null;
+  department?: { id: string; name: string } | null;
 }
 
 export interface IDataSheetDetail {
@@ -19,6 +21,7 @@ export interface IDataSheetDetail {
   periodHeaders: string[];
   status: string;
   periodType: string;
+  templateType?: string;
   seriesCount: number;
   periodCount: number;
 }

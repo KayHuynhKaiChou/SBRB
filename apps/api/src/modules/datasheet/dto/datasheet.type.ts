@@ -1,5 +1,6 @@
 import { Field, ID, Int, ObjectType, Float } from '@nestjs/graphql';
 import GraphQLJSON from 'graphql-type-json';
+import { DepartmentType } from '../../department/dto/department.type';
 
 /** GraphQL ObjectType for DataSheet */
 @ObjectType()
@@ -13,8 +14,6 @@ export class DataSheetType {
   @Field(() => ID)
   uploadedBy: string;
 
-  @Field(() => String, { nullable: true })
-  departmentId: string | null;
 
   @Field(() => String)
   name: string;
@@ -24,6 +23,9 @@ export class DataSheetType {
 
   @Field(() => String)
   periodType: string;
+
+  @Field(() => String, { nullable: true })
+  templateType?: string;
 
   @Field(() => [String])
   periodHeaders: string[];
@@ -58,6 +60,12 @@ export class DataSeriesType {
 
   @Field(() => ID)
   dataSheetId: string;
+
+  @Field(() => String, { nullable: true })
+  departmentId?: string | null;
+
+  @Field(() => DepartmentType, { nullable: true })
+  department?: import('../../department/dto/department.type').DepartmentType | null;
 
   @Field(() => String)
   seriesName: string;

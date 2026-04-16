@@ -5,6 +5,7 @@ import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { Sidebar } from '../../components/layout/sidebar';
 import { DataTable } from '../../components/datasheet/data-table';
+import { DepartmentDataTable } from '../../components/datasheet/department-data-table';
 import { TableToolbar } from '../../components/datasheet/table-toolbar';
 import {
   useDataSheetDetail,
@@ -129,14 +130,22 @@ export default function DataSheetDetailPage() {
                   existingPeriods={sheet!.periodHeaders ?? []}
                   loading={mutationLoading}
                 />
-                <DataTable
-                  series={series}
-                  periodHeaders={sheet!.periodHeaders ?? []}
-                  onCellEdit={handleCellEdit}
-                  onDeleteSeries={handleDeleteSeries}
-                  onDeletePeriod={handleDeletePeriod}
-                  onRenameSeries={handleRenameSeries}
-                />
+                {sheet!.templateType === 'department' ? (
+                  <DepartmentDataTable
+                    series={series}
+                    periodHeaders={sheet!.periodHeaders ?? []}
+                    onCellEdit={handleCellEdit}
+                  />
+                ) : (
+                  <DataTable
+                    series={series}
+                    periodHeaders={sheet!.periodHeaders ?? []}
+                    onCellEdit={handleCellEdit}
+                    onDeleteSeries={handleDeleteSeries}
+                    onDeletePeriod={handleDeletePeriod}
+                    onRenameSeries={handleRenameSeries}
+                  />
+                )}
               </>
             )}
           </Space>

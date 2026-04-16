@@ -14,7 +14,9 @@ import type { UploadFile } from 'antd';
 import { useImportDataSheet } from '../../hooks/use-datasheet';
 import { validateUploadFile } from '../../utils/file-upload-validator';
 import { useAuthStore } from '../../store/auth.store';
+import { apiClient } from '../../services/api-client';
 import { ImportPreviewTable } from '../../components/datasheet/import-preview-table';
+import { ImportTemplateSelector } from '../../components/datasheet/import-template-selector';
 import { DepartmentSelect } from '../../components/department/department-select';
 
 const { Dragger } = Upload;
@@ -24,6 +26,9 @@ interface IPreviewData {
   headers: string[];
   rows: { name: string; values: Record<string, number | null> }[];
   warnings: string[];
+  groups?: { departmentName: string; seriesCount: number }[];
+  categories?: { name: string; level: number; hasValues: boolean }[];
+  departmentColumns?: { name: string; startCol: number; endCol: number; periods: string[] }[];
 }
 
 interface IImportDialogProps {
@@ -36,6 +41,7 @@ interface IImportDialogProps {
 export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDialogProps) {
   const { t } = useTranslation(['datasheet', 'common', 'department']);
   const [step, setStep] = useState(0);
+  const [templateType, setTemplateType] = useState<'simple' | 'department' | 'pnl'>('simple');
   const [file, setFile] = useState<File | null>(null);
   const [importName, setImportName] = useState('');
   const [departmentId, setDepartmentId] = useState<string | null>(null);
@@ -57,6 +63,7 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
   const handleClose = () => {
     clearPoll();
     setStep(0);
+    setTemplateType('simple');
     setFile(null);
     setImportName('');
     setDepartmentId(null);
@@ -87,7 +94,7 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
       const token = useAuthStore.getState().accessToken;
       const formData = new FormData();
       formData.append('file', f);
-      const response = await fetch('/api/v1/data-sheets/preview', {
+      const response = await fetch(`/api/v1/data-sheets/preview?templateType=${templateType}`, {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData,
@@ -121,13 +128,25 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
     }
   };
 
+  const doneRef = useRef(false);
   const handleImportDone = useCallback(() => {
+    if (doneRef.current) return; // dedup: poll + WebSocket may both fire
+    doneRef.current = true;
     clearPoll();
     message.success(t('datasheet:import_complete'));
     setImporting(false);
     onSuccess();
-    handleClose();
-  }, [onSuccess, clearPoll]);
+    // Reset state inline instead of calling handleClose (avoids stale closure)
+    setStep(0);
+    setTemplateType('simple');
+    setFile(null);
+    setImportName('');
+    setDepartmentId(null);
+    setError(null);
+    setPreviewData(null);
+    setPreviewLoading(false);
+    onClose();
+  }, [onSuccess, onClose, clearPoll, t]);
 
   const handleStartImport = async () => {
     if (!file || !importName.trim()) {
@@ -136,8 +155,9 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
     }
     setImporting(true);
     setError(null);
+    doneRef.current = false;
     try {
-      const datasheetId = await upload(file, importName.trim(), departmentId);
+      const datasheetId = await upload(file, importName.trim(), departmentId, templateType);
       // REST polling fallback (WebSocket may miss if job completes before subscription)
       clearPoll();
       pollRef.current = setInterval(async () => {
@@ -166,13 +186,10 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
   // Cleanup polling on unmount
   React.useEffect(() => clearPoll, [clearPoll]);
 
-  // Watch progress completion
+  // Watch progress completion (dedup via doneRef — poll handler may also fire)
   React.useEffect(() => {
     if (progress?.status === 'done' || progress?.percent === 100) {
-      message.success(t('datasheet:import_complete'));
-      setImporting(false);
-      onSuccess();
-      handleClose();
+      handleImportDone();
     } else if (progress?.status === 'error') {
       setError(progress.errorMessage ?? t('datasheet:import_failed'));
       setImporting(false);
@@ -190,6 +207,12 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
     switch (step) {
       case 0:
         return (
+          <>
+          <ImportTemplateSelector
+            templateType={templateType}
+            onChange={setTemplateType}
+            disabled={previewLoading}
+          />
           <Dragger
             accept=".xlsx,.csv"
             beforeUpload={handleBeforeUpload}
@@ -204,6 +227,7 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
             <p className="ant-upload-text">{t('datasheet:upload_label')}</p>
             <p className="ant-upload-hint">{t('datasheet:upload_hint')}</p>
           </Dragger>
+          </>
         );
       case 1:
         return (
@@ -214,6 +238,10 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
                   headers={previewData.headers}
                   rows={previewData.rows}
                   warnings={previewData.warnings}
+                  templateType={templateType}
+                  groups={previewData.groups}
+                  categories={previewData.categories}
+                  departmentColumns={previewData.departmentColumns}
                 />
               )}
             </div>
@@ -317,7 +345,7 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
       onCancel={importing || isUploading ? undefined : handleClose}
       closable={false}
       footer={renderFooter()}
-      width={600}
+      width={800}
     >
       <Steps current={step} items={stepItems} className="!mb-6" />
       {error && (

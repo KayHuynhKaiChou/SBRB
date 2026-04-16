@@ -3,8 +3,8 @@ import { join } from 'path';
 import * as dotenv from 'dotenv';
 
 // Load .env for CLI migrations (outside NestJS context)
-dotenv.config({ path: '.env.local' });
-dotenv.config({ path: '.env' });
+dotenv.config({ path: join(__dirname, '../../../../../.env.local') });
+dotenv.config({ path: join(__dirname, '../../../../../.env') });
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -12,8 +12,8 @@ export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',
   url: process.env.DATABASE_URL,
   ssl: isProduction ? { rejectUnauthorized: false } : false,
-  entities: [join(__dirname, '..', '**', '*.entity.{ts,js}')],
-  migrations: [join(__dirname, '..', 'migrations', '*.{ts,js}')],
+  entities: [join(__dirname, '..', '..', '**', '*.entity.{ts,js}')],
+  migrations: [join(__dirname, '..', '..', 'migrations', '*.{ts,js}')],
   synchronize: false,
   logging: process.env.DB_LOGGING === 'true',
 };
