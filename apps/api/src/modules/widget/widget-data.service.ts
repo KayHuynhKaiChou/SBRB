@@ -70,18 +70,20 @@ export class WidgetDataService {
       return { labels: [], datasets: [], trend: null, departmentId: null, departmentName: null };
     }
 
-    // Resolve department info from linked datasheet
-    let departmentName: string | null = null;
-    if (dataSheet.departmentId) {
-      const dept = await this.departmentRepo.findOne({ where: { id: dataSheet.departmentId } });
-      departmentName = dept?.name ?? null;
-    }
+    // Resolve department info from linked datasheet (obsolete in V5, series have their own dept)
+    const departmentName: string | null = null;
 
-    // Always load ALL series — frontend handles filtering by selectedSeries
-    const allSeries = await this.dataSeriesRepo.find({
+    // Load all series and join department
+    let allSeries = await this.dataSeriesRepo.find({
       where: { dataSheetId: widget.dataSheetId },
       order: { rowIndex: 'ASC' },
+      relations: ['department'],
     });
+
+    // Filter by selected series if explicitly set
+    if (widget.selectedSeries && widget.selectedSeries.length > 0) {
+      allSeries = allSeries.filter(s => widget.selectedSeries!.includes(s.id));
+    }
 
     // Determine active period labels
     const labels: string[] =
@@ -94,6 +96,7 @@ export class WidgetDataService {
       data: labels.map((p) => s.values[p] ?? 0),
       backgroundColor: CHART_COLORS[i % CHART_COLORS.length],
       borderColor: CHART_COLORS[i % CHART_COLORS.length],
+      departmentName: s.department?.name ?? null,
     }));
 
     const trend = this.computeTrend(allSeries, labels);
@@ -102,8 +105,9 @@ export class WidgetDataService {
       labels,
       datasets,
       trend,
-      departmentId: dataSheet.departmentId,
-      departmentName,
+      departmentId: null,
+      departmentName: null,
+      allPeriods: dataSheet.periodHeaders,
     };
   }
 
@@ -125,6 +129,7 @@ export class WidgetDataService {
         showLabels: (config['showLabels'] as boolean) ?? null,
         yAxisFromZero: (config['yAxisFromZero'] as boolean) ?? null,
         showLegend: (config['showLegend'] as boolean) ?? null,
+        xAxisGroup: (config['xAxisGroup'] as string) ?? null,
       },
       config: widget.config as Record<string, unknown> | null,
       dataSheetId: widget.dataSheetId,
@@ -191,12 +196,23 @@ export class WidgetDataService {
   async getAvailableSeries(widgetId: string, userId: string): Promise<AvailableSeriesType[]> {
     const { widget } = await this.widgetAuth.assertMemberByWidgetId(widgetId, userId);
     if (!widget.dataSheetId) return [];
+    
+    // Fetch datasheet to get templateType
+    const dataSheet = await this.dataSheetRepo.findOne({ where: { id: widget.dataSheetId } });
+    if (!dataSheet) return [];
+
     const series = await this.dataSeriesRepo.find({
       where: { dataSheetId: widget.dataSheetId },
       order: { rowIndex: 'ASC' },
-      select: ['id', 'seriesName'],
+      relations: ['department'],
     });
-    return series.map(s => ({ id: s.id, name: s.seriesName }));
+
+    return series.map(s => ({ 
+      id: s.id, 
+      name: s.seriesName,
+      templateType: dataSheet.templateType,
+      departmentName: s.department?.name ?? null,
+    }));
   }
 
   /** Clear all data link fields from a widget — SRS 4.5.5 */

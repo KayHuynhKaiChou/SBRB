@@ -61,6 +61,9 @@ export class ChartConfigType {
 
   @Field(() => Boolean, { nullable: true })
   showLegend: boolean | null;
+
+  @Field(() => String, { nullable: true })
+  xAxisGroup: string | null;
 }
 
 /** GraphQL return type for Widget — SRS 4.4 */

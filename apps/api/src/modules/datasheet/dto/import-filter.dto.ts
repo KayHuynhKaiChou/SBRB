@@ -17,4 +17,8 @@ export class ImportFilterDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @IsOptional()
+  @IsIn(['simple', 'department', 'pnl'])
+  templateType?: 'simple' | 'department' | 'pnl' = 'simple';
 }

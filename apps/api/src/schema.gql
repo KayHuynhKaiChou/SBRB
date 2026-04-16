@@ -22,8 +22,10 @@ type AuthResult {
 }
 
 type AvailableSeriesType {
+  departmentName: String
   id: ID!
   name: String!
+  templateType: String
 }
 
 type BusinessType {
@@ -52,10 +54,12 @@ type ChartConfig {
   showLabels: Boolean
   showLegend: Boolean
   type: String
+  xAxisGroup: String
   yAxisFromZero: Boolean
 }
 
 type ChartData {
+  allPeriods: [String!]
   datasets: [ChartDataset!]!
   departmentId: String
   departmentName: String
@@ -67,6 +71,7 @@ type ChartDataset {
   backgroundColor: String
   borderColor: String
   data: [Float!]!
+  departmentName: String
   label: String!
 }
 
@@ -105,6 +110,8 @@ input CreateWidgetInput {
 
 type DataSeriesType {
   dataSheetId: ID!
+  department: DepartmentType
+  departmentId: String
   id: ID!
   rowIndex: Int!
   seriesName: String!
@@ -114,7 +121,6 @@ type DataSeriesType {
 type DataSheetType {
   businessId: ID!
   createdAt: DateTime!
-  departmentId: String
   errorMessage: String
   id: ID!
   importedAt: DateTime
@@ -125,6 +131,7 @@ type DataSheetType {
   periodType: String!
   seriesCount: Int!
   status: String!
+  templateType: String
   updatedAt: DateTime!
   uploadedBy: ID!
 }
@@ -237,7 +244,7 @@ type Query {
   business(id: ID!): BusinessType!
   dataSeries(datasheetId: ID!, search: String): [DataSeriesType!]!
   dataSheet(id: ID!): DataSheetType!
-  dataSheets(businessId: ID!, departmentId: ID): [DataSheetType!]!
+  dataSheets(businessId: ID!): [DataSheetType!]!
   departments(businessId: ID!): [DepartmentType!]!
   me: User!
   members(businessId: ID!, filter: String): [MemberType!]!

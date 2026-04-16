@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PubSub } from 'graphql-subscriptions';
 import { AuthorizationService } from '../../common/services/authorization.service';
+import { Department } from '../department/entities/department.entity';
 import { DataSheet } from './entities/data-sheet.entity';
 import { DataSeries } from './entities/data-series.entity';
 import { ImportBatch } from './entities/import-batch.entity';
@@ -28,6 +29,8 @@ export class DatasheetImportService {
     private readonly seriesRepo: Repository<DataSeries>,
     @InjectRepository(ImportBatch)
     private readonly batchRepo: Repository<ImportBatch>,
+    @InjectRepository(Department)
+    private readonly departmentRepo: Repository<Department>,
     private readonly authorizationService: AuthorizationService,
     @Inject('PUBSUB') private readonly pubSub: PubSub,
   ) {}
@@ -38,11 +41,12 @@ export class DatasheetImportService {
     businessId: string,
     userId: string,
     departmentId?: string,
+    templateType: 'simple' | 'department' | 'pnl' = 'simple',
   ): Promise<{ batchId: string; datasheetId: string; status: string }> {
     this.validateFileType(file);
     await this.authorizationService.requireManager(businessId, userId);
 
-    const { headers, rows, warnings } = await this.parseFile(file);
+    const { headers, rows, warnings } = await this.parseFile(file, templateType);
 
     const sheet = this.sheetRepo.create({
       businessId,
@@ -50,11 +54,15 @@ export class DatasheetImportService {
       name: file.originalname,
       originalFilename: file.originalname,
       status: 'processing',
+      templateType: templateType,
       periodHeaders: headers,
       periodCount: headers.length,
       seriesCount: rows.length,
-      ...(departmentId ? { departmentId } : {}),
     });
+    if (warnings.length > 0) {
+      sheet.status = 'READY_WITH_WARNINGS';
+      sheet.validationErrors = warnings; // Store as JSON
+    }
     const savedSheet = await this.sheetRepo.save(sheet);
 
     const batch = this.batchRepo.create({
@@ -67,16 +75,43 @@ export class DatasheetImportService {
     const savedBatch = await this.batchRepo.save(batch);
 
     try {
-      const seriesEntities = rows.map((row, idx) =>
-        this.seriesRepo.create({
+      // 1. Setup Department Lookup Map
+      const deptMap = new Map<string, string>();
+      const existingDepts = await this.departmentRepo.find({ where: { businessId } });
+      existingDepts.forEach((d) => deptMap.set(d.name.toLowerCase(), d.id));
+
+      // 2. Identify all unique department names from the parsed rows
+      const uniqueDeptNames = new Set<string>();
+      rows.forEach((r: any) => {
+        if (r.departmentName) uniqueDeptNames.add(r.departmentName);
+      });
+
+      // 3. Auto-create missing departments
+      for (const dName of uniqueDeptNames) {
+        if (!deptMap.has(dName.toLowerCase())) {
+          const newDept = this.departmentRepo.create({ businessId, name: dName });
+          const savedDept = await this.departmentRepo.save(newDept);
+          deptMap.set(dName.toLowerCase(), savedDept.id);
+        }
+      }
+
+      // 4. Map series
+      const seriesEntities = rows.map((row: any, idx) => {
+        let mappedDeptId = departmentId || null;
+        if (row.departmentName) {
+          mappedDeptId = deptMap.get(row.departmentName.toLowerCase()) || null;
+        }
+
+        return this.seriesRepo.create({
           dataSheetId: savedSheet.id,
+          departmentId: mappedDeptId,
           seriesName: row.name,
           rowIndex: idx,
           values: Object.fromEntries(
             Object.entries(row.values).map(([k, v]) => [k, v ?? 0]),
-          ),
-        }),
-      );
+          ) as Record<string, number>,
+        });
+      });
       await this.seriesRepo.save(seriesEntities);
 
       await this.sheetRepo.update(savedSheet.id, {
@@ -113,7 +148,7 @@ export class DatasheetImportService {
 
     this.validateFileType(file);
 
-    const { headers, rows, warnings } = await this.parseFile(file);
+    const { headers, rows, warnings } = await this.parseFile(file, sheet.templateType as 'simple' | 'department' | 'pnl');
 
     const batch = this.batchRepo.create({
       businessId: sheet.businessId,
@@ -127,20 +162,48 @@ export class DatasheetImportService {
     try {
       await this.seriesRepo.delete({ dataSheetId: datasheetId });
 
-      const seriesEntities = rows.map((row, idx) =>
-        this.seriesRepo.create({
+      // 1. Setup Department Lookup Map
+      const deptMap = new Map<string, string>();
+      const existingDepts = await this.departmentRepo.find({ where: { businessId: sheet.businessId } });
+      existingDepts.forEach((d) => deptMap.set(d.name.toLowerCase(), d.id));
+
+      // 2. Identify all unique department names from the parsed rows
+      const uniqueDeptNames = new Set<string>();
+      rows.forEach((r: any) => {
+        if (r.departmentName) uniqueDeptNames.add(r.departmentName);
+      });
+
+      // 3. Auto-create missing departments
+      for (const dName of uniqueDeptNames) {
+        if (!deptMap.has(dName.toLowerCase())) {
+          const newDept = this.departmentRepo.create({ businessId: sheet.businessId, name: dName });
+          const savedDept = await this.departmentRepo.save(newDept);
+          deptMap.set(dName.toLowerCase(), savedDept.id);
+        }
+      }
+
+      // 4. Map series
+      const seriesEntities = rows.map((row: any, idx) => {
+        let mappedDeptId = null;
+        if (row.departmentName) {
+          mappedDeptId = deptMap.get(row.departmentName.toLowerCase()) || null;
+        }
+
+        return this.seriesRepo.create({
           dataSheetId: datasheetId,
+          departmentId: mappedDeptId,
           seriesName: row.name,
           rowIndex: idx,
           values: Object.fromEntries(
             Object.entries(row.values).map(([k, v]) => [k, v ?? 0]),
-          ),
-        }),
-      );
+          ) as Record<string, number>,
+        });
+      });
       await this.seriesRepo.save(seriesEntities);
 
       await this.sheetRepo.update(datasheetId, {
-        status: 'ready',
+        status: warnings.length > 0 ? 'READY_WITH_WARNINGS' : 'ready',
+        validationErrors: (warnings.length > 0 ? warnings : null) as any,
         importedAt: new Date(),
         periodHeaders: headers,
         periodCount: headers.length,
@@ -167,13 +230,18 @@ export class DatasheetImportService {
   }
 
   /** Parse file and return preview data WITHOUT saving anything to DB — SRS 4.7 */
-  async preview(file: Express.Multer.File): Promise<{
+  async preview(
+    file: Express.Multer.File,
+    templateType: 'simple' | 'department' | 'pnl' = 'simple',
+  ): Promise<{
     headers: string[];
     rows: { name: string; values: Record<string, number | null> }[];
     warnings: string[];
+    groups?: { departmentName: string; seriesCount: number }[];
+    categories?: { name: string; level: number; hasValues: boolean }[];
   }> {
     this.validateFileType(file);
-    return this.parseFile(file);
+    return this.parseFile(file, templateType);
   }
 
   async getImportHistory(businessId: string, userId: string): Promise<ImportBatch[]> {
@@ -204,14 +272,23 @@ export class DatasheetImportService {
     }
   }
 
-  private async parseFile(file: Express.Multer.File) {
-    const { headers, rows, warnings } = await parseFileBuffer(file.buffer, file.originalname);
+  private async parseFile(file: Express.Multer.File, templateType: 'simple' | 'department' | 'pnl' = 'simple') {
+    let result;
+    if (templateType === 'department') {
+      const { parseDepartmentBuffer } = await import('../../../../worker/src/processors/import-department-parser');
+      result = await parseDepartmentBuffer(file.buffer, file.originalname);
+    } else if (templateType === 'pnl') {
+      const { parsePnlBuffer } = await import('../../../../worker/src/processors/import-pnl-parser');
+      result = await parsePnlBuffer(file.buffer, file.originalname);
+    } else {
+      result = await parseFileBuffer(file.buffer, file.originalname);
+    }
     try {
-      validateParseResult(headers, rows);
+      validateParseResult(result.headers, result.rows);
     } catch (e) {
       throw new BadRequestException(e instanceof Error ? e.message : String(e));
     }
-    return { headers, rows, warnings };
+    return result;
   }
 
   private async findSheetOrFail(id: string): Promise<DataSheet> {

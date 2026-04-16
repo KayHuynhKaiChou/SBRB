@@ -8,4 +8,10 @@ export class AvailableSeriesType {
 
   @Field(() => String)
   name: string;
+
+  @Field(() => String, { nullable: true })
+  templateType?: string;
+
+  @Field(() => String, { nullable: true })
+  departmentName?: string | null;
 }

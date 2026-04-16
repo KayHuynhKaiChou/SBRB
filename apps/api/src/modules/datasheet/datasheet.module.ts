@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { MulterModule } from '@nestjs/platform-express';
 import { PubSub } from 'graphql-subscriptions';
 import { CommonModule } from '../../common/common.module';
+import { Department } from '../department/entities/department.entity';
 import { Widget } from '../widget/entities/widget.entity';
 import { DataSheet } from './entities/data-sheet.entity';
 import { DataSeries } from './entities/data-series.entity';
@@ -22,7 +23,7 @@ import { DatasheetResolver } from './datasheet.resolver';
  */
 @Module({
   imports: [
-    TypeOrmModule.forFeature([DataSheet, DataSeries, ImportBatch, Widget]),
+    TypeOrmModule.forFeature([DataSheet, DataSeries, ImportBatch, Widget, Department]),
     MulterModule.register({ limits: { fileSize: 10 * 1024 * 1024 } }),
     CommonModule,
   ],

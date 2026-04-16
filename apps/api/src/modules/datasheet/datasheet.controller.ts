@@ -43,10 +43,14 @@ export class DatasheetController {
     @Param('businessId') businessId: string,
     @UploadedFile() file: Express.Multer.File,
     @Query('departmentId') departmentId: string | undefined,
+    @Query('templateType') templateType: string | undefined,
     @Req() req: Request,
   ) {
     const user = req.user as IJwtPayload;
-    return this.datasheetService.upload(file, businessId, user.sub, departmentId);
+    const tt = (['simple', 'department', 'pnl'].includes(templateType as string)
+      ? templateType
+      : 'simple') as 'simple' | 'department' | 'pnl';
+    return this.datasheetService.upload(file, businessId, user.sub, departmentId, tt);
   }
 
   /** GET /businesses/:businessId/data-sheets */
@@ -57,7 +61,26 @@ export class DatasheetController {
     @Req() req: Request,
   ) {
     const user = req.user as IJwtPayload;
-    return this.datasheetService.findByBusiness(businessId, user.sub, departmentId);
+    return this.datasheetService.findByBusiness(businessId, user.sub);
+  }
+
+  /** GET /data-sheets/sample-template — MUST be before /:id */
+  @Get('data-sheets/sample-template')
+  async sampleTemplate(
+    @Query('templateType') templateType: string | undefined,
+    @Res() res: Response,
+  ) {
+    const tt = (['simple', 'department', 'pnl'].includes(templateType as string)
+      ? templateType
+      : 'simple') as 'simple' | 'department' | 'pnl';
+    const buffer = await this.datasheetService.generateSampleFile(tt);
+    const date = new Date().toISOString().split('T')[0];
+    res.set({
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename=sbrb_sample_${tt}_${date}.xlsx`,
+      'Content-Length': String(buffer.length),
+    });
+    res.end(buffer);
   }
 
   /** GET /data-sheets/export-template — MUST be before /:id */
@@ -70,7 +93,7 @@ export class DatasheetController {
     res.set({
       'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'Content-Disposition': `attachment; filename=sbrb_template_${periodType}_${date}.xlsx`,
-      'Content-Length': buffer.length,
+      'Content-Length': String(buffer.length),
     });
     res.end(buffer);
   }
@@ -78,8 +101,14 @@ export class DatasheetController {
   /** POST /data-sheets/preview — MUST be before /:id routes to avoid route shadowing */
   @Post('data-sheets/preview')
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: FILE_SIZE_LIMIT } }))
-  async previewFile(@UploadedFile() file: Express.Multer.File) {
-    return this.datasheetService.preview(file);
+  async previewFile(
+    @UploadedFile() file: Express.Multer.File,
+    @Query('templateType') templateType: string | undefined,
+  ) {
+    const tt = (['simple', 'department', 'pnl'].includes(templateType as string)
+      ? templateType
+      : 'simple') as 'simple' | 'department' | 'pnl';
+    return this.datasheetService.preview(file, tt);
   }
 
   /** GET /data-sheets/:id/export — MUST be before /:id to avoid route shadowing */

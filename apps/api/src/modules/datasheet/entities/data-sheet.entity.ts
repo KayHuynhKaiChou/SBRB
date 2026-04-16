@@ -10,7 +10,6 @@ import {
 } from 'typeorm';
 import { User } from '../../auth/entities/user.entity';
 import { Business } from '../../business/entities/business.entity';
-import { Department } from '../../department/entities/department.entity';
 
 @Entity('data_sheets')
 export class DataSheet {
@@ -25,13 +24,8 @@ export class DataSheet {
   @JoinColumn({ name: 'business_id' })
   business: Business;
 
-  @Column({ name: 'department_id', type: 'uuid', nullable: true })
-  @Index()
-  departmentId: string | null;
-
-  @ManyToOne(() => Department, { onDelete: 'SET NULL', nullable: true })
-  @JoinColumn({ name: 'department_id' })
-  department: Department;
+  @Column({ name: 'validation_errors', type: 'jsonb', nullable: true })
+  validationErrors: any;
 
   @Column({ name: 'uploaded_by', type: 'uuid' })
   uploadedBy: string;
@@ -45,6 +39,9 @@ export class DataSheet {
 
   @Column({ name: 'original_filename', type: 'varchar', length: 255, nullable: true })
   originalFilename: string | null;
+
+  @Column({ name: 'template_type', type: 'varchar', length: 20, default: 'simple' })
+  templateType: string;
 
   @Column({ name: 'period_type', type: 'varchar', length: 20, default: 'month' })
   periodType: string;

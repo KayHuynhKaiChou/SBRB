@@ -29,10 +29,9 @@ export class DatasheetResolver {
   @Query(() => [DataSheetType], { name: 'dataSheets' })
   async getDataSheets(
     @Args('businessId', { type: () => ID }) businessId: string,
-    @Args('departmentId', { type: () => ID, nullable: true }) departmentId: string | undefined,
     @CurrentUser() user: IJwtPayload,
   ): Promise<DataSheetType[]> {
-    return this.datasheetService.findByBusiness(businessId, user.sub, departmentId);
+    return this.datasheetService.findByBusiness(businessId, user.sub);
   }
 
   @Query(() => DataSheetType, { name: 'dataSheet' })

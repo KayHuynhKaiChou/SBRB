@@ -32,16 +32,22 @@ export class DatasheetService {
   // Delegated: import operations
   // ---------------------------------------------------------------------------
 
-  upload(file: Express.Multer.File, businessId: string, userId: string, departmentId?: string) {
-    return this.importService.upload(file, businessId, userId, departmentId);
+  upload(
+    file: Express.Multer.File,
+    businessId: string,
+    userId: string,
+    departmentId?: string,
+    templateType: 'simple' | 'department' | 'pnl' = 'simple',
+  ) {
+    return this.importService.upload(file, businessId, userId, departmentId, templateType);
   }
 
   reimport(datasheetId: string, file: Express.Multer.File, userId: string) {
     return this.importService.reimport(datasheetId, file, userId);
   }
 
-  preview(file: Express.Multer.File) {
-    return this.importService.preview(file);
+  preview(file: Express.Multer.File, templateType: 'simple' | 'department' | 'pnl' = 'simple') {
+    return this.importService.preview(file, templateType);
   }
 
   getImportHistory(businessId: string, userId: string): Promise<ImportBatch[]> {
@@ -63,20 +69,23 @@ export class DatasheetService {
     return this.templateService.generateTemplate(periodType, count);
   }
 
+  generateSampleFile(
+    templateType: 'simple' | 'department' | 'pnl',
+  ): Promise<Buffer<ArrayBufferLike>> {
+    return this.templateService.generateSampleFile(templateType);
+  }
+
   // ---------------------------------------------------------------------------
   // CRUD operations
   // ---------------------------------------------------------------------------
 
-  async findByBusiness(businessId: string, userId: string, departmentId?: string): Promise<DataSheet[]> {
+  async findByBusiness(businessId: string, userId: string): Promise<DataSheet[]> {
     await this.authorizationService.requireMember(businessId, userId);
-    const where: Record<string, unknown> = { businessId };
-    if (departmentId) {
-      where.departmentId = departmentId;
-    }
-    return this.sheetRepo.find({
-      where,
-      order: { createdAt: 'DESC' },
-    });
+    const qb = this.sheetRepo.createQueryBuilder('s')
+      .where('s.businessId = :businessId', { businessId })
+      .orderBy('s.createdAt', 'DESC');
+    
+    return qb.getMany();
   }
 
   async findById(id: string, userId: string): Promise<DataSheet> {
@@ -91,6 +100,7 @@ export class DatasheetService {
 
     const qb = this.seriesRepo
       .createQueryBuilder('s')
+      .leftJoinAndSelect('s.department', 'department')
       .where('s.dataSheetId = :datasheetId', { datasheetId })
       .orderBy('s.rowIndex', 'ASC');
 
@@ -105,7 +115,7 @@ export class DatasheetService {
     await this.authorizationService.requireManager(sheet.businessId, userId);
     sheet.name = name;
     if (departmentId !== undefined) {
-      sheet.departmentId = departmentId ?? null;
+      // Ignored: DataSheet no longer has departmentId. Series have departmentId.
     }
     return this.sheetRepo.save(sheet);
   }

@@ -200,6 +200,7 @@ export class WidgetService {
         showLabels: (config['showLabels'] as boolean) ?? null,
         yAxisFromZero: (config['yAxisFromZero'] as boolean) ?? null,
         showLegend: (config['showLegend'] as boolean) ?? null,
+        xAxisGroup: (config['xAxisGroup'] as string) ?? null,
       },
       config: widget.config as Record<string, unknown> | null,
       dataSheetId: widget.dataSheetId,

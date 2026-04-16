@@ -7,6 +7,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { DataSheet } from './data-sheet.entity';
+import { Department } from '../../department/entities/department.entity';
 
 @Entity('data_series')
 @Index(['dataSheetId', 'rowIndex'])
@@ -20,6 +21,14 @@ export class DataSeries {
   @ManyToOne(() => DataSheet, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'data_sheet_id' })
   dataSheet: DataSheet;
+
+  @Column({ name: 'department_id', type: 'uuid', nullable: true })
+  @Index()
+  departmentId: string | null;
+
+  @ManyToOne(() => Department, { onDelete: 'RESTRICT', nullable: true })
+  @JoinColumn({ name: 'department_id' })
+  department: Department;
 
   @Column({ name: 'series_name', type: 'varchar', length: 200 })
   seriesName: string;

@@ -14,6 +14,9 @@ export class ChartDataset {
 
   @Field(() => String, { nullable: true })
   borderColor: string | null;
+
+  @Field(() => String, { nullable: true })
+  departmentName?: string | null;
 }
 
 /** Trend badge comparing last two periods */
@@ -46,4 +49,7 @@ export class ChartData {
 
   @Field(() => String, { nullable: true })
   departmentName: string | null;
+
+  @Field(() => [String], { nullable: true })
+  allPeriods?: string[];
 }

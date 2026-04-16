@@ -3,7 +3,8 @@
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
     "declaration": false,
-    "types": ["node", "multer"]
+    "types": ["node", "multer"],
+    "jsx": "react-jsx"
   },
   "exclude": [
     "jest.config.ts",
