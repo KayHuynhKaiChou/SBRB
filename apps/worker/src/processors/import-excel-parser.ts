@@ -9,6 +9,8 @@ export interface IParseResult {
   headers: string[];
   rows: ISeriesRow[];
   warnings: string[];
+  groups?: { departmentName: string; seriesCount: number }[];
+  categories?: { name: string; level: number; hasValues: boolean }[];
 }
 
 /**
@@ -99,12 +101,13 @@ export function validateParseResult(
   const seen = new Set<string>();
   const dupes: string[] = [];
   for (const row of rows) {
-    const key = row.name.toLowerCase();
+    const dept = (row as any).departmentName || '';
+    const key = `${dept}::${row.name}`.toLowerCase();
     if (seen.has(key)) dupes.push(row.name);
     else seen.add(key);
   }
   if (dupes.length > 0) {
-    throw new Error(`Duplicate series names: ${dupes.join(', ')}`);
+    throw new Error(`Duplicate series names: ${dupes.join(', ')}. Lỗi này thường do bạn import nhầm định dạng Mẫu 2 (Nhiều phòng ban) vào DataSheet được tạo dưới Mẫu 1 (Đơn giản).`);
   }
 
   return { errorRows: 0 };
