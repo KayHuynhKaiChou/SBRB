@@ -95,5 +95,8 @@
   "template_department_desc": "Nhóm theo bộ phận với các chỉ số con",
   "template_pnl_desc": "Doanh thu / Giá vốn / Chi phí với mục con",
   "download_sample": "Tải mẫu",
-  "combo_mode_hint": "Chọn loại mẫu phù hợp với cấu trúc file Excel"
+  "combo_mode_hint": "Chọn loại mẫu phù hợp với cấu trúc file Excel",
+  "insert_column_left": "Chèn cột bên trái",
+  "insert_column_right": "Chèn cột bên phải",
+  "column_menu_tooltip": "Tuỳ chọn cột"
 }

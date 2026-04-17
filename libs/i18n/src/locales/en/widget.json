@@ -1,5 +1,6 @@
 {
   "create_title": "Create new Widget",
+  "chart_settings_title": "Chart Settings",
   "name_label": "Widget name",
   "name_placeholder": "E.g. Monthly Revenue",
   "metric_name_label": "Metric name",
@@ -68,6 +69,7 @@
   "unit_custom_placeholder": "Type custom unit...",
   "create_success": "Widget created successfully",
   "series_chart_type": "Chart type",
+  "series_chart_type_locked": "Chart type follows the global setting above",
   "series_y_axis": "Y-axis",
   "y_axis_left": "L",
   "y_axis_right": "R",
@@ -75,5 +77,17 @@
   "y_axis_right_placeholder": "Right Y-axis",
   "unit_right": "Right Y-axis unit",
   "unit_right_placeholder": "e.g. %, units",
-  "combo_mode_hint": "Per-series type is available for Bar/Line charts"
+  "combo_mode_hint": "Per-series type is available for Bar/Line charts",
+  "x_axis_group_label": "X-axis grouping",
+  "x_axis_time": "Time",
+  "x_axis_department": "Department",
+  "x_axis_criteria": "Criteria",
+  "departments_config": "Departments (Color / Type)",
+  "criteria_config": "Criteria (Color / Type)",
+  "global_criteria_filter": "Criteria filter",
+  "period_filter": "Time filter",
+  "empty_preview_title": "No data source linked",
+  "empty_preview_subtitle": "Link an imported dataset to start visualizing",
+  "criteria_sum_subtitle": "Σ Sum of {{count}} periods: {{range}}",
+  "criteria_sum_subtitle_one": "Σ {{range}}"
 }

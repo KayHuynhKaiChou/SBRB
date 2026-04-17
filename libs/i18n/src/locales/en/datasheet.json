@@ -95,5 +95,8 @@
   "template_department_desc": "Grouped by department with sub-series",
   "template_pnl_desc": "Revenue / COGS / OpEx with sub-items",
   "download_sample": "Download sample",
-  "combo_mode_hint": "Select template type matching your Excel file structure"
+  "combo_mode_hint": "Select template type matching your Excel file structure",
+  "insert_column_left": "Insert column to the left",
+  "insert_column_right": "Insert column to the right",
+  "column_menu_tooltip": "Column options"
 }

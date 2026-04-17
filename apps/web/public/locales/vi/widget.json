@@ -1,5 +1,6 @@
 {
   "create_title": "Tạo Widget mới",
+  "chart_settings_title": "Cài đặt biểu đồ",
   "name_label": "Tên widget",
   "name_placeholder": "VD: Doanh thu tháng",
   "metric_name_label": "Tên chỉ số",
@@ -68,6 +69,7 @@
   "unit_custom_placeholder": "Nhập đơn vị...",
   "create_success": "Đã tạo Widget",
   "series_chart_type": "Loại biểu đồ",
+  "series_chart_type_locked": "Loại biểu đồ áp dụng theo cài đặt chung phía trên",
   "series_y_axis": "Trục Y",
   "y_axis_left": "T",
   "y_axis_right": "P",
@@ -75,5 +77,17 @@
   "y_axis_right_placeholder": "Trục Y phải",
   "unit_right": "Đơn vị trục Y phải",
   "unit_right_placeholder": "VD: %, cái",
-  "combo_mode_hint": "Tùy chỉnh loại biểu đồ cho từng chuỗi (Bar/Line)"
+  "combo_mode_hint": "Tùy chỉnh loại biểu đồ cho từng chuỗi (Bar/Line)",
+  "x_axis_group_label": "Nhóm trục X",
+  "x_axis_time": "Thời gian",
+  "x_axis_department": "Phòng ban",
+  "x_axis_criteria": "Tiêu chí",
+  "departments_config": "Phòng ban (Màu / Loại)",
+  "criteria_config": "Tiêu chí (Màu / Loại)",
+  "global_criteria_filter": "Bộ lọc tiêu chí",
+  "period_filter": "Bộ lọc thời gian",
+  "empty_preview_title": "Chưa có nguồn dữ liệu",
+  "empty_preview_subtitle": "Hãy liên kết một bộ dữ liệu đã import để bắt đầu trực quan hoá",
+  "criteria_sum_subtitle": "Σ Tổng {{count}} kỳ: {{range}}",
+  "criteria_sum_subtitle_one": "Σ {{range}}"
 }
