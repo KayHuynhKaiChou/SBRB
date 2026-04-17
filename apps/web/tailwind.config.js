@@ -1,8 +1,8 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    './apps/web/src/**/*.{js,ts,jsx,tsx}',
-    './libs/ui/src/**/*.{js,ts,jsx,tsx}',
+    require('path').join(__dirname, 'src/**/*.{js,ts,jsx,tsx}').replace(/\\/g, '/'),
+    require('path').join(__dirname, '../../libs/ui/src/**/*.{js,ts,jsx,tsx}').replace(/\\/g, '/'),
   ],
   // Prevent Tailwind from conflicting with Ant Design
   corePlugins: {
