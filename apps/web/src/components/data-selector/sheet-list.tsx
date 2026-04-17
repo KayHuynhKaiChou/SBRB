@@ -9,9 +9,11 @@ interface ISheetListProps {
   sheets: IDataSheetDto[];
   value?: string | null;
   onChange?: (id: string) => void;
+  /** Max scrollable height of the list area (excludes search input). Defaults to 240px. */
+  maxHeight?: number;
 }
 
-export function SheetList({ sheets, value, onChange }: ISheetListProps) {
+export function SheetList({ sheets, value, onChange, maxHeight = 240 }: ISheetListProps) {
   const [search, setSearch] = useState('');
 
   const filtered = sheets.filter((s) =>
@@ -19,7 +21,7 @@ export function SheetList({ sheets, value, onChange }: ISheetListProps) {
   );
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col">
       <Input
         prefix={<SearchOutlined />}
         placeholder="Tìm bộ dữ liệu..."
@@ -31,7 +33,7 @@ export function SheetList({ sheets, value, onChange }: ISheetListProps) {
       {filtered.length === 0 ? (
         <Empty description="Không có dữ liệu" image={Empty.PRESENTED_IMAGE_SIMPLE} />
       ) : (
-        <div className="overflow-y-auto flex-1">
+        <div className="overflow-y-auto" style={{ maxHeight }}>
           <Radio.Group
             value={value}
             onChange={(e) => onChange?.(e.target.value as string)}
