@@ -37,6 +37,9 @@ export function useAvailableSeries(widgetId: string | null) {
     {
       variables: { widgetId },
       skip: !widgetId,
+      // cache-and-network: always refetch when hook re-activates after relink,
+      // otherwise stale [] from prior remove-link state would persist
+      fetchPolicy: 'cache-and-network',
     },
   );
   return { series: data?.availableSeries ?? [], loading };

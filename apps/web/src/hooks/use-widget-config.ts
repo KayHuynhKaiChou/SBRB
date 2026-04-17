@@ -8,6 +8,9 @@ import {
 } from '../graphql/widget-config.operations';
 import type { IChartConfig } from '@sbrb/shared-types';
 
+// Queries that depend on widget data link — must refetch after link mutations.
+const DATA_LINK_DEPENDENT_QUERIES = ['WidgetChartData', 'AvailableSeries', 'Widgets'];
+
 /** Input shape matching GraphQL UpdateDataLinkDto */
 export interface IUpdateDataLinkInput {
   dataSheetId: string;
@@ -36,7 +39,11 @@ export function useWidgetConfig() {
 
   const updateDataLink = async (id: string, dataLink: IUpdateDataLinkInput) => {
     try {
-      await updateDataLinkMutation({ variables: { id, input: dataLink } });
+      await updateDataLinkMutation({
+        variables: { id, input: dataLink },
+        refetchQueries: DATA_LINK_DEPENDENT_QUERIES,
+        awaitRefetchQueries: true,
+      });
     } catch {
       message.error(t('widget:update_link_error'));
     }
@@ -44,7 +51,11 @@ export function useWidgetConfig() {
 
   const removeDataLink = async (id: string) => {
     try {
-      await removeDataLinkMutation({ variables: { id } });
+      await removeDataLinkMutation({
+        variables: { id },
+        refetchQueries: DATA_LINK_DEPENDENT_QUERIES,
+        awaitRefetchQueries: true,
+      });
     } catch {
       message.error(t('widget:remove_link_error'));
     }
