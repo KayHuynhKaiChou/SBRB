@@ -53,7 +53,6 @@ export function WidgetCard({
   };
 
   const handleOpenDataSelector = () => {
-    setModalOpen(false);
     onOpenDataSelector?.(widget.id);
   };
 

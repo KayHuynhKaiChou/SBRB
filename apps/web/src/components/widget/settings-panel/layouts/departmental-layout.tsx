@@ -3,7 +3,7 @@ import { Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import type { ChartType, ISeriesConfig } from '@sbrb/shared-types';
 import type { IAvailableSeries } from '../../../../hooks/use-chart-data';
-import { ConfigRow } from '../shared/config-row';
+import { SeriesCard } from '../shared/series-card';
 import { VisibilityCheckboxList } from '../shared/visibility-checkbox-list';
 
 const { Text } = Typography;
@@ -26,9 +26,9 @@ interface IDepartmentalLayoutProps {
 /**
  * Departmental layout adapts based on xAxisGroup:
  *
- * X=time:       ConfigRows per department  + Filter by criteria
- * X=department: ConfigRows per criteria    + Filter by period
- * X=criteria:   ConfigRows per department  + Filter by period
+ * X=time:       ConfigCards per department  + Filter by criteria
+ * X=department: ConfigCards per criteria    + Filter by period
+ * X=criteria:   ConfigCards per department  + Filter by period
  */
 export function DepartmentalLayout({
   series,
@@ -56,20 +56,18 @@ export function DepartmentalLayout({
     return { departments: Array.from(deps), criteriaNames: Array.from(crits) };
   }, [series]);
 
-  // Determine config rows based on xAxisGroup
+  // Determine config items based on xAxisGroup
   // X=time or X=criteria → config per department (color/type/axis)
   // X=department → config per criteria
   const isGroupByDept = xAxisGroup === 'time' || xAxisGroup === 'criteria';
   const configItems = isGroupByDept ? departments : criteriaNames;
   const configTitle = isGroupByDept
-    ? t('departments_config', 'Phòng ban (Màu / Loại)')
-    : t('criteria_config', 'Tiêu chí (Màu / Loại)');
+    ? t('departments_config')
+    : t('criteria_config');
 
-  // Criteria filter only shown when X=time (criteria is the filtered dimension)
-  // Period filter is handled by standalone PeriodCheckboxList (always present)
+  // Criteria filter only shown when X=time
   const showCriteriaFilter = xAxisGroup === 'time';
 
-  // Criteria selection logic (only used when showCriteriaFilter)
   const allSelected = selectedSeriesIds.length === 0;
 
   const selectedCriteriaNames = useMemo(() => {
@@ -99,30 +97,25 @@ export function DepartmentalLayout({
         </Text>
       </div>
 
-      <div className="flex flex-col gap-1.5 mb-2">
-        {configItems.map((item, index) => {
-          const currentColor = getEffectiveColor(item, index);
-          return (
-            <div key={item} className="flex overflow-hidden">
-              <ConfigRow
-                label={item}
-                isBold={isGroupByDept}
-                color={currentColor}
-                usedColors={allUsedColors}
-                onColorChange={(color) => onColorsChange({ ...seriesColors, [item]: color })}
-                widgetChartType={widgetChartType}
-                seriesConfig={seriesConfig[item]}
-                onSeriesConfigChange={(config) => onSeriesConfigChange({ ...seriesConfig, [item]: config })}
-                showToggle={true}
-              />
-            </div>
-          );
-        })}
+      {/* Department card list */}
+      <div className="flex flex-col gap-2 mb-2">
+        {configItems.map((item, index) => (
+          <SeriesCard
+            key={item}
+            name={item}
+            color={getEffectiveColor(item, index)}
+            usedColors={allUsedColors}
+            onColorChange={(color) => onColorsChange({ ...seriesColors, [item]: color })}
+            widgetChartType={widgetChartType}
+            seriesConfig={seriesConfig[item]}
+            onSeriesConfigChange={(config) => onSeriesConfigChange({ ...seriesConfig, [item]: config })}
+          />
+        ))}
       </div>
 
       {showCriteriaFilter && criteriaNames.length > 0 && (
         <VisibilityCheckboxList
-          title={t('global_criteria_filter', 'Bộ lọc tiêu chí')}
+          title={t('global_criteria_filter')}
           items={criteriaNames}
           selectedItems={selectedCriteriaNames}
           onChange={handleCriteriaFilterChange}

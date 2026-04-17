@@ -3,6 +3,7 @@ import { Button, Typography } from 'antd';
 import { DatabaseOutlined, PlusOutlined, DisconnectOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { IWidgetDto } from '@sbrb/shared-types';
+import { useDataSheets } from '../../../hooks/use-datasheet';
 
 const { Text } = Typography;
 
@@ -16,6 +17,13 @@ export function DataSelectorButton({ widget, onOpenSelector, onRemoveLink }: IDa
   const { t } = useTranslation('widget');
   const { dataLink } = widget;
   const hasLink = !!dataLink?.datasheetId;
+  // Look up the linked datasheet's name. useDataSheets is cache-and-network — query
+  // result is shared with DataSelectorModal's sheet picker, so no extra fetch on repeat.
+  const { dataSheets } = useDataSheets(hasLink ? widget.businessId : '');
+  const linkedSheet = hasLink
+    ? dataSheets.find((s) => s.id === dataLink!.datasheetId)
+    : null;
+  const displayName = linkedSheet?.name || linkedSheet?.originalFilename || 'DataSheet';
 
   if (!hasLink) {
     return (
@@ -40,9 +48,11 @@ export function DataSelectorButton({ widget, onOpenSelector, onRemoveLink }: IDa
 
   return (
     <div className="border border-[#e8e8e8] rounded-lg px-3 py-[10px] bg-[#f6ffed] flex items-center justify-between gap-2">
-      <div className="flex items-center gap-2 min-w-0">
+      <div className="flex items-center gap-2 min-w-0 flex-1">
         <DatabaseOutlined className="!text-[#52c41a] !shrink-0" />
-        <Text className="!text-xs !block">DataSheet</Text>
+        <Text className="!text-xs !block !truncate" title={displayName}>
+          {displayName}
+        </Text>
       </div>
       <Button
         size="small"

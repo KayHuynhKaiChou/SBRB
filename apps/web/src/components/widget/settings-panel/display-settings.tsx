@@ -10,6 +10,8 @@ interface IDisplaySettingsProps {
   onChange: (updated: Partial<IChartConfig>) => void;
   hasRightAxis?: boolean;
   templateType?: 'simple' | 'department' | 'pnl';
+  /** Default X-axis group when config.xAxisGroup is unset. Must match chart render default. */
+  defaultXAxisGroup?: 'time' | 'department' | 'criteria';
 }
 
 /** Row helper for label + control */
@@ -22,7 +24,7 @@ function SettingRow({ label, children }: { label: string; children: React.ReactN
   );
 }
 
-export function DisplaySettings({ config, onChange, hasRightAxis, templateType = 'simple' }: IDisplaySettingsProps) {
+export function DisplaySettings({ config, onChange, hasRightAxis, templateType = 'simple', defaultXAxisGroup = 'time' }: IDisplaySettingsProps) {
   const isDept = templateType === 'department';
   const { t } = useTranslation('widget');
 
@@ -66,23 +68,23 @@ export function DisplaySettings({ config, onChange, hasRightAxis, templateType =
 
       <Space direction="vertical" className="!w-full" size={8}>
         <div>
-          <Text className="!text-[11px] !text-[#888]">Nhóm Trục X</Text>
+          <Text className="!text-[11px] !text-[#888]">{t('x_axis_group_label')}</Text>
           <Segmented
             size="small"
             block
             options={
               isDept
                 ? [
-                    { label: 'Thời gian', value: 'time' },
-                    { label: 'Phòng ban', value: 'department' },
-                    { label: 'Tiêu chí', value: 'criteria' },
+                    { label: t('x_axis_time'), value: 'time' },
+                    { label: t('x_axis_department'), value: 'department' },
+                    { label: t('x_axis_criteria'), value: 'criteria' },
                   ]
                 : [
-                    { label: 'Thời gian', value: 'time' },
-                    { label: 'Tiêu chí', value: 'criteria' },
+                    { label: t('x_axis_time'), value: 'time' },
+                    { label: t('x_axis_criteria'), value: 'criteria' },
                   ]
             }
-            value={config.xAxisGroup ?? 'time'}
+            value={config.xAxisGroup ?? defaultXAxisGroup}
             onChange={(v) => onChange({ xAxisGroup: v as 'time' | 'criteria' | 'department' })}
             className="!mt-1 !mb-2"
           />

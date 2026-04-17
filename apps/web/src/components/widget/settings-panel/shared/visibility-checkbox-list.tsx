@@ -37,7 +37,7 @@ export function VisibilityCheckboxList({ items, selectedItems, onChange, title }
     <div className="mt-4 pt-4 border-t border-gray-100">
       <div className="flex items-center justify-between mb-2">
         <Text type="secondary" className="!text-[11px] font-semibold">
-          {title || t('global_criteria_filter', 'Bộ lọc tiêu chí chung')}
+          {title || t('global_criteria_filter')}
         </Text>
         <div className="flex gap-2">
           <span className="text-[11px] text-blue-500 cursor-pointer hover:underline" onClick={handleSelectAll}>

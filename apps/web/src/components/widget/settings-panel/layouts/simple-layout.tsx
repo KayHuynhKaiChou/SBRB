@@ -1,10 +1,9 @@
 import React from 'react';
-import { Checkbox, Typography } from 'antd';
+import { Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { CHART_COLORS } from '@sbrb/shared-constants';
 import type { ChartType, ISeriesConfig } from '@sbrb/shared-types';
 import type { IAvailableSeries } from '../../../../hooks/use-chart-data';
-import { ConfigRow } from '../shared/config-row';
+import { SeriesCard } from '../shared/series-card';
 
 const { Text } = Typography;
 
@@ -55,7 +54,7 @@ export function SimpleLayout({
   return (
     <>
       <div className="flex items-center justify-between mb-2">
-        <Text type="secondary" className="!text-[11px]">
+        <Text type="secondary" className="!text-[11px] font-semibold">
           {t('series_section')}
         </Text>
         <div className="flex gap-2">
@@ -69,30 +68,23 @@ export function SimpleLayout({
         </div>
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        {series.map((s, index) => {
-          const currentColor = getEffectiveColor(s.name, index);
-          return (
-            <div key={s.id} className="flex items-center gap-2">
-              <Checkbox
-                checked={isSeriesSelected(s.id)}
-                onChange={(e) => handleToggle(s.id, e.target.checked)}
-              />
-              <div className="flex-1 overflow-hidden">
-                <ConfigRow
-                  label={s.name}
-                  color={currentColor}
-                  usedColors={allUsedColors}
-                  onColorChange={(color) => onColorsChange({ ...seriesColors, [s.name]: color })}
-                  widgetChartType={widgetChartType}
-                  seriesConfig={seriesConfig[s.name]}
-                  onSeriesConfigChange={(config) => onSeriesConfigChange({ ...seriesConfig, [s.name]: config })}
-                  showToggle={isSeriesSelected(s.id)}
-                />
-              </div>
-            </div>
-          );
-        })}
+      <div className="flex flex-col gap-2">
+        {series.map((s, index) => (
+          <SeriesCard
+            key={s.id}
+            name={s.name}
+            color={getEffectiveColor(s.name, index)}
+            usedColors={allUsedColors}
+            onColorChange={(color) => onColorsChange({ ...seriesColors, [s.name]: color })}
+            widgetChartType={widgetChartType}
+            seriesConfig={seriesConfig[s.name]}
+            onSeriesConfigChange={(config) => onSeriesConfigChange({ ...seriesConfig, [s.name]: config })}
+            checkable={{
+              checked: isSeriesSelected(s.id),
+              onToggle: (checked) => handleToggle(s.id, checked),
+            }}
+          />
+        ))}
       </div>
     </>
   );

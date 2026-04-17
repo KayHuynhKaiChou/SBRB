@@ -19,6 +19,8 @@ interface IChartTypeSelectorProps {
 
 export function ChartTypeSelector({ value, onChange }: IChartTypeSelectorProps) {
   const { t } = useTranslation('widget');
+  // null/undefined → 'bar' so the highlighted option matches what the chart actually renders.
+  const effectiveValue: ChartType = value ?? 'bar';
   return (
     <div>
       <Text type="secondary" className="!text-[11px] !block !mb-2">
@@ -26,7 +28,7 @@ export function ChartTypeSelector({ value, onChange }: IChartTypeSelectorProps) 
       </Text>
       <div className="grid grid-cols-2 gap-2">
         {CHART_TYPES.map((item) => {
-          const isSelected = value === item.type;
+          const isSelected = effectiveValue === item.type;
           return (
             <div
               key={item.type}
