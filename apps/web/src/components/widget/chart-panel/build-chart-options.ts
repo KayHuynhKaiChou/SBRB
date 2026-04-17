@@ -20,7 +20,13 @@ export function buildOptions(
 
   const datalabelsPlugin = config.showLabels
     ? {
-        display: 'auto' as const,
+        // Show labels for all real data points; only hide for null/empty (which produce no bar).
+        // 'auto' would also hide labels that collide vertically with adjacent bars (e.g. T6
+        // Lợi nhuận 1.2K next to Chi phí 1.3K), making bars look like they're missing data.
+        display: (context: any) => {
+          const value = context.dataset.data[context.dataIndex];
+          return value != null;
+        },
         clamp: true,
         color: '#555',
         font: { size: 11, weight: 500 as const },
@@ -82,7 +88,10 @@ export function buildOptions(
             ? {
                 y1: {
                   position: 'right' as const,
-                  beginAtZero: config.yAxisFromZero,
+                  // Right axis always starts at 0 in dual-axis bar charts: prevents bars
+                  // whose value equals the auto-fitted axis minimum from collapsing to 0
+                  // height (which also hides their data label via datalabels' display: 'auto').
+                  beginAtZero: true,
                   grid: { drawOnChartArea: false },
                   ...(config.yAxisNameRight
                     ? { title: { display: true, text: config.yAxisNameRight } }

@@ -50,10 +50,13 @@ function abbreviate(value: number, thresholds: [number, string][]): string {
  * - Handles negatives, zero, small values (<1000 shown as-is)
  */
 export function formatChartNumber(
-  value: number,
+  value: number | null | undefined,
   options?: IFormatChartNumberOptions,
 ): string {
   const { unit, mode = 'auto' } = options ?? {};
+
+  // null/undefined → empty string (used to skip data labels for missing combos)
+  if (value == null) return '';
 
   if (mode === 'full') return value.toLocaleString();
 
