@@ -8,6 +8,7 @@ import { DatasheetEditService } from './datasheet-edit.service';
 import { DatasheetService } from './datasheet.service';
 import { AddPeriodDto } from './dto/add-period.dto';
 import { AddSeriesDto } from './dto/add-series.dto';
+import { InsertPeriodDto } from './dto/insert-period.dto';
 import {
   DataSeriesType,
   DataSheetType,
@@ -99,6 +100,19 @@ export class DatasheetResolver {
     @CurrentUser() user: IJwtPayload,
   ): Promise<DataSheetType> {
     return this.editService.addPeriod(input.datasheetId, input.periodName, user.sub);
+  }
+
+  @Mutation(() => DataSheetType)
+  async insertPeriod(
+    @Args('input') input: InsertPeriodDto,
+    @CurrentUser() user: IJwtPayload,
+  ): Promise<DataSheetType> {
+    return this.editService.insertPeriodAt(
+      input.datasheetId,
+      input.periodName,
+      input.index,
+      user.sub,
+    );
   }
 
   @Mutation(() => DataSheetType)

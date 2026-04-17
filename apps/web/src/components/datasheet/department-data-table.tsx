@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Table, Empty } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { EditableCell } from './editable-cell';
+import { ColumnHeaderMenu } from './column-header-menu';
 import type { IDataSeriesRow } from '../../hooks/use-datasheet-detail';
 
 interface IDeptGroup {
@@ -13,6 +14,8 @@ interface IDepartmentDataTableProps {
   series: IDataSeriesRow[];
   periodHeaders: string[];
   onCellEdit: (seriesId: string, period: string, value: number | null) => void;
+  onDeletePeriod?: (periodName: string) => void;
+  onInsertPeriod?: (periodName: string, index: number) => void;
 }
 
 /**
@@ -24,6 +27,8 @@ export function DepartmentDataTable({
   series,
   periodHeaders,
   onCellEdit,
+  onDeletePeriod,
+  onInsertPeriod,
 }: IDepartmentDataTableProps) {
   const { t, i18n } = useTranslation('datasheet');
   const formatter = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language]);
@@ -78,8 +83,22 @@ export function DepartmentDataTable({
     const deptGroupCols = departments.map((dept) => ({
       title: <span className="font-semibold">{dept.name}</span>,
       key: `dept-${dept.deptId}`,
-      children: periodHeaders.map((period) => ({
-        title: period,
+      children: periodHeaders.map((period, idx) => ({
+        title:
+          onInsertPeriod && onDeletePeriod ? (
+            <div className="group/header flex items-center justify-end gap-1">
+              <span className="font-medium">{period}</span>
+              <ColumnHeaderMenu
+                period={period}
+                index={idx}
+                existingPeriods={periodHeaders}
+                onInsertAt={onInsertPeriod}
+                onDelete={onDeletePeriod}
+              />
+            </div>
+          ) : (
+            <span className="font-medium">{period}</span>
+          ),
         key: `${dept.deptId}__${period}`,
         width: 110,
         align: 'right' as const,
@@ -97,7 +116,7 @@ export function DepartmentDataTable({
     }));
 
     return [nameCol, ...deptGroupCols];
-  }, [departments, periodHeaders, seriesLookup, onCellEdit, t]);
+  }, [departments, periodHeaders, seriesLookup, onCellEdit, onInsertPeriod, onDeletePeriod, t]);
 
   // Data source: one row per unique series name
   const dataSource = useMemo(

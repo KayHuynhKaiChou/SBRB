@@ -1,10 +1,11 @@
 import React, { useMemo } from 'react';
-import { Table, Empty, Popconfirm, Button, Space } from 'antd';
+import { Table, Empty, Popconfirm, Button } from 'antd';
 import { DeleteOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 import { EditableCell } from './editable-cell';
 import { SeriesNameCell } from './series-name-cell';
+import { ColumnHeaderMenu } from './column-header-menu';
 import type { IDataSeriesRow } from '../../hooks/use-datasheet-detail';
 
 interface IDataTableProps {
@@ -13,6 +14,7 @@ interface IDataTableProps {
   onCellEdit: (seriesId: string, period: string, value: number | null) => void;
   onDeleteSeries?: (seriesId: string) => void;
   onDeletePeriod?: (periodName: string) => void;
+  onInsertPeriod?: (periodName: string, index: number) => void;
   onRenameSeries?: (seriesId: string, newName: string) => void;
 }
 
@@ -23,6 +25,7 @@ export function DataTable({
   onCellEdit,
   onDeleteSeries,
   onDeletePeriod,
+  onInsertPeriod,
   onRenameSeries,
 }: IDataTableProps) {
   const { t, i18n } = useTranslation('datasheet');
@@ -30,8 +33,19 @@ export function DataTable({
   const formatter = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language]);
 
   const columns = useMemo<ColumnsType<IDataSeriesRow>>(() => {
-    const periodCols: ColumnsType<IDataSeriesRow> = periodHeaders.map((period) => ({
-      title: onDeletePeriod ? (
+    const periodCols: ColumnsType<IDataSeriesRow> = periodHeaders.map((period, idx) => ({
+      title: onInsertPeriod && onDeletePeriod ? (
+        <div className="group/header flex items-center justify-end gap-1">
+          <span className="font-medium">{period}</span>
+          <ColumnHeaderMenu
+            period={period}
+            index={idx}
+            existingPeriods={periodHeaders}
+            onInsertAt={onInsertPeriod}
+            onDelete={onDeletePeriod}
+          />
+        </div>
+      ) : onDeletePeriod ? (
         <div className="group/header flex items-center justify-end gap-1">
           <span className="font-medium">{period}</span>
           <Popconfirm
@@ -109,7 +123,7 @@ export function DataTable({
       ...periodCols,
       ...(actionCol ? [actionCol] : []),
     ];
-  }, [periodHeaders, t, onCellEdit, onDeleteSeries, onDeletePeriod, onRenameSeries]);
+  }, [periodHeaders, t, onCellEdit, onDeleteSeries, onDeletePeriod, onInsertPeriod, onRenameSeries]);
 
   const totals = useMemo(() => {
     const result: Record<string, number> = {};

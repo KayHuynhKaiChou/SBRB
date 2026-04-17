@@ -157,6 +157,12 @@ type ImportProgressType {
   status: String!
 }
 
+input InsertPeriodDto {
+  datasheetId: ID!
+  index: Int!
+  periodName: String!
+}
+
 type InvitationType {
   businessId: String!
   createdAt: DateTime!
@@ -216,6 +222,7 @@ type Mutation {
   deleteTab(id: ID!): Boolean!
   deleteWidget(id: ID!): Boolean!
   forgotPassword(email: String!): Boolean!
+  insertPeriod(input: InsertPeriodDto!): DataSheetType!
   inviteMember(businessId: ID!, input: InviteMemberDto!): InvitationType!
   login(input: LoginDto!): AuthResult!
   logout: Boolean!

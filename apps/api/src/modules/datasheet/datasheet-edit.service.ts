@@ -155,6 +155,49 @@ export class DatasheetEditService {
   }
 
   /**
+   * Insert a new period column at an arbitrary position. `index` is the target
+   * slot in `periodHeaders` (0 = before first, N = append, equivalent to addPeriod).
+   * Because values are stored as JSONB keyed by period name, column order is purely
+   * controlled by the `periodHeaders` array — no JSONB reshaping needed.
+   */
+  async insertPeriodAt(
+    datasheetId: string,
+    periodName: string,
+    index: number,
+    userId: string,
+  ): Promise<DataSheet> {
+    const sheet = await this.sheetRepo.findOne({ where: { id: datasheetId } });
+    if (!sheet) throw new NotFoundException('DataSheet not found');
+    await this.authorizationService.requireManager(sheet.businessId, userId);
+
+    if (sheet.periodHeaders.includes(periodName)) {
+      throw new BadRequestException(`Period '${periodName}' already exists`);
+    }
+    const clampedIndex = Math.max(0, Math.min(index, sheet.periodHeaders.length));
+
+    await this.dataSource.transaction(async (em) => {
+      const next = [...sheet.periodHeaders];
+      next.splice(clampedIndex, 0, periodName);
+      sheet.periodHeaders = next;
+      sheet.periodCount += 1;
+      await em.save(DataSheet, sheet);
+
+      // Bulk-patch all series: append new key with value 0 (key order in JSONB is
+      // insignificant — render order comes from periodHeaders).
+      const patch = JSON.stringify({ [periodName]: 0 });
+      await em
+        .createQueryBuilder()
+        .update(DataSeries)
+        .set({ values: () => `values || :patch::jsonb` })
+        .setParameter('patch', patch)
+        .where('data_sheet_id = :id', { id: datasheetId })
+        .execute();
+    });
+
+    return this.sheetRepo.findOneOrFail({ where: { id: datasheetId } });
+  }
+
+  /**
    * Delete a period column. Removes header from periodHeaders and bulk-removes
    * the key from all series JSONB values in a single transaction.
    */

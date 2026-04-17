@@ -16,6 +16,7 @@ import {
   useDeleteSeries,
   useAddPeriod,
   useDeletePeriod,
+  useInsertPeriod,
   useRenameSeries,
   useExportDataSheet,
 } from '../../hooks/use-datasheet-mutations';
@@ -33,6 +34,7 @@ export default function DataSheetDetailPage() {
   const { deleteSeries } = useDeleteSeries();
   const { addPeriod, loading: addPeriodLoading } = useAddPeriod();
   const { deletePeriod } = useDeletePeriod();
+  const { insertPeriod, loading: insertPeriodLoading } = useInsertPeriod();
   const { renameSeries } = useRenameSeries();
   const { exportSheet } = useExportDataSheet();
 
@@ -82,13 +84,21 @@ export default function DataSheetDetailPage() {
     [id, deletePeriod],
   );
 
+  const handleInsertPeriod = useCallback(
+    (periodName: string, index: number) => {
+      if (!id) return;
+      insertPeriod(id, periodName, index);
+    },
+    [id, insertPeriod],
+  );
+
   const handleRenameSeries = useCallback(
     (seriesId: string, newName: string) => renameSeries(seriesId, newName),
     [renameSeries],
   );
 
   const isReady = sheet?.status === 'ready';
-  const mutationLoading = addSeriesLoading || addPeriodLoading;
+  const mutationLoading = addSeriesLoading || addPeriodLoading || insertPeriodLoading;
 
   return (
     <Layout className="!min-h-screen">
@@ -135,6 +145,8 @@ export default function DataSheetDetailPage() {
                     series={series}
                     periodHeaders={sheet!.periodHeaders ?? []}
                     onCellEdit={handleCellEdit}
+                    onDeletePeriod={handleDeletePeriod}
+                    onInsertPeriod={handleInsertPeriod}
                   />
                 ) : (
                   <DataTable
@@ -143,6 +155,7 @@ export default function DataSheetDetailPage() {
                     onCellEdit={handleCellEdit}
                     onDeleteSeries={handleDeleteSeries}
                     onDeletePeriod={handleDeletePeriod}
+                    onInsertPeriod={handleInsertPeriod}
                     onRenameSeries={handleRenameSeries}
                   />
                 )}

@@ -8,6 +8,7 @@ import {
   ADD_PERIOD_MUTATION,
   DELETE_PERIOD_MUTATION,
   RENAME_SERIES_MUTATION,
+  INSERT_PERIOD_MUTATION,
 } from '../graphql/datasheet.operations';
 
 const REFETCH = ['DataSheetDetail'];
@@ -67,6 +68,25 @@ export function useAddPeriod() {
   };
 
   return { addPeriod, loading };
+}
+
+/** Insert a new period column at a specific index (0-based). */
+export function useInsertPeriod() {
+  const { t } = useTranslation('datasheet');
+  const [mutate, { loading }] = useMutation(INSERT_PERIOD_MUTATION, {
+    refetchQueries: REFETCH,
+  });
+
+  const insertPeriod = async (datasheetId: string, periodName: string, index: number) => {
+    try {
+      await mutate({ variables: { input: { datasheetId, periodName, index } } });
+      message.success(t('add_success'));
+    } catch {
+      message.error(t('edit_error'));
+    }
+  };
+
+  return { insertPeriod, loading };
 }
 
 /** Delete a period column from all series in the datasheet */
