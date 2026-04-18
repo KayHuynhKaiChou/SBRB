@@ -98,5 +98,12 @@
   "combo_mode_hint": "Select template type matching your Excel file structure",
   "insert_column_left": "Insert column to the left",
   "insert_column_right": "Insert column to the right",
-  "column_menu_tooltip": "Column options"
+  "column_menu_tooltip": "Column options",
+  "insert_row_above": "Insert row above",
+  "insert_row_below": "Insert row below",
+  "row_menu_tooltip": "Row options",
+  "cannot_delete_last_series": "Cannot delete — at least one row required",
+  "series_duplicate": "A series with this name already exists",
+  "series_name_label": "Series name",
+  "series_name_placeholder": "e.g. Revenue"
 }

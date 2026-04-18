@@ -163,6 +163,12 @@ input InsertPeriodDto {
   periodName: String!
 }
 
+input InsertSeriesDto {
+  datasheetId: ID!
+  index: Int!
+  name: String!
+}
+
 type InvitationType {
   businessId: String!
   createdAt: DateTime!
@@ -218,11 +224,13 @@ type Mutation {
   deleteDepartment(id: ID!): Boolean!
   deletePeriod(datasheetId: ID!, periodName: String!): DataSheetType!
   deleteSeries(seriesId: ID!): Boolean!
+  deleteSeriesByName(datasheetId: ID!, name: String!): Boolean!
   deleteSession(id: ID!): Boolean!
   deleteTab(id: ID!): Boolean!
   deleteWidget(id: ID!): Boolean!
   forgotPassword(email: String!): Boolean!
   insertPeriod(input: InsertPeriodDto!): DataSheetType!
+  insertSeries(input: InsertSeriesDto!): DataSheetType!
   inviteMember(businessId: ID!, input: InviteMemberDto!): InvitationType!
   login(input: LoginDto!): AuthResult!
   logout: Boolean!

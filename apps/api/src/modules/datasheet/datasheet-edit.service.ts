@@ -228,6 +228,127 @@ export class DatasheetEditService {
     return this.sheetRepo.findOneOrFail({ where: { id: datasheetId } });
   }
 
+  /**
+   * Insert a new series (row) at an arbitrary position.
+   * - Simple template: creates 1 DataSeries row at target rowIndex.
+   * - Department template: creates N DataSeries rows (one per distinct department)
+   *   all sharing the same target rowIndex and new seriesName.
+   * Existing series with rowIndex >= target are shifted down atomically.
+   */
+  async insertSeriesAt(
+    datasheetId: string,
+    name: string,
+    index: number,
+    userId: string,
+  ): Promise<DataSheet> {
+    if (!name || name.length > 200) throw new BadRequestException('Invalid series name');
+
+    const sheet = await this.sheetRepo.findOne({ where: { id: datasheetId } });
+    if (!sheet) throw new NotFoundException('DataSheet not found');
+    await this.authorizationService.requireManager(sheet.businessId, userId);
+
+    const existing = await this.seriesRepo
+      .createQueryBuilder('s')
+      .select(['s.seriesName', 's.rowIndex', 's.departmentId'])
+      .where('s.dataSheetId = :id', { id: datasheetId })
+      .orderBy('s.rowIndex', 'ASC')
+      .getMany();
+
+    const isDepartment = sheet.templateType === 'department';
+
+    // Single pass: build unique names (first-appearance order), their anchor rowIndex,
+    // detect duplicates, and collect distinct departmentIds (dept template only).
+    const uniqueNames: string[] = [];
+    const firstRowIdxByName = new Map<string, number>();
+    const deptIdSet = new Set<string | null>();
+    let maxRowIndex = -1;
+    for (const s of existing) {
+      if (!firstRowIdxByName.has(s.seriesName)) {
+        firstRowIdxByName.set(s.seriesName, s.rowIndex);
+        uniqueNames.push(s.seriesName);
+      }
+      if (isDepartment) deptIdSet.add(s.departmentId ?? null);
+      if (s.rowIndex > maxRowIndex) maxRowIndex = s.rowIndex;
+    }
+    if (firstRowIdxByName.has(name)) {
+      throw new BadRequestException(`Series '${name}' already exists`);
+    }
+
+    const clampedIndex = Math.max(0, Math.min(index, uniqueNames.length));
+    const targetRowIndex =
+      clampedIndex < uniqueNames.length
+        ? firstRowIdxByName.get(uniqueNames[clampedIndex])!
+        : maxRowIndex + 1;
+
+    const deptIds: (string | null)[] =
+      isDepartment && deptIdSet.size > 0 ? [...deptIdSet] : [null];
+    const values = Object.fromEntries(sheet.periodHeaders.map((h) => [h, 0]));
+
+    await this.dataSource.transaction(async (em) => {
+      // Shift existing rows at target position down by 1 (skipped when appending).
+      if (clampedIndex < uniqueNames.length) {
+        await em
+          .createQueryBuilder()
+          .update(DataSeries)
+          .set({ rowIndex: () => 'row_index + 1' })
+          .where('data_sheet_id = :id AND row_index >= :target', {
+            id: datasheetId,
+            target: targetRowIndex,
+          })
+          .execute();
+      }
+
+      // Bulk INSERT — one round-trip regardless of deptIds.length.
+      await em.insert(
+        DataSeries,
+        deptIds.map((departmentId) => ({
+          dataSheetId: datasheetId,
+          seriesName: name,
+          rowIndex: targetRowIndex,
+          departmentId,
+          values,
+        })),
+      );
+      await em.increment(DataSheet, { id: datasheetId }, 'seriesCount', deptIds.length);
+    });
+
+    // Reflect in-memory increment to avoid an extra SELECT round-trip.
+    sheet.seriesCount += deptIds.length;
+    return sheet;
+  }
+
+  /**
+   * Delete all DataSeries rows matching a given seriesName (across all departments).
+   * Used by department template where one rendered row = N DataSeries records.
+   */
+  async deleteSeriesByName(
+    datasheetId: string,
+    name: string,
+    userId: string,
+  ): Promise<boolean> {
+    const sheet = await this.sheetRepo.findOne({ where: { id: datasheetId } });
+    if (!sheet) throw new NotFoundException('DataSheet not found');
+    await this.authorizationService.requireManager(sheet.businessId, userId);
+
+    await this.dataSource.transaction(async (em) => {
+      const result = await em.delete(DataSeries, {
+        dataSheetId: datasheetId,
+        seriesName: name,
+      });
+      const removed = result.affected ?? 0;
+      if (removed > 0) {
+        await em
+          .createQueryBuilder()
+          .update(DataSheet)
+          .set({ seriesCount: () => `GREATEST(series_count - ${removed}, 0)` })
+          .where('id = :id', { id: datasheetId })
+          .execute();
+      }
+    });
+
+    return true;
+  }
+
   /** Rename a DataSeries row. Manager+ only. */
   async renameSeries(seriesId: string, name: string, userId: string): Promise<DataSeries> {
     if (!name || name.length > 200) throw new BadRequestException('Invalid series name');

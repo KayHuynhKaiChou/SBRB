@@ -98,5 +98,12 @@
   "combo_mode_hint": "Chọn loại mẫu phù hợp với cấu trúc file Excel",
   "insert_column_left": "Chèn cột bên trái",
   "insert_column_right": "Chèn cột bên phải",
-  "column_menu_tooltip": "Tuỳ chọn cột"
+  "column_menu_tooltip": "Tuỳ chọn cột",
+  "insert_row_above": "Chèn hàng phía trên",
+  "insert_row_below": "Chèn hàng phía dưới",
+  "row_menu_tooltip": "Tuỳ chọn hàng",
+  "cannot_delete_last_series": "Không thể xoá — phải còn ít nhất 1 hàng",
+  "series_duplicate": "Đã tồn tại chỉ số với tên này",
+  "series_name_label": "Tên chỉ số",
+  "series_name_placeholder": "VD: Doanh thu"
 }

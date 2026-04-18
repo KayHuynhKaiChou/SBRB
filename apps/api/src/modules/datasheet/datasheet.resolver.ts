@@ -9,6 +9,7 @@ import { DatasheetService } from './datasheet.service';
 import { AddPeriodDto } from './dto/add-period.dto';
 import { AddSeriesDto } from './dto/add-series.dto';
 import { InsertPeriodDto } from './dto/insert-period.dto';
+import { InsertSeriesDto } from './dto/insert-series.dto';
 import {
   DataSeriesType,
   DataSheetType,
@@ -92,6 +93,28 @@ export class DatasheetResolver {
     @CurrentUser() user: IJwtPayload,
   ): Promise<boolean> {
     return this.editService.deleteSeries(seriesId, user.sub);
+  }
+
+  @Mutation(() => DataSheetType)
+  async insertSeries(
+    @Args('input') input: InsertSeriesDto,
+    @CurrentUser() user: IJwtPayload,
+  ): Promise<DataSheetType> {
+    return this.editService.insertSeriesAt(
+      input.datasheetId,
+      input.name,
+      input.index,
+      user.sub,
+    );
+  }
+
+  @Mutation(() => Boolean)
+  async deleteSeriesByName(
+    @Args('datasheetId', { type: () => ID }) datasheetId: string,
+    @Args('name') name: string,
+    @CurrentUser() user: IJwtPayload,
+  ): Promise<boolean> {
+    return this.editService.deleteSeriesByName(datasheetId, name, user.sub);
   }
 
   @Mutation(() => DataSheetType)

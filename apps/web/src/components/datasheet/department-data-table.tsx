@@ -3,6 +3,7 @@ import { Table, Empty } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { EditableCell } from './editable-cell';
 import { ColumnHeaderMenu } from './column-header-menu';
+import { RowHeaderMenu } from './row-header-menu';
 import type { IDataSeriesRow } from '../../hooks/use-datasheet-detail';
 
 interface IDeptGroup {
@@ -16,6 +17,8 @@ interface IDepartmentDataTableProps {
   onCellEdit: (seriesId: string, period: string, value: number | null) => void;
   onDeletePeriod?: (periodName: string) => void;
   onInsertPeriod?: (periodName: string, index: number) => void;
+  onInsertSeries?: (name: string, index: number) => void;
+  onDeleteSeriesByName?: (name: string) => void;
 }
 
 /**
@@ -29,6 +32,8 @@ export function DepartmentDataTable({
   onCellEdit,
   onDeletePeriod,
   onInsertPeriod,
+  onInsertSeries,
+  onDeleteSeriesByName,
 }: IDepartmentDataTableProps) {
   const { t, i18n } = useTranslation('datasheet');
   const formatter = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language]);
@@ -68,6 +73,8 @@ export function DepartmentDataTable({
     return names;
   }, [series]);
 
+  const canDeleteRow = seriesNames.length > 1;
+
   // Build columns: Series Name | Dept A > periods | Dept B > periods
   const columns = useMemo(() => {
     const nameCol = {
@@ -75,9 +82,24 @@ export function DepartmentDataTable({
       dataIndex: 'seriesName',
       key: 'seriesName',
       fixed: 'left' as const,
-      width: 180,
+      width: 200,
       ellipsis: true,
-      render: (name: string) => <span className="font-medium text-gray-800">{name}</span>,
+      render: (name: string, _record: unknown, rowIdx: number) => (
+        <div className="flex items-center justify-between gap-1">
+          <span className="font-medium text-gray-800">{name}</span>
+          {onInsertSeries && onDeleteSeriesByName && (
+            <RowHeaderMenu
+              seriesName={name}
+              seriesKey={name}
+              index={rowIdx}
+              existingSeries={seriesNames}
+              canDelete={canDeleteRow}
+              onInsertAt={onInsertSeries}
+              onDelete={onDeleteSeriesByName}
+            />
+          )}
+        </div>
+      ),
     };
 
     const deptGroupCols = departments.map((dept) => ({
@@ -116,7 +138,19 @@ export function DepartmentDataTable({
     }));
 
     return [nameCol, ...deptGroupCols];
-  }, [departments, periodHeaders, seriesLookup, onCellEdit, onInsertPeriod, onDeletePeriod, t]);
+  }, [
+    departments,
+    periodHeaders,
+    seriesLookup,
+    onCellEdit,
+    onInsertPeriod,
+    onDeletePeriod,
+    onInsertSeries,
+    onDeleteSeriesByName,
+    seriesNames,
+    canDeleteRow,
+    t,
+  ]);
 
   // Data source: one row per unique series name
   const dataSource = useMemo(

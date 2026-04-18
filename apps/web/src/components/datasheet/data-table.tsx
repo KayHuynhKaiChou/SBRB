@@ -1,11 +1,11 @@
 import React, { useMemo } from 'react';
-import { Table, Empty, Popconfirm, Button } from 'antd';
-import { DeleteOutlined } from '@ant-design/icons';
+import { Table, Empty } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 import { EditableCell } from './editable-cell';
 import { SeriesNameCell } from './series-name-cell';
 import { ColumnHeaderMenu } from './column-header-menu';
+import { RowHeaderMenu } from './row-header-menu';
 import type { IDataSeriesRow } from '../../hooks/use-datasheet-detail';
 
 interface IDataTableProps {
@@ -13,6 +13,7 @@ interface IDataTableProps {
   periodHeaders: string[];
   onCellEdit: (seriesId: string, period: string, value: number | null) => void;
   onDeleteSeries?: (seriesId: string) => void;
+  onInsertSeries?: (name: string, index: number) => void;
   onDeletePeriod?: (periodName: string) => void;
   onInsertPeriod?: (periodName: string, index: number) => void;
   onRenameSeries?: (seriesId: string, newName: string) => void;
@@ -24,6 +25,7 @@ export function DataTable({
   periodHeaders,
   onCellEdit,
   onDeleteSeries,
+  onInsertSeries,
   onDeletePeriod,
   onInsertPeriod,
   onRenameSeries,
@@ -31,6 +33,8 @@ export function DataTable({
   const { t, i18n } = useTranslation('datasheet');
 
   const formatter = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language]);
+  const seriesNames = useMemo(() => series.map((s) => s.seriesName), [series]);
+  const canDeleteRow = series.length > 1;
 
   const columns = useMemo<ColumnsType<IDataSeriesRow>>(() => {
     const periodCols: ColumnsType<IDataSeriesRow> = periodHeaders.map((period, idx) => ({
@@ -44,25 +48,6 @@ export function DataTable({
             onInsertAt={onInsertPeriod}
             onDelete={onDeletePeriod}
           />
-        </div>
-      ) : onDeletePeriod ? (
-        <div className="group/header flex items-center justify-end gap-1">
-          <span className="font-medium">{period}</span>
-          <Popconfirm
-            title={t('confirm_delete_period')}
-            onConfirm={() => onDeletePeriod(period)}
-            okText={t('rename_confirm')}
-            cancelText={t('rename_cancel')}
-          >
-            <Button
-              type="text"
-              size="small"
-              danger
-              icon={<DeleteOutlined />}
-              className="!h-5 !w-5 !min-w-0 !p-0 opacity-0 group-hover/header:!opacity-60 hover:!opacity-100 transition-opacity"
-              onClick={(e) => e.stopPropagation()}
-            />
-          </Popconfirm>
         </div>
       ) : (
         <span className="font-medium">{period}</span>
@@ -79,51 +64,49 @@ export function DataTable({
       ),
     }));
 
-    const actionCol: ColumnsType<IDataSeriesRow>[number] | null = onDeleteSeries
-      ? {
-          key: 'actions',
-          width: 40,
-          fixed: 'right' as const,
-          onHeaderCell: () => ({ className: 'bg-gray-50/80!' }),
-          render: (_: unknown, record: IDataSeriesRow) => (
-            <Popconfirm
-              title={t('confirm_delete_series')}
-              onConfirm={() => onDeleteSeries(record.id)}
-              okText={t('rename_confirm')}
-              cancelText={t('rename_cancel')}
-            >
-              <Button
-                type="text"
-                size="small"
-                danger
-                icon={<DeleteOutlined className="text-xs" />}
-                className="!h-6 !w-6 !min-w-0 !p-0 opacity-30 hover:!opacity-100 transition-opacity"
-              />
-            </Popconfirm>
-          ),
-        }
-      : null;
-
     return [
       {
         title: <span className="font-semibold">{t('series_name_col')}</span>,
         dataIndex: 'seriesName',
         key: 'seriesName',
         fixed: 'left' as const,
-        width: 180,
+        width: 200,
         ellipsis: true,
-        render: (_: unknown, record: IDataSeriesRow) => (
-          <SeriesNameCell
-            seriesId={record.id}
-            name={record.seriesName}
-            onRename={onRenameSeries}
-          />
+        render: (_: unknown, record: IDataSeriesRow, rowIdx: number) => (
+          <div className="flex items-center justify-between gap-1">
+            <SeriesNameCell
+              seriesId={record.id}
+              name={record.seriesName}
+              onRename={onRenameSeries}
+            />
+            {onInsertSeries && onDeleteSeries && (
+              <RowHeaderMenu
+                seriesName={record.seriesName}
+                seriesKey={record.id}
+                index={rowIdx}
+                existingSeries={seriesNames}
+                canDelete={canDeleteRow}
+                onInsertAt={onInsertSeries}
+                onDelete={onDeleteSeries}
+              />
+            )}
+          </div>
         ),
       },
       ...periodCols,
-      ...(actionCol ? [actionCol] : []),
     ];
-  }, [periodHeaders, t, onCellEdit, onDeleteSeries, onDeletePeriod, onInsertPeriod, onRenameSeries]);
+  }, [
+    periodHeaders,
+    t,
+    onCellEdit,
+    onDeleteSeries,
+    onInsertSeries,
+    onDeletePeriod,
+    onInsertPeriod,
+    onRenameSeries,
+    seriesNames,
+    canDeleteRow,
+  ]);
 
   const totals = useMemo(() => {
     const result: Record<string, number> = {};
@@ -135,9 +118,6 @@ export function DataTable({
     }
     return result;
   }, [series, periodHeaders]);
-
-  // Summary row spans series-name column + period columns; skip actions column index
-  const summaryColCount = periodHeaders.length + 1;
 
   return (
     <Table<IDataSeriesRow>
@@ -175,10 +155,6 @@ export function DataTable({
                 {totals[period] !== 0 ? formatter.format(totals[period]) : '–'}
               </Table.Summary.Cell>
             ))}
-            {/* Placeholder cell to align with optional actions column */}
-            {onDeleteSeries && (
-              <Table.Summary.Cell index={summaryColCount} className="!bg-blue-50/50" />
-            )}
           </Table.Summary.Row>
         </Table.Summary>
       )}

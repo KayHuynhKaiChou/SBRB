@@ -17,6 +17,8 @@ import {
   useAddPeriod,
   useDeletePeriod,
   useInsertPeriod,
+  useInsertSeries,
+  useDeleteSeriesByName,
   useRenameSeries,
   useExportDataSheet,
 } from '../../hooks/use-datasheet-mutations';
@@ -35,6 +37,8 @@ export default function DataSheetDetailPage() {
   const { addPeriod, loading: addPeriodLoading } = useAddPeriod();
   const { deletePeriod } = useDeletePeriod();
   const { insertPeriod, loading: insertPeriodLoading } = useInsertPeriod();
+  const { insertSeries, loading: insertSeriesLoading } = useInsertSeries();
+  const { deleteSeriesByName } = useDeleteSeriesByName();
   const { renameSeries } = useRenameSeries();
   const { exportSheet } = useExportDataSheet();
 
@@ -92,13 +96,30 @@ export default function DataSheetDetailPage() {
     [id, insertPeriod],
   );
 
+  const handleInsertSeries = useCallback(
+    (name: string, index: number) => {
+      if (!id) return;
+      insertSeries(id, name, index);
+    },
+    [id, insertSeries],
+  );
+
+  const handleDeleteSeriesByName = useCallback(
+    (name: string) => {
+      if (!id) return;
+      deleteSeriesByName(id, name);
+    },
+    [id, deleteSeriesByName],
+  );
+
   const handleRenameSeries = useCallback(
     (seriesId: string, newName: string) => renameSeries(seriesId, newName),
     [renameSeries],
   );
 
   const isReady = sheet?.status === 'ready';
-  const mutationLoading = addSeriesLoading || addPeriodLoading || insertPeriodLoading;
+  const mutationLoading =
+    addSeriesLoading || addPeriodLoading || insertPeriodLoading || insertSeriesLoading;
 
   return (
     <Layout className="!min-h-screen">
@@ -147,6 +168,8 @@ export default function DataSheetDetailPage() {
                     onCellEdit={handleCellEdit}
                     onDeletePeriod={handleDeletePeriod}
                     onInsertPeriod={handleInsertPeriod}
+                    onInsertSeries={handleInsertSeries}
+                    onDeleteSeriesByName={handleDeleteSeriesByName}
                   />
                 ) : (
                   <DataTable
@@ -154,6 +177,7 @@ export default function DataSheetDetailPage() {
                     periodHeaders={sheet!.periodHeaders ?? []}
                     onCellEdit={handleCellEdit}
                     onDeleteSeries={handleDeleteSeries}
+                    onInsertSeries={handleInsertSeries}
                     onDeletePeriod={handleDeletePeriod}
                     onInsertPeriod={handleInsertPeriod}
                     onRenameSeries={handleRenameSeries}

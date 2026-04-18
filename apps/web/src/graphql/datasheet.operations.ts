@@ -124,6 +124,18 @@ export const INSERT_PERIOD_MUTATION = gql`
   }
 `;
 
+export const INSERT_SERIES_MUTATION = gql`
+  mutation InsertSeries($input: InsertSeriesDto!) {
+    insertSeries(input: $input) { id seriesCount }
+  }
+`;
+
+export const DELETE_SERIES_BY_NAME_MUTATION = gql`
+  mutation DeleteSeriesByName($datasheetId: ID!, $name: String!) {
+    deleteSeriesByName(datasheetId: $datasheetId, name: $name)
+  }
+`;
+
 export const RENAME_SERIES_MUTATION = gql`
   mutation RenameSeries($seriesId: ID!, $name: String!) {
     renameSeries(seriesId: $seriesId, name: $name) { id seriesName }

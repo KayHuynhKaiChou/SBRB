@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useMutation } from '@apollo/client';
 import { message } from 'antd';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +10,8 @@ import {
   DELETE_PERIOD_MUTATION,
   RENAME_SERIES_MUTATION,
   INSERT_PERIOD_MUTATION,
+  INSERT_SERIES_MUTATION,
+  DELETE_SERIES_BY_NAME_MUTATION,
 } from '../graphql/datasheet.operations';
 
 const REFETCH = ['DataSheetDetail'];
@@ -106,6 +109,50 @@ export function useDeletePeriod() {
   };
 
   return { deletePeriod, loading };
+}
+
+/** Insert a new data series (row) at a specific index (0-based). */
+export function useInsertSeries() {
+  const { t } = useTranslation('datasheet');
+  const [mutate, { loading }] = useMutation(INSERT_SERIES_MUTATION, {
+    refetchQueries: REFETCH,
+  });
+
+  const insertSeries = useCallback(
+    async (datasheetId: string, name: string, index: number) => {
+      try {
+        await mutate({ variables: { input: { datasheetId, name, index } } });
+        message.success(t('add_success'));
+      } catch {
+        message.error(t('edit_error'));
+      }
+    },
+    [mutate, t],
+  );
+
+  return { insertSeries, loading };
+}
+
+/** Delete all DataSeries rows matching a seriesName (department template) */
+export function useDeleteSeriesByName() {
+  const { t } = useTranslation('datasheet');
+  const [mutate, { loading }] = useMutation(DELETE_SERIES_BY_NAME_MUTATION, {
+    refetchQueries: REFETCH,
+  });
+
+  const deleteSeriesByName = useCallback(
+    async (datasheetId: string, name: string) => {
+      try {
+        await mutate({ variables: { datasheetId, name } });
+        message.success(t('delete_success'));
+      } catch {
+        message.error(t('edit_error'));
+      }
+    },
+    [mutate, t],
+  );
+
+  return { deleteSeriesByName, loading };
 }
 
 /** Rename a data series */
