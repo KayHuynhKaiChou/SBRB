@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=zcmchmjlzcpjiwbmlmsz&features=docs%2Caccount%2Cdebugging%2Cdatabase%2Cdevelopment%2Cfunctions%2Cbranching%2Cstorage"
+    },
+    "graphql": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-graphql"
+      ],
+      "env": {
+        "ENDPOINT": "http://localhost:4000/graphql",
+        "SCHEMA": "/Users/huynhkhoi/dev/SBRB/apps/api/src/schema.gql"
+      }
+    }
+  }
+}
