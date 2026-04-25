@@ -1,14 +1,16 @@
 import React, { useState, useRef } from 'react';
-import { Button, Input, Popover, message } from 'antd';
+import { Button, Input, Popover } from 'antd';
 import type { InputRef } from 'antd';
-import { PlusOutlined, DownloadOutlined } from '@ant-design/icons';
+import { PlusOutlined, DownloadOutlined, ApartmentOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useNotify } from '@sbrb/shared-apollo-client';
 
 interface ITableToolbarProps {
   datasheetId: string;
   onAddSeries: () => void;
   onAddPeriod: (periodName: string) => void;
   onExport: () => void;
+  onAddDepartment?: () => void;
   existingPeriods?: string[];
   loading?: boolean;
 }
@@ -18,10 +20,12 @@ export function TableToolbar({
   onAddSeries,
   onAddPeriod,
   onExport,
+  onAddDepartment,
   existingPeriods = [],
   loading = false,
 }: ITableToolbarProps) {
   const { t } = useTranslation('datasheet');
+  const notify = useNotify();
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [periodName, setPeriodName] = useState('');
   const inputRef = useRef<InputRef>(null);
@@ -30,7 +34,7 @@ export function TableToolbar({
     const trimmed = periodName.trim();
     if (!trimmed) return;
     if (existingPeriods.includes(trimmed)) {
-      message.warning(t('period_duplicate'));
+      notify.warning(t('period_duplicate'));
       return;
     }
     onAddPeriod(trimmed);
@@ -104,6 +108,17 @@ export function TableToolbar({
           {t('add_period')}
         </Button>
       </Popover>
+
+      {onAddDepartment && (
+        <Button
+          size="small"
+          icon={<ApartmentOutlined />}
+          onClick={onAddDepartment}
+          disabled={loading}
+        >
+          {t('add_department')}
+        </Button>
+      )}
 
       <Button
         size="small"

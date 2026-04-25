@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { Dropdown, Input, Button, Popover, Popconfirm, message } from 'antd';
+import { Dropdown, Input, Button, Popover, Popconfirm } from 'antd';
 import type { MenuProps, InputRef } from 'antd';
+import { useNotify } from '@sbrb/shared-apollo-client';
 import {
   MoreOutlined,
   ArrowLeftOutlined,
@@ -32,6 +33,7 @@ export function ColumnHeaderMenu({
   onDelete,
 }: IColumnHeaderMenuProps) {
   const { t } = useTranslation('datasheet');
+  const notify = useNotify();
   const [insertSide, setInsertSide] = useState<'left' | 'right' | null>(null);
   const [newName, setNewName] = useState('');
   const inputRef = useRef<InputRef>(null);
@@ -45,7 +47,7 @@ export function ColumnHeaderMenu({
     const trimmed = newName.trim();
     if (!trimmed) return;
     if (existingPeriods.includes(trimmed)) {
-      message.warning(t('period_duplicate'));
+      notify.warning(t('period_duplicate'));
       return;
     }
     const targetIndex = insertSide === 'right' ? index + 1 : index;

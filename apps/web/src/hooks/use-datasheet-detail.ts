@@ -1,9 +1,11 @@
-import { useQuery, useMutation } from '@apollo/client';
-import { message } from 'antd';
+import { useCallback } from 'react';
+import { useQuery } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
+import { useAppMutation } from '@sbrb/shared-apollo-client';
 import {
   DATASHEET_DETAIL_QUERY,
   UPDATE_SERIES_VALUE_MUTATION,
+  UPSERT_CELL_VALUE_MUTATION,
 } from '../graphql/datasheet.operations';
 
 export interface IDataSeriesRow {
@@ -22,8 +24,6 @@ export interface IDataSheetDetail {
   status: string;
   periodType: string;
   templateType?: string;
-  seriesCount: number;
-  periodCount: number;
 }
 
 /** Fetch datasheet detail with all series and their values */
@@ -44,7 +44,10 @@ export function useDataSheetDetail(id: string | undefined) {
 /** Mutation to update a single cell value in a data series */
 export function useUpdateSeriesValue() {
   const { t } = useTranslation('datasheet');
-  const [mutate, { loading }] = useMutation(UPDATE_SERIES_VALUE_MUTATION);
+  const [mutate, { loading }] = useAppMutation(UPDATE_SERIES_VALUE_MUTATION, {
+    notifyOnSuccess: false,
+    fallbackError: t('edit_error'),
+  });
 
   const updateValue = async (
     seriesId: string,
@@ -52,22 +55,49 @@ export function useUpdateSeriesValue() {
     value: number | null,
     currentValues: Record<string, number | null>,
   ) => {
-    try {
-      await mutate({
-        variables: { input: { seriesId, period, value } },
-        optimisticResponse: {
-          updateSeriesValue: {
-            __typename: 'DataSeriesType',
-            id: seriesId,
-            values: { ...currentValues, [period]: value },
-          },
+    await mutate({
+      variables: { input: { seriesId, period, value } },
+      optimisticResponse: {
+        updateSeriesValue: {
+          __typename: 'DataSeriesType',
+          id: seriesId,
+          values: { ...currentValues, [period]: value },
         },
-      });
-      message.success(t('edit_success'));
-    } catch {
-      message.error(t('edit_error'));
-    }
+      },
+    }).catch(() => undefined);
   };
 
   return { updateValue, loading };
+}
+
+/**
+ * Upsert a cell value in department-template datasheets — handles both:
+ *   - Existing (dept, seriesName) row → JSONB update of values[period]
+ *   - Missing row → creates new DataSeries with rowIndex inherited from siblings
+ * Refetches DataSheetDetail because a newly-created row must appear in the list.
+ */
+export function useUpsertCellValue() {
+  const { t } = useTranslation('datasheet');
+  const [mutate] = useAppMutation(UPSERT_CELL_VALUE_MUTATION, {
+    refetchQueries: ['DataSheetDetail'],
+    notifyOnSuccess: false,
+    fallbackError: t('edit_error'),
+  });
+
+  const upsertValue = useCallback(
+    async (
+      datasheetId: string,
+      departmentId: string,
+      seriesName: string,
+      period: string,
+      value: number | null,
+    ) => {
+      await mutate({
+        variables: { input: { datasheetId, departmentId, seriesName, period, value } },
+      }).catch(() => undefined);
+    },
+    [mutate],
+  );
+
+  return { upsertValue };
 }

@@ -1,7 +1,6 @@
 import { useCallback } from 'react';
-import { useMutation } from '@apollo/client';
-import { message } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { useAppMutation, useNotify } from '@sbrb/shared-apollo-client';
 import { useAuthStore } from '../store/auth.store';
 import {
   ADD_SERIES_MUTATION,
@@ -12,24 +11,25 @@ import {
   INSERT_PERIOD_MUTATION,
   INSERT_SERIES_MUTATION,
   DELETE_SERIES_BY_NAME_MUTATION,
+  ADD_DEPARTMENT_TO_DATASHEET_MUTATION,
+  DELETE_DEPARTMENT_FROM_DATASHEET_MUTATION,
+  TOGGLE_DATASHEET_STATUS_MUTATION,
 } from '../graphql/datasheet.operations';
+import { UPDATE_DEPARTMENT_MUTATION } from '../graphql/department.operations';
 
 const REFETCH = ['DataSheetDetail'];
 
 /** Add a new data series (row) to the datasheet */
 export function useAddSeries() {
   const { t } = useTranslation('datasheet');
-  const [mutate, { loading }] = useMutation(ADD_SERIES_MUTATION, {
+  const [mutate, { loading }] = useAppMutation(ADD_SERIES_MUTATION, {
     refetchQueries: REFETCH,
+    fallbackSuccess: t('add_success'),
+    fallbackError: t('edit_error'),
   });
 
   const addSeries = async (datasheetId: string, name: string) => {
-    try {
-      await mutate({ variables: { input: { datasheetId, name } } });
-      message.success(t('add_success'));
-    } catch {
-      message.error(t('edit_error'));
-    }
+    await mutate({ variables: { input: { datasheetId, name } } }).catch(() => undefined);
   };
 
   return { addSeries, loading };
@@ -38,17 +38,14 @@ export function useAddSeries() {
 /** Delete a data series (row) by id */
 export function useDeleteSeries() {
   const { t } = useTranslation('datasheet');
-  const [mutate, { loading }] = useMutation(DELETE_SERIES_MUTATION, {
+  const [mutate, { loading }] = useAppMutation(DELETE_SERIES_MUTATION, {
     refetchQueries: REFETCH,
+    fallbackSuccess: t('delete_success'),
+    fallbackError: t('edit_error'),
   });
 
   const deleteSeries = async (seriesId: string) => {
-    try {
-      await mutate({ variables: { seriesId } });
-      message.success(t('delete_success'));
-    } catch {
-      message.error(t('edit_error'));
-    }
+    await mutate({ variables: { seriesId } }).catch(() => undefined);
   };
 
   return { deleteSeries, loading };
@@ -57,17 +54,14 @@ export function useDeleteSeries() {
 /** Add a new period column to the datasheet */
 export function useAddPeriod() {
   const { t } = useTranslation('datasheet');
-  const [mutate, { loading }] = useMutation(ADD_PERIOD_MUTATION, {
+  const [mutate, { loading }] = useAppMutation(ADD_PERIOD_MUTATION, {
     refetchQueries: REFETCH,
+    fallbackSuccess: t('add_success'),
+    fallbackError: t('edit_error'),
   });
 
   const addPeriod = async (datasheetId: string, periodName: string) => {
-    try {
-      await mutate({ variables: { input: { datasheetId, periodName } } });
-      message.success(t('add_success'));
-    } catch {
-      message.error(t('edit_error'));
-    }
+    await mutate({ variables: { input: { datasheetId, periodName } } }).catch(() => undefined);
   };
 
   return { addPeriod, loading };
@@ -76,17 +70,16 @@ export function useAddPeriod() {
 /** Insert a new period column at a specific index (0-based). */
 export function useInsertPeriod() {
   const { t } = useTranslation('datasheet');
-  const [mutate, { loading }] = useMutation(INSERT_PERIOD_MUTATION, {
+  const [mutate, { loading }] = useAppMutation(INSERT_PERIOD_MUTATION, {
     refetchQueries: REFETCH,
+    fallbackSuccess: t('add_success'),
+    fallbackError: t('edit_error'),
   });
 
   const insertPeriod = async (datasheetId: string, periodName: string, index: number) => {
-    try {
-      await mutate({ variables: { input: { datasheetId, periodName, index } } });
-      message.success(t('add_success'));
-    } catch {
-      message.error(t('edit_error'));
-    }
+    await mutate({ variables: { input: { datasheetId, periodName, index } } }).catch(
+      () => undefined,
+    );
   };
 
   return { insertPeriod, loading };
@@ -95,17 +88,14 @@ export function useInsertPeriod() {
 /** Delete a period column from all series in the datasheet */
 export function useDeletePeriod() {
   const { t } = useTranslation('datasheet');
-  const [mutate, { loading }] = useMutation(DELETE_PERIOD_MUTATION, {
+  const [mutate, { loading }] = useAppMutation(DELETE_PERIOD_MUTATION, {
     refetchQueries: REFETCH,
+    fallbackSuccess: t('delete_success'),
+    fallbackError: t('edit_error'),
   });
 
   const deletePeriod = async (datasheetId: string, periodName: string) => {
-    try {
-      await mutate({ variables: { datasheetId, periodName } });
-      message.success(t('delete_success'));
-    } catch {
-      message.error(t('edit_error'));
-    }
+    await mutate({ variables: { datasheetId, periodName } }).catch(() => undefined);
   };
 
   return { deletePeriod, loading };
@@ -114,20 +104,17 @@ export function useDeletePeriod() {
 /** Insert a new data series (row) at a specific index (0-based). */
 export function useInsertSeries() {
   const { t } = useTranslation('datasheet');
-  const [mutate, { loading }] = useMutation(INSERT_SERIES_MUTATION, {
+  const [mutate, { loading }] = useAppMutation(INSERT_SERIES_MUTATION, {
     refetchQueries: REFETCH,
+    fallbackSuccess: t('add_success'),
+    fallbackError: t('edit_error'),
   });
 
   const insertSeries = useCallback(
     async (datasheetId: string, name: string, index: number) => {
-      try {
-        await mutate({ variables: { input: { datasheetId, name, index } } });
-        message.success(t('add_success'));
-      } catch {
-        message.error(t('edit_error'));
-      }
+      await mutate({ variables: { input: { datasheetId, name, index } } }).catch(() => undefined);
     },
-    [mutate, t],
+    [mutate],
   );
 
   return { insertSeries, loading };
@@ -136,39 +123,120 @@ export function useInsertSeries() {
 /** Delete all DataSeries rows matching a seriesName (department template) */
 export function useDeleteSeriesByName() {
   const { t } = useTranslation('datasheet');
-  const [mutate, { loading }] = useMutation(DELETE_SERIES_BY_NAME_MUTATION, {
+  const [mutate, { loading }] = useAppMutation(DELETE_SERIES_BY_NAME_MUTATION, {
     refetchQueries: REFETCH,
+    fallbackSuccess: t('delete_success'),
+    fallbackError: t('edit_error'),
   });
 
   const deleteSeriesByName = useCallback(
     async (datasheetId: string, name: string) => {
-      try {
-        await mutate({ variables: { datasheetId, name } });
-        message.success(t('delete_success'));
-      } catch {
-        message.error(t('edit_error'));
-      }
+      await mutate({ variables: { datasheetId, name } }).catch(() => undefined);
     },
-    [mutate, t],
+    [mutate],
   );
 
   return { deleteSeriesByName, loading };
 }
 
+/** Add a new department to a department-template datasheet (appears last). */
+export function useAddDepartmentToDatasheet() {
+  const { t } = useTranslation('datasheet');
+  const [mutate, { loading }] = useAppMutation(ADD_DEPARTMENT_TO_DATASHEET_MUTATION, {
+    refetchQueries: REFETCH,
+    fallbackSuccess: t('add_success'),
+    fallbackError: t('edit_error'),
+  });
+
+  const addDepartment = useCallback(
+    async (datasheetId: string, name: string) => {
+      await mutate({ variables: { input: { datasheetId, name } } }).catch(() => undefined);
+    },
+    [mutate],
+  );
+
+  return { addDepartment, loading };
+}
+
+/** Delete a department from a department-template datasheet (rejects if ≤2 remain). */
+export function useDeleteDepartmentFromDatasheet() {
+  const { t } = useTranslation('datasheet');
+  const [mutate, { loading }] = useAppMutation(DELETE_DEPARTMENT_FROM_DATASHEET_MUTATION, {
+    refetchQueries: REFETCH,
+    fallbackSuccess: t('delete_success'),
+    fallbackError: t('edit_error'),
+  });
+
+  const deleteDepartment = useCallback(
+    async (datasheetId: string, departmentId: string) => {
+      await mutate({ variables: { datasheetId, departmentId } }).catch(() => undefined);
+    },
+    [mutate],
+  );
+
+  return { deleteDepartment, loading };
+}
+
+/** Toggle a datasheet between 'active' and 'inactive'. Optimistic update so the
+ *  Switch flips instantly; Apollo cache normalizes by id, so the list row updates
+ *  without a full refetch. */
+export function useToggleDataSheetStatus() {
+  const { t } = useTranslation('datasheet');
+  const [mutate, { loading }] = useAppMutation(TOGGLE_DATASHEET_STATUS_MUTATION, {
+    notifyOnSuccess: false,
+    fallbackError: t('edit_error'),
+  });
+
+  const toggleStatus = useCallback(
+    async (id: string, currentStatus: string) => {
+      const next = currentStatus === 'active' ? 'inactive' : 'active';
+      await mutate({
+        variables: { id },
+        optimisticResponse: {
+          toggleDataSheetStatus: {
+            __typename: 'DataSheetType',
+            id,
+            status: next,
+          },
+        },
+      }).catch(() => undefined);
+    },
+    [mutate],
+  );
+
+  return { toggleStatus, loading };
+}
+
+/** Rename a department (column group) — reuses the general updateDepartment mutation. */
+export function useRenameDepartment() {
+  const { t } = useTranslation('datasheet');
+  const [mutate, { loading }] = useAppMutation(UPDATE_DEPARTMENT_MUTATION, {
+    refetchQueries: REFETCH,
+    fallbackSuccess: t('rename_success'),
+    fallbackError: t('edit_error'),
+  });
+
+  const renameDepartment = useCallback(
+    async (departmentId: string, name: string) => {
+      await mutate({ variables: { id: departmentId, input: { name } } }).catch(() => undefined);
+    },
+    [mutate],
+  );
+
+  return { renameDepartment, loading };
+}
+
 /** Rename a data series */
 export function useRenameSeries() {
   const { t } = useTranslation('datasheet');
-  const [mutate, { loading }] = useMutation(RENAME_SERIES_MUTATION, {
+  const [mutate, { loading }] = useAppMutation(RENAME_SERIES_MUTATION, {
     refetchQueries: REFETCH,
+    fallbackSuccess: t('rename_success'),
+    fallbackError: t('edit_error'),
   });
 
   const renameSeries = async (seriesId: string, name: string) => {
-    try {
-      await mutate({ variables: { seriesId, name } });
-      message.success(t('rename_success'));
-    } catch {
-      message.error(t('edit_error'));
-    }
+    await mutate({ variables: { seriesId, name } }).catch(() => undefined);
   };
 
   return { renameSeries, loading };
@@ -177,10 +245,10 @@ export function useRenameSeries() {
 /** Trigger browser download of the datasheet as an Excel file */
 export function useExportDataSheet() {
   const { t } = useTranslation('datasheet');
+  const notify = useNotify();
 
   const exportSheet = async (datasheetId: string) => {
     try {
-      // Read freshest token at call time (not stale render-time closure)
       const token = useAuthStore.getState().accessToken ?? '';
       const res = await fetch(`/api/v1/data-sheets/${datasheetId}/export`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -197,9 +265,9 @@ export function useExportDataSheet() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      message.success(t('export_success'));
+      notify.success(t('export_success'));
     } catch {
-      message.error(t('edit_error'));
+      notify.error(t('edit_error'));
     }
   };
 

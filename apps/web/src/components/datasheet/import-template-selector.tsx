@@ -1,8 +1,8 @@
 import { Button, Alert, Tag } from 'antd';
 import { DownloadOutlined, FileExcelOutlined, ApartmentOutlined, AlignLeftOutlined, CheckCircleFilled } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { message } from 'antd';
 import { apiClient } from '../../services/api-client';
+import { useNotify } from '@sbrb/shared-apollo-client';
 
 type TemplateType = 'simple' | 'department' | 'pnl';
 
@@ -18,6 +18,7 @@ export function ImportTemplateSelector({
   disabled,
 }: IImportTemplateSelectorProps) {
   const { t } = useTranslation('datasheet');
+  const notify = useNotify();
 
   const templates = [
     {
@@ -73,7 +74,7 @@ export function ImportTemplateSelector({
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      message.error(t('import_failed'));
+      notify.error(t('import_failed'));
     }
   };
 

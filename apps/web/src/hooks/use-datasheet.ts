@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useSubscription } from '@apollo/client';
-import { message } from 'antd';
+import { useQuery, useSubscription } from '@apollo/client';
 import { apiClient } from '../services/api-client';
+import { useAppMutation, useNotify } from '@sbrb/shared-apollo-client';
 import {
   DATA_SHEETS_QUERY,
   DATA_SERIES_QUERY,
@@ -10,17 +10,37 @@ import {
   DELETE_DATASHEET_MUTATION,
 } from '../graphql/datasheet.operations';
 
+export interface IUploaderInfo {
+  id: string;
+  fullName: string;
+  email: string;
+  avatarUrl?: string | null;
+}
+
+export type TemplateType = 'simple' | 'department' | 'pnl';
+export type DataSheetStatus = 'active' | 'inactive';
+export type DataSheetSortField = 'widgetCount' | 'importedAt' | 'createdAt';
+export type SortOrder = 'ASC' | 'DESC';
+
+export interface IListDataSheetsFilter {
+  status?: DataSheetStatus[];
+  templateType?: TemplateType[];
+  sortBy?: DataSheetSortField;
+  sortOrder?: SortOrder;
+}
+
 export interface IDataSheetDto {
   id: string;
   name: string;
   status: string;
+  templateType: TemplateType;
   periodHeaders: string[];
-  seriesCount: number;
-  periodCount: number;
+  widgetCount: number;
   originalFilename: string | null;
   importedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  uploader: IUploaderInfo | null;
 }
 
 export interface IDataSeriesDto {
@@ -39,10 +59,10 @@ export interface IImportProgress {
   errorMessage?: string;
 }
 
-/** Fetch all datasheets for a business, optionally filtered by department */
-export function useDataSheets(businessId: string) {
+/** Fetch all datasheets for a business. BE handles filter + sort. */
+export function useDataSheets(businessId: string, filter?: IListDataSheetsFilter) {
   const { data, loading, error, refetch } = useQuery(DATA_SHEETS_QUERY, {
-    variables: { businessId },
+    variables: { businessId, filter },
     skip: !businessId,
     fetchPolicy: 'cache-and-network',
   });
@@ -76,7 +96,6 @@ export function useImportDataSheet(businessId: string) {
   const [uploadedDatasheetId, setUploadedDatasheetId] = useState<string | null>(null);
   const [progress, setProgress] = useState<IImportProgress | null>(null);
 
-  // Subscribe to progress updates after upload
   useSubscription(IMPORT_PROGRESS_SUBSCRIPTION, {
     variables: { datasheetId: uploadedDatasheetId },
     skip: !uploadedDatasheetId,
@@ -136,15 +155,14 @@ export function useReimport() {
 
 /** Delete datasheet via GQL mutation */
 export function useDeleteDataSheet() {
-  const [deleteMutation, { loading }] = useMutation(DELETE_DATASHEET_MUTATION);
+  const [deleteMutation, { loading }] = useAppMutation(DELETE_DATASHEET_MUTATION, {
+    notifyOnSuccess: false,
+    fallbackError: { vi: 'Xóa dữ liệu thất bại', en: 'Failed to delete data' },
+  });
 
   const deleteDataSheet = async (id: string) => {
-    try {
-      await deleteMutation({ variables: { id } });
-    } catch {
-      message.error('Xóa dữ liệu thất bại');
-      throw new Error('Xóa dữ liệu thất bại');
-    }
+    const result = await deleteMutation({ variables: { id } });
+    if (result.errors) throw new Error('Xóa dữ liệu thất bại');
   };
 
   return { deleteDataSheet, loading };
@@ -152,15 +170,14 @@ export function useDeleteDataSheet() {
 
 /** Rename datasheet via GQL mutation */
 export function useRenameDataSheet() {
-  const [renameMutation, { loading }] = useMutation(RENAME_DATASHEET_MUTATION);
+  const [renameMutation, { loading }] = useAppMutation(RENAME_DATASHEET_MUTATION, {
+    notifyOnSuccess: false,
+    fallbackError: { vi: 'Đổi tên thất bại', en: 'Failed to rename' },
+  });
 
   const renameDataSheet = async (id: string, name: string) => {
-    try {
-      await renameMutation({ variables: { id, input: { name } } });
-    } catch {
-      message.error('Đổi tên thất bại');
-      throw new Error('Đổi tên thất bại');
-    }
+    const result = await renameMutation({ variables: { id, input: { name } } });
+    if (result.errors) throw new Error('Đổi tên thất bại');
   };
 
   return { renameDataSheet, loading };
@@ -169,6 +186,7 @@ export function useRenameDataSheet() {
 /** Download Excel template */
 export function useDownloadTemplate() {
   const [loading, setLoading] = useState(false);
+  const notify = useNotify();
 
   const downloadTemplate = async () => {
     setLoading(true);
@@ -181,7 +199,7 @@ export function useDownloadTemplate() {
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      message.error('Tải mẫu Excel thất bại');
+      notify.error({ vi: 'Tải mẫu Excel thất bại', en: 'Failed to download Excel template' });
     } finally {
       setLoading(false);
     }

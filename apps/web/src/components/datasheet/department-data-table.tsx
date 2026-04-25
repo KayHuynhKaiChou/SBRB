@@ -1,9 +1,11 @@
-import React, { useMemo } from 'react';
-import { Table, Empty } from 'antd';
+import React, { useCallback, useMemo } from 'react';
+import { Table, Empty, Popconfirm, Tooltip, Button } from 'antd';
+import { DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { EditableCell } from './editable-cell';
 import { ColumnHeaderMenu } from './column-header-menu';
 import { RowHeaderMenu } from './row-header-menu';
+import { DeptNameCell } from './dept-name-cell';
 import type { IDataSeriesRow } from '../../hooks/use-datasheet-detail';
 
 interface IDeptGroup {
@@ -15,10 +17,18 @@ interface IDepartmentDataTableProps {
   series: IDataSeriesRow[];
   periodHeaders: string[];
   onCellEdit: (seriesId: string, period: string, value: number | null) => void;
+  onCellUpsert?: (
+    departmentId: string,
+    seriesName: string,
+    period: string,
+    value: number | null,
+  ) => void;
   onDeletePeriod?: (periodName: string) => void;
   onInsertPeriod?: (periodName: string, index: number) => void;
   onInsertSeries?: (name: string, index: number) => void;
   onDeleteSeriesByName?: (name: string) => void;
+  onDeleteDepartment?: (departmentId: string) => void;
+  onRenameDepartment?: (departmentId: string, name: string) => void;
 }
 
 /**
@@ -30,10 +40,13 @@ export function DepartmentDataTable({
   series,
   periodHeaders,
   onCellEdit,
+  onCellUpsert,
   onDeletePeriod,
   onInsertPeriod,
   onInsertSeries,
   onDeleteSeriesByName,
+  onDeleteDepartment,
+  onRenameDepartment,
 }: IDepartmentDataTableProps) {
   const { t, i18n } = useTranslation('datasheet');
   const formatter = useMemo(() => new Intl.NumberFormat(i18n.language), [i18n.language]);
@@ -74,6 +87,59 @@ export function DepartmentDataTable({
   }, [series]);
 
   const canDeleteRow = seriesNames.length > 1;
+  const canDeleteDept = departments.length > 2;
+
+  const renderDeptHeader = useCallback(
+    (dept: IDeptGroup) => {
+      const nameCell = (
+        <DeptNameCell
+          deptId={dept.deptId}
+          name={dept.name}
+          onRename={onRenameDepartment}
+        />
+      );
+
+      if (!onDeleteDepartment) {
+        return nameCell;
+      }
+
+      const button = (
+        <Button
+          type="text"
+          size="small"
+          danger={canDeleteDept}
+          disabled={!canDeleteDept}
+          icon={<DeleteOutlined className="text-xs" />}
+          onClick={(e) => e.stopPropagation()}
+          className="!h-5 !w-5 !min-w-0 !p-0 opacity-0 group-hover/dept-header:!opacity-60 hover:!opacity-100 transition-opacity"
+          aria-label={`${t('delete_department')} — ${dept.name}`}
+        />
+      );
+      return (
+        <div className="group/dept-header flex items-center justify-center gap-1">
+          {nameCell}
+          {canDeleteDept ? (
+            <Popconfirm
+              title={t('confirm_delete_department')}
+              onConfirm={() => onDeleteDepartment(dept.deptId)}
+              okText={t('rename_confirm')}
+              cancelText={t('rename_cancel')}
+              okButtonProps={{ danger: true }}
+            >
+              {button}
+            </Popconfirm>
+          ) : (
+            // Span wrapper required: disabled Button blocks mouse events → Tooltip
+            // won't show on hover. Span catches events on behalf of the button.
+            <Tooltip title={t('cannot_delete_min_departments')} placement="top">
+              <span className="inline-flex cursor-not-allowed">{button}</span>
+            </Tooltip>
+          )}
+        </div>
+      );
+    },
+    [canDeleteDept, onDeleteDepartment, onRenameDepartment, t],
+  );
 
   // Build columns: Series Name | Dept A > periods | Dept B > periods
   const columns = useMemo(() => {
@@ -103,7 +169,7 @@ export function DepartmentDataTable({
     };
 
     const deptGroupCols = departments.map((dept) => ({
-      title: <span className="font-semibold">{dept.name}</span>,
+      title: renderDeptHeader(dept),
       key: `dept-${dept.deptId}`,
       children: periodHeaders.map((period, idx) => ({
         title:
@@ -126,13 +192,25 @@ export function DepartmentDataTable({
         align: 'right' as const,
         render: (_: unknown, record: { seriesName: string }) => {
           const row = seriesLookup.get(`${dept.deptId}::${record.seriesName}`);
-          if (!row) return '—';
-          return (
-            <EditableCell
-              value={row.values?.[period] ?? null}
-              onSave={(v) => onCellEdit(row.id, period, v)}
-            />
-          );
+          if (row) {
+            return (
+              <EditableCell
+                value={row.values?.[period] ?? null}
+                onSave={(v) => onCellEdit(row.id, period, v)}
+              />
+            );
+          }
+          // Missing DataSeries: render 0 and route saves through the upsert path
+          // so the backend can create the row on first edit.
+          if (onCellUpsert) {
+            return (
+              <EditableCell
+                value={0}
+                onSave={(v) => onCellUpsert(dept.deptId, record.seriesName, period, v)}
+              />
+            );
+          }
+          return '—';
         },
       })),
     }));
@@ -143,12 +221,14 @@ export function DepartmentDataTable({
     periodHeaders,
     seriesLookup,
     onCellEdit,
+    onCellUpsert,
     onInsertPeriod,
     onDeletePeriod,
     onInsertSeries,
     onDeleteSeriesByName,
     seriesNames,
     canDeleteRow,
+    renderDeptHeader,
     t,
   ]);
 

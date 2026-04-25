@@ -1,6 +1,7 @@
 import React, { memo, useState } from 'react';
-import { Dropdown, Input, Button, Popover, Popconfirm, Tooltip, message } from 'antd';
+import { Dropdown, Input, Button, Popover, Popconfirm, Tooltip } from 'antd';
 import type { MenuProps } from 'antd';
+import { useNotify } from '@sbrb/shared-apollo-client';
 import {
   MoreOutlined,
   ArrowUpOutlined,
@@ -37,6 +38,7 @@ export const RowHeaderMenu = memo(function RowHeaderMenu({
   onDelete,
 }: IRowHeaderMenuProps) {
   const { t } = useTranslation('datasheet');
+  const notify = useNotify();
   const [insertSide, setInsertSide] = useState<'above' | 'below' | null>(null);
   const [newName, setNewName] = useState('');
 
@@ -49,7 +51,7 @@ export const RowHeaderMenu = memo(function RowHeaderMenu({
     const trimmed = newName.trim();
     if (!trimmed) return;
     if (existingSeries.includes(trimmed)) {
-      message.warning(t('series_duplicate'));
+      notify.warning(t('series_duplicate'));
       return;
     }
     const targetIndex = insertSide === 'below' ? index + 1 : index;
