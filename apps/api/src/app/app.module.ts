@@ -3,7 +3,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
-import { BullModule } from '@nestjs/bull';
 import { join } from 'path';
 import { databaseConfig } from './config/database.config';
 import { appConfig } from './config/app.config';
@@ -56,23 +55,6 @@ import { UserModule } from '../modules/user/user.module';
         'subscriptions-transport-ws': false,
       },
       context: ({ req, res }: { req: unknown; res: unknown }) => ({ req, res }),
-    }),
-
-    // BullMQ — Redis job queue
-    BullModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        redis: {
-          host: config.get<string>('REDIS_HOST', 'localhost'),
-          port: config.get<number>('REDIS_PORT', 6379),
-          password: config.get<string>('REDIS_PASSWORD'),
-          // Redis Cloud TLS — rejectUnauthorized: false fixes self-signed cert on Windows
-          tls: config.get('REDIS_TLS', 'false') === 'true'
-            ? { rejectUnauthorized: false }
-            : undefined,
-        },
-      }),
     }),
 
     // Feature modules

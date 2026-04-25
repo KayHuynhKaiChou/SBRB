@@ -15,6 +15,9 @@ export class UserType {
   @Field(() => String, { nullable: true })
   avatarUrl?: string | null;
 
+  @Field(() => String, { nullable: true })
+  phone?: string | null;
+
   @Field(() => Boolean)
   emailVerified: boolean;
 

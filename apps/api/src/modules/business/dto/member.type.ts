@@ -1,4 +1,5 @@
 import { Field, ID, ObjectType } from '@nestjs/graphql';
+import { UserType } from '../../auth/dto/user.type';
 
 /** GraphQL return type for BusinessMember */
 @ObjectType()
@@ -11,6 +12,9 @@ export class MemberType {
 
   @Field(() => String)
   userId: string;
+
+  @Field(() => UserType, { nullable: true })
+  user?: UserType | null;
 
   @Field(() => String)
   role: string;

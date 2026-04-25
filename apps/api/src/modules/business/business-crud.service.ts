@@ -2,10 +2,14 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AuditService } from '../audit/audit.service';
+import { Department } from '../department/entities/department.entity';
+import { DepartmentMember } from '../department/entities/department-member.entity';
 import { CreateBusinessDto } from './dto/create-business.dto';
 import { UpdateBusinessDto } from './dto/update-business.dto';
 import { Business } from './entities/business.entity';
 import { BusinessMember } from './entities/business-member.entity';
+
+const BOD_DEFAULT_NAME = 'Ban giám đốc';
 
 /** Business CRUD operations — SRS 4.2 */
 @Injectable()
@@ -15,6 +19,10 @@ export class BusinessCrudService {
     private readonly businessRepo: Repository<Business>,
     @InjectRepository(BusinessMember)
     private readonly memberRepo: Repository<BusinessMember>,
+    @InjectRepository(Department)
+    private readonly deptRepo: Repository<Department>,
+    @InjectRepository(DepartmentMember)
+    private readonly deptMemberRepo: Repository<DepartmentMember>,
     private readonly auditService: AuditService,
   ) {}
 
@@ -43,6 +51,19 @@ export class BusinessCrudService {
       status: 'active',
     });
     await this.memberRepo.save(member);
+
+    // Auto-seed BOD root department + assign owner as manager (B12, SRS §4.1)
+    const bod = await this.deptRepo.save({
+      businessId: saved.id,
+      parentId: null,
+      name: BOD_DEFAULT_NAME,
+      isRoot: true,
+    });
+    await this.deptMemberRepo.save({
+      departmentId: bod.id,
+      userId,
+      isManager: true,
+    });
 
     await this.auditService.log({
       businessId: saved.id,

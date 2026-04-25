@@ -21,13 +21,21 @@ function makeCrudService() {
     findOne: jest.fn(),
     find: jest.fn(),
   };
+  const deptRepo = {
+    save: jest.fn().mockImplementation((entity) => Promise.resolve({ id: 'dept-bod', ...entity })),
+  };
+  const deptMemberRepo = {
+    save: jest.fn().mockResolvedValue(undefined),
+  };
   const auditService = { log: jest.fn().mockResolvedValue(undefined) };
   const service = new BusinessCrudService(
     businessRepo as any,
     memberRepo as any,
+    deptRepo as any,
+    deptMemberRepo as any,
     auditService as any,
   );
-  return { service, businessRepo, memberRepo, auditService };
+  return { service, businessRepo, memberRepo, deptRepo, deptMemberRepo, auditService };
 }
 
 function makeOwnershipService() {
@@ -53,6 +61,33 @@ describe('BusinessCrudService', () => {
       const result = await service.create('user-1', { name: 'My Shop' } as any);
       expect(result).toEqual(mockBusiness);
       expect(memberRepo.save).toHaveBeenCalled();
+    });
+
+    it('auto-seeds BOD root department + owner-as-manager', async () => {
+      const { service, businessRepo, memberRepo, deptRepo, deptMemberRepo } = makeCrudService();
+      memberRepo.count.mockResolvedValue(0);
+      businessRepo.create.mockReturnValue(mockBusiness);
+      businessRepo.save.mockResolvedValue(mockBusiness);
+      memberRepo.create.mockReturnValue(mockMember);
+      memberRepo.save.mockResolvedValue(mockMember);
+
+      await service.create('user-1', { name: 'My Shop' } as any);
+
+      expect(deptRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          businessId: 'biz-1',
+          parentId: null,
+          name: 'Ban giám đốc',
+          isRoot: true,
+        }),
+      );
+      expect(deptMemberRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          departmentId: 'dept-bod',
+          userId: 'user-1',
+          isManager: true,
+        }),
+      );
     });
 
     it('throws BadRequestException when user owns 3 businesses', async () => {

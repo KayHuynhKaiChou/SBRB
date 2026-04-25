@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { Department } from '../department/entities/department.entity';
+import { DepartmentMember } from '../department/entities/department-member.entity';
 import { Business } from './entities/business.entity';
 import { BusinessMember } from './entities/business-member.entity';
 import { BusinessInvitation } from './entities/business-invitation.entity';
@@ -23,7 +25,7 @@ import { AuditModule } from '../audit/audit.module';
  */
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Business, BusinessMember, BusinessInvitation, User]),
+    TypeOrmModule.forFeature([Business, BusinessMember, BusinessInvitation, User, Department, DepartmentMember]),
     MailModule,
     MinioModule,
     AuditModule,

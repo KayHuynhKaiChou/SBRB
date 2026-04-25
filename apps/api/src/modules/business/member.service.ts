@@ -21,7 +21,7 @@ export class MemberService {
   async members(businessId: string, filter?: string): Promise<BusinessMember[]> {
     const where: Record<string, unknown> = { businessId };
     if (filter) where['status'] = filter;
-    return this.memberRepo.find({ where });
+    return this.memberRepo.find({ where, relations: ['user'] });
   }
 
   async changeMemberRole(

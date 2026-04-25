@@ -28,6 +28,9 @@ export class User {
   @Column({ type: 'varchar', length: 10, default: 'vi' })
   language: string;
 
+  @Column({ type: 'varchar', length: 30, nullable: true })
+  phone: string | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
