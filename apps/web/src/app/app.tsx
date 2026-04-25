@@ -77,6 +77,14 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/departments/:deptId"
+          element={
+            <ProtectedRoute>
+              <DepartmentPage />
+            </ProtectedRoute>
+          }
+        />
 
         <Route path="/" element={<Navigate to="/auth/login" replace />} />
         <Route path="*" element={<NotFoundPage />} />

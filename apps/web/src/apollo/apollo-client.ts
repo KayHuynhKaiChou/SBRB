@@ -58,6 +58,12 @@ export const apolloClient = new ApolloClient({
       Tab: {
         keyFields: ['id'],
       },
+      DepartmentType: {
+        keyFields: ['id'],
+      },
+      DepartmentMember: {
+        keyFields: ['id'],
+      },
     },
   }),
   defaultOptions: {
