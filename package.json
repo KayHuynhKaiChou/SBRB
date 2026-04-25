@@ -7,11 +7,9 @@
   "scripts": {
     "dev:web": "nx serve web",
     "dev:api": "nodemon --watch apps/api/src --watch libs --ext ts --exec \"ts-node --project apps/api/tsconfig.app.json -r tsconfig-paths/register apps/api/src/main.ts\"",
-    "dev:worker": "nx serve worker",
     "dev:desktop": "nx serve desktop",
     "build:web": "nx build web",
     "build:api": "nx build api",
-    "build:worker": "nx build worker",
     "build:desktop": "nx build desktop",
     "package:desktop": "nx package desktop",
     "build:all": "nx run-many --target=build --all",
@@ -62,8 +60,11 @@
     "typescript": "^5.4.0"
   },
   "dependencies": {
+    "@dagrejs/dagre": "^3.0.0",
     "@nestjs/schedule": "^6.1.1",
+    "@xyflow/react": "^12.10.2",
     "graphql-subscriptions": "^3.0.0",
+    "ioredis": "^5.10.1",
     "minio": "^8.0.7"
   }
 }

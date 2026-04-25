@@ -21,8 +21,7 @@
 ### Project Structure
 ```bash
 apps/web/          # React frontend (port 3000)
-apps/api/          # NestJS backend (port 4000)
-apps/worker/       # BullMQ job processor
+apps/api/          # NestJS backend (port 4000) — handles Excel parsing in-process
 libs/shared/*      # Types, constants, utils (shared by all)
 libs/ui/           # React components
 libs/i18n/         # Translations (vi, en)
@@ -31,10 +30,9 @@ libs/i18n/         # Translations (vi, en)
 ### Start Development
 ```bash
 npm install                    # Install deps
-npm run docker:up             # Start PostgreSQL, Redis, MinIO
+npm run docker:up             # Start MinIO (PostgreSQL=Supabase, Redis=cloud)
 npm run dev:web               # Frontend on :3000
 npm run dev:api               # Backend on :4000
-npm run dev:worker            # Worker listener
 ```
 
 ### Quality Checks
