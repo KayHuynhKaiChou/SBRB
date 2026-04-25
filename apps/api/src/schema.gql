@@ -2,6 +2,11 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+input AddDepartmentToDatasheetDto {
+  datasheetId: ID!
+  name: String!
+}
+
 input AddPeriodDto {
   datasheetId: ID!
   periodName: String!
@@ -118,6 +123,23 @@ type DataSeriesType {
   values: JSON
 }
 
+enum DataSheetSortField {
+  createdAt
+  importedAt
+  widgetCount
+}
+
+enum DataSheetStatusFilter {
+  active
+  inactive
+}
+
+enum DataSheetTemplateType {
+  department
+  pnl
+  simple
+}
+
 type DataSheetType {
   businessId: ID!
   createdAt: DateTime!
@@ -126,14 +148,14 @@ type DataSheetType {
   importedAt: DateTime
   name: String!
   originalFilename: String
-  periodCount: Int!
   periodHeaders: [String!]!
   periodType: String!
-  seriesCount: Int!
   status: String!
   templateType: String
   updatedAt: DateTime!
   uploadedBy: ID!
+  uploader: User
+  widgetCount: Int
 }
 
 """
@@ -141,12 +163,34 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+type DepartmentMember {
+  businessRole: String
+  departmentId: ID!
+  id: ID!
+  isManager: Boolean!
+  joinedAt: DateTime!
+  user: User!
+  userId: ID!
+}
+
+input DepartmentPositionInput {
+  id: ID!
+  positionX: Float!
+  positionY: Float!
+}
+
 type DepartmentType {
   businessId: String!
+  children: [DepartmentType!]
   createdAt: DateTime!
   id: ID!
+  isRoot: Boolean!
+  manager: DepartmentMember
+  memberCount: Int
   name: String!
   parentId: String
+  positionX: Float
+  positionY: Float
   updatedAt: DateTime!
 }
 
@@ -190,6 +234,13 @@ The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://
 """
 scalar JSON
 
+input ListDataSheetsInput {
+  sortBy: DataSheetSortField
+  sortOrder: SortOrder
+  status: [DataSheetStatusFilter!]
+  templateType: [DataSheetTemplateType!]
+}
+
 input LoginDto {
   email: String!
   password: String!
@@ -202,11 +253,14 @@ type MemberType {
   joinedAt: DateTime!
   role: String!
   status: String!
+  user: User
   userId: String!
 }
 
 type Mutation {
   acceptInvitation(token: String!): MemberType!
+  addDepartmentMember(departmentId: ID!, userId: ID!): DepartmentMember!
+  addDepartmentToDatasheet(input: AddDepartmentToDatasheetDto!): DataSheetType!
   addPeriod(input: AddPeriodDto!): DataSheetType!
   addSeries(input: AddSeriesDto!): DataSeriesType!
   assignWidgets(businessId: ID!, input: AssignWidgetsDto!, targetUserId: ID!): MemberType!
@@ -222,6 +276,7 @@ type Mutation {
   deleteBusiness(confirmName: String!, id: ID!): Boolean!
   deleteDataSheet(id: ID!): Boolean!
   deleteDepartment(id: ID!): Boolean!
+  deleteDepartmentFromDatasheet(datasheetId: ID!, departmentId: ID!): Boolean!
   deletePeriod(datasheetId: ID!, periodName: String!): DataSheetType!
   deleteSeries(seriesId: ID!): Boolean!
   deleteSeriesByName(datasheetId: ID!, name: String!): Boolean!
@@ -236,21 +291,26 @@ type Mutation {
   logout: Boolean!
   refreshToken: AuthResult!
   register(input: RegisterDto!): AuthResult!
+  removeDepartmentMember(departmentId: ID!, userId: ID!): Boolean!
   removeMember(businessId: ID!, targetUserId: ID!): Boolean!
   removeWidgetDataLink(id: ID!): Widget!
   renameDataSheet(id: ID!, input: UpdateDatasheetDto!): DataSheetType!
   renameSeries(name: String!, seriesId: ID!): DataSeriesType!
   reorderTabs(orders: [TabOrderInput!]!): Boolean!
   resetPassword(input: ResetPasswordDto!): Boolean!
+  setDepartmentManager(departmentId: ID!, userId: ID!): DepartmentMember!
+  toggleDataSheetStatus(id: ID!): DataSheetType!
   transferOwnership(id: ID!, newOwnerId: ID!): Boolean!
   updateBusiness(id: ID!, input: UpdateBusinessDto!): BusinessType!
   updateDepartment(id: ID!, input: UpdateDepartmentDto!): DepartmentType!
+  updateDepartmentPositions(businessId: ID!, positions: [DepartmentPositionInput!]!): [DepartmentType!]!
   updateMe(input: UpdateProfileDto!): User!
   updateSeriesValue(input: UpdateSeriesValueDto!): DataSeriesType!
   updateTab(id: ID!, input: UpdateTabInput!): Tab!
   updateWidget(id: ID!, input: UpdateWidgetInput!): Widget!
   updateWidgetConfig(config: JSON!, id: ID!): Widget!
   updateWidgetDataLink(id: ID!, input: UpdateDataLinkDto!): Widget!
+  upsertCellValue(input: UpsertCellValueDto!): DataSeriesType!
   verifyEmail(token: String!): Boolean!
 }
 
@@ -259,10 +319,13 @@ type Query {
   business(id: ID!): BusinessType!
   dataSeries(datasheetId: ID!, search: String): [DataSeriesType!]!
   dataSheet(id: ID!): DataSheetType!
-  dataSheets(businessId: ID!): [DataSheetType!]!
+  dataSheets(businessId: ID!, filter: ListDataSheetsInput): [DataSheetType!]!
+  departmentMembers(departmentId: ID!): [DepartmentMember!]!
+  departmentTree(businessId: ID!): [DepartmentType!]!
   departments(businessId: ID!): [DepartmentType!]!
   me: User!
   members(businessId: ID!, filter: String): [MemberType!]!
+  myBusinessRole(businessId: ID!): String
   myBusinesses: [BusinessType!]!
   mySessions: [Session!]!
   pendingInvitations(businessId: ID!): [InvitationType!]!
@@ -289,6 +352,11 @@ type Session {
   id: ID!
   ipAddress: String
   lastActiveAt: DateTime!
+}
+
+enum SortOrder {
+  ASC
+  DESC
 }
 
 type Subscription {
@@ -378,6 +446,14 @@ input UpdateWidgetInput {
   unit: String
 }
 
+input UpsertCellValueDto {
+  datasheetId: ID!
+  departmentId: ID!
+  period: String!
+  seriesName: String!
+  value: Float
+}
+
 type User {
   avatarUrl: String
   createdAt: DateTime!
@@ -387,6 +463,7 @@ type User {
   id: ID!
   language: String!
   lastLoginAt: DateTime
+  phone: String
 }
 
 type Widget {

@@ -10,8 +10,13 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Business } from '../../business/entities/business.entity';
+import { DepartmentMember } from './department-member.entity';
 
 @Entity('departments')
+@Index('uniq_root_per_business', ['businessId'], {
+  unique: true,
+  where: '"is_root" = true',
+})
 export class Department {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -39,6 +44,18 @@ export class Department {
 
   @Column({ type: 'varchar', length: 100 })
   name: string;
+
+  @Column({ name: 'is_root', type: 'boolean', default: false })
+  isRoot: boolean;
+
+  @Column({ name: 'position_x', type: 'float', nullable: true })
+  positionX: number | null;
+
+  @Column({ name: 'position_y', type: 'float', nullable: true })
+  positionY: number | null;
+
+  @OneToMany(() => DepartmentMember, (dm) => dm.department)
+  members: DepartmentMember[];
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;

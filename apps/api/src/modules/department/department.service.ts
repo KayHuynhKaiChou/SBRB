@@ -5,11 +5,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { BusinessMember } from '../business/entities/business-member.entity';
 import { CreateDepartmentDto } from './dto/create-department.dto';
 import { UpdateDepartmentDto } from './dto/update-department.dto';
+import { DepartmentPositionInput, DepartmentType } from './dto/department.type';
 import { Department } from './entities/department.entity';
+import { DepartmentMember } from './entities/department-member.entity';
 
 const MAX_DEPTH = 3;
 
@@ -18,40 +20,105 @@ export class DepartmentService {
   constructor(
     @InjectRepository(Department)
     private readonly deptRepo: Repository<Department>,
+    @InjectRepository(DepartmentMember)
+    private readonly memberRepo: Repository<DepartmentMember>,
     @InjectRepository(BusinessMember)
-    private readonly memberRepo: Repository<BusinessMember>,
+    private readonly bizMemberRepo: Repository<BusinessMember>,
+    private readonly dataSource: DataSource,
   ) {}
 
   async create(userId: string, dto: CreateDepartmentDto): Promise<Department> {
-    await this.assertMember(dto.businessId, userId);
+    await this.assertBusinessMember(dto.businessId, userId);
 
     if (dto.parentId) {
       await this.validateParent(dto.parentId, dto.businessId);
     }
 
-    const dept = this.deptRepo.create({
-      businessId: dto.businessId,
-      name: dto.name,
-      parentId: dto.parentId ?? null,
+    return this.dataSource.transaction(async (manager) => {
+      const dept = await manager.getRepository(Department).save({
+        businessId: dto.businessId,
+        name: dto.name,
+        parentId: dto.parentId ?? null,
+        isRoot: false,
+      });
+
+      // B12 — auto-assign creator as manager
+      await manager.getRepository(DepartmentMember).save({
+        departmentId: dept.id,
+        userId,
+        isManager: true,
+      });
+
+      return dept;
     });
-    return this.deptRepo.save(dept);
   }
 
   async findByBusiness(businessId: string, userId: string): Promise<Department[]> {
-    await this.assertMember(businessId, userId);
+    await this.assertBusinessMember(businessId, userId);
     return this.deptRepo.find({
       where: { businessId },
       order: { name: 'ASC' },
     });
   }
 
+  /** Return nested tree (BOD root → children → grandchildren) with manager + memberCount */
+  async findTree(businessId: string, userId: string): Promise<DepartmentType[]> {
+    await this.assertBusinessMember(businessId, userId);
+
+    const depts = await this.deptRepo.find({
+      where: { businessId },
+      order: { isRoot: 'DESC', name: 'ASC' },
+    });
+    if (!depts.length) return [];
+
+    const deptIds = depts.map((d) => d.id);
+    const members = await this.memberRepo.find({
+      where: { departmentId: In(deptIds) },
+      relations: ['user'],
+    });
+
+    const countByDept = new Map<string, number>();
+    const managerByDept = new Map<string, DepartmentMember>();
+    for (const m of members) {
+      countByDept.set(m.departmentId, (countByDept.get(m.departmentId) ?? 0) + 1);
+      if (m.isManager) managerByDept.set(m.departmentId, m);
+    }
+
+    const nodeMap = new Map<string, DepartmentType>();
+    const roots: DepartmentType[] = [];
+
+    for (const d of depts) {
+      const node: DepartmentType = {
+        ...d,
+        memberCount: countByDept.get(d.id) ?? 0,
+        manager: managerByDept.get(d.id) ?? null,
+        children: [],
+      } as DepartmentType;
+      nodeMap.set(d.id, node);
+    }
+
+    for (const d of depts) {
+      const node = nodeMap.get(d.id)!;
+      if (d.parentId && nodeMap.has(d.parentId)) {
+        nodeMap.get(d.parentId)!.children!.push(node);
+      } else {
+        roots.push(node);
+      }
+    }
+
+    return roots;
+  }
+
   async update(id: string, userId: string, dto: UpdateDepartmentDto): Promise<Department> {
     const dept = await this.deptRepo.findOne({ where: { id } });
     if (!dept) throw new NotFoundException('Department not found');
 
-    await this.assertMember(dept.businessId, userId);
+    await this.assertBusinessMember(dept.businessId, userId);
 
     if (dto.parentId !== undefined) {
+      if (dept.isRoot && dto.parentId !== null) {
+        throw new BadRequestException('Root department cannot have a parent');
+      }
       if (dto.parentId === id) {
         throw new BadRequestException('Department cannot be its own parent');
       }
@@ -61,9 +128,7 @@ export class DepartmentService {
       dept.parentId = dto.parentId;
     }
 
-    if (dto.name !== undefined) {
-      dept.name = dto.name;
-    }
+    if (dto.name !== undefined) dept.name = dto.name;
 
     return this.deptRepo.save(dept);
   }
@@ -72,7 +137,11 @@ export class DepartmentService {
     const dept = await this.deptRepo.findOne({ where: { id } });
     if (!dept) throw new NotFoundException('Department not found');
 
-    await this.assertMember(dept.businessId, userId);
+    await this.assertBusinessMember(dept.businessId, userId);
+
+    if (dept.isRoot) {
+      throw new BadRequestException('Cannot delete root department');
+    }
 
     const childCount = await this.deptRepo.count({ where: { parentId: id } });
     if (childCount > 0) {
@@ -82,15 +151,65 @@ export class DepartmentService {
     await this.deptRepo.delete(id);
   }
 
+  /** Owner-only: persist positions for multiple departments at once. */
+  async updatePositions(
+    businessId: string,
+    userId: string,
+    positions: DepartmentPositionInput[],
+  ): Promise<Department[]> {
+    const member = await this.assertBusinessMember(businessId, userId);
+    if (member.role !== 'owner') {
+      throw new ForbiddenException('Only the business owner can edit chart positions');
+    }
+    if (!positions.length) return [];
+
+    // Sanity bound — anything beyond this is a client bug or abuse.
+    const MAX_COORD = 100000;
+    for (const p of positions) {
+      if (
+        !Number.isFinite(p.positionX) ||
+        !Number.isFinite(p.positionY) ||
+        Math.abs(p.positionX) > MAX_COORD ||
+        Math.abs(p.positionY) > MAX_COORD
+      ) {
+        throw new BadRequestException('Position coordinates out of range');
+      }
+    }
+
+    const ids = positions.map((p) => p.id);
+    const depts = await this.deptRepo.find({ where: { id: In(ids) } });
+    const wrong = depts.find((d) => d.businessId !== businessId);
+    if (wrong || depts.length !== ids.length) {
+      throw new BadRequestException('All departments must belong to the business');
+    }
+
+    return this.dataSource.transaction(async (manager) => {
+      const repo = manager.getRepository(Department);
+      const updated: Department[] = [];
+      for (const p of positions) {
+        await repo.update(p.id, { positionX: p.positionX, positionY: p.positionY });
+        const fresh = await repo.findOne({ where: { id: p.id } });
+        if (fresh) updated.push(fresh);
+      }
+      return updated;
+    });
+  }
+
+  /** Returns the current user's role within a business, or null if not a member. */
+  async findMyRole(businessId: string, userId: string): Promise<string | null> {
+    const member = await this.bizMemberRepo.findOne({ where: { businessId, userId } });
+    return member?.role ?? null;
+  }
+
   /** Verify user is a member of the business */
-  private async assertMember(businessId: string, userId: string): Promise<void> {
-    const member = await this.memberRepo.findOne({
+  async assertBusinessMember(businessId: string, userId: string): Promise<BusinessMember> {
+    const member = await this.bizMemberRepo.findOne({
       where: { businessId, userId },
     });
     if (!member) throw new ForbiddenException('Not a member of this business');
+    return member;
   }
 
-  /** Validate parentId: exists, same business, depth <= MAX_DEPTH */
   private async validateParent(
     parentId: string,
     businessId: string,
@@ -98,28 +217,20 @@ export class DepartmentService {
   ): Promise<void> {
     const parent = await this.deptRepo.findOne({ where: { id: parentId } });
     if (!parent) throw new NotFoundException('Parent department not found');
-
     if (parent.businessId !== businessId) {
       throw new BadRequestException('Parent must belong to the same business');
     }
+    if (excludeId) await this.assertNotDescendant(parentId, excludeId);
 
-    // Check if the proposed parent is a descendant of excludeId (circular ref)
-    if (excludeId) {
-      await this.assertNotDescendant(parentId, excludeId);
-    }
-
-    // Compute depth: walk up from parent to root
     const depth = await this.computeDepth(parentId);
     if (depth + 1 >= MAX_DEPTH) {
       throw new BadRequestException(`Department nesting cannot exceed ${MAX_DEPTH} levels`);
     }
   }
 
-  /** Walk up the tree from nodeId and count depth (root = 0) */
   private async computeDepth(nodeId: string): Promise<number> {
     let depth = 0;
     let currentId: string | null = nodeId;
-
     while (currentId) {
       const node = await this.deptRepo.findOne({
         where: { id: currentId },
@@ -130,22 +241,18 @@ export class DepartmentService {
       currentId = node.parentId;
       if (depth >= MAX_DEPTH) break;
     }
-
     return depth;
   }
 
-  /** Ensure targetId is not a descendant of ancestorId (prevents circular refs on update) */
   private async assertNotDescendant(targetId: string, ancestorId: string): Promise<void> {
     let currentId: string | null = targetId;
     const visited = new Set<string>();
-
     while (currentId) {
       if (currentId === ancestorId) {
         throw new BadRequestException('Cannot create circular department hierarchy');
       }
       if (visited.has(currentId)) break;
       visited.add(currentId);
-
       const node = await this.deptRepo.findOne({
         where: { id: currentId },
         select: ['id', 'parentId'],
