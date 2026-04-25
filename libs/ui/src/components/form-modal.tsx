@@ -1,7 +1,9 @@
 import React from 'react';
-import { Modal, Form } from 'antd';
+import { Modal, Form, Typography } from 'antd';
 import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
 import { IconButton } from './icon-button';
+
+const { Text } = Typography;
 
 interface IFormModalProps<T> {
   title: string;
@@ -21,8 +23,8 @@ interface IFormModalProps<T> {
 
 /**
  * Generic form modal wrapping Ant Modal + Form.
- * Handles validateFields, resetFields, and close on submit.
- * Footer: save (CheckOutlined) + close (CloseOutlined) IconButtons.
+ * Header row: title + IconButton save (check) + IconButton close.
+ * No default antd X — uses project-standard IconButton pattern.
  */
 export function FormModal<T>({
   title,
@@ -60,22 +62,36 @@ export function FormModal<T>({
 
   return (
     <Modal
-      title={title}
       open={open}
       onCancel={handleCancel}
       width={width}
       closable={false}
       style={modalStyle}
-      destroyOnClose={destroyOnClose}
+      destroyOnHidden={destroyOnClose}
       centered={centered}
-      footer={
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-          <IconButton icon={<CheckOutlined />} tooltip={okText} size="small" onClick={handleOk} />
-          <IconButton icon={<CloseOutlined />} tooltip={cancelText} size="small" onClick={handleCancel} />
-        </div>
-      }
+      footer={null}
+      styles={{ body: { padding: 0 } }}
     >
-      <Form form={form} layout="vertical" initialValues={initialValues}>
+      <div className="px-5 py-3.5 border-b border-gray-100 flex items-center gap-3">
+        <Text strong className="!text-[15px] !flex-1">
+          {title}
+        </Text>
+        <div className="flex gap-2">
+          <IconButton
+            icon={<CheckOutlined />}
+            tooltip={okText}
+            size="small"
+            onClick={handleOk}
+          />
+          <IconButton
+            icon={<CloseOutlined />}
+            tooltip={cancelText}
+            size="small"
+            onClick={handleCancel}
+          />
+        </div>
+      </div>
+      <Form form={form} layout="vertical" initialValues={initialValues} className="px-5 py-4">
         {children}
       </Form>
     </Modal>

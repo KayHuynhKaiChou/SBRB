@@ -24,6 +24,7 @@ interface IIconButtonProps {
   onClick?: () => void;
   className?: string;
   style?: React.CSSProperties;
+  htmlType?: 'button' | 'submit' | 'reset';
 }
 
 const SIZE_MAP: Record<IconButtonSize, { button: number; icon: number }> = {
@@ -71,6 +72,7 @@ function getVariantStyles(
             ? BRAND_DARK
             : BRAND_LIGHT,
         color: active ? BRAND : hovered ? '#ffffff' : BRAND,
+        border: `1px solid ${hovered ? BRAND_DARK : BRAND}`,
         cursor: 'pointer',
       };
   }
@@ -87,6 +89,7 @@ export function IconButton({
   onClick,
   className,
   style,
+  htmlType,
 }: IIconButtonProps) {
   const [hovered, setHovered] = React.useState(false);
   const dims = SIZE_MAP[size];
@@ -97,6 +100,7 @@ export function IconButton({
       type="text"
       shape="circle"
       icon={icon}
+      htmlType={htmlType}
       disabled={disabled || loading}
       loading={loading}
       onClick={onClick}
