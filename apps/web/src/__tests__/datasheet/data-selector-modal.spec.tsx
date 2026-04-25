@@ -100,8 +100,6 @@ const mockDataSheets = [
     name: 'Doanh thu Q1',
     status: 'ready',
     periodHeaders: ['Jan', 'Feb', 'Mar'],
-    seriesCount: 3,
-    periodCount: 3,
     originalFilename: 'q1.xlsx',
     importedAt: null,
     createdAt: '2026-01-01T00:00:00.000Z',

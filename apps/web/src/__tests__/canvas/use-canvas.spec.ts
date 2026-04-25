@@ -15,9 +15,17 @@ vi.mock('@sbrb/shared-utils', () => ({
   detectCollision: vi.fn(() => []),
 }));
 
-// Mock antd message
-vi.mock('antd', () => ({
-  message: { error: vi.fn(), success: vi.fn() },
+// Mock notification context (use-canvas reads via useNotify)
+const mockNotifyError = vi.fn();
+vi.mock('@sbrb/shared-apollo-client', () => ({
+  useNotify: () => ({
+    success: vi.fn(),
+    error: mockNotifyError,
+    info: vi.fn(),
+    warning: vi.fn(),
+    notify: vi.fn(),
+    locale: 'vi',
+  }),
 }));
 
 // Mock auth store
@@ -35,7 +43,6 @@ vi.mock('../../graphql/canvas.operations', () => ({
 
 import { useCanvas } from '../../hooks/use-canvas';
 import { detectCollision } from '@sbrb/shared-utils';
-import { message } from 'antd';
 
 const makeWidget = (id: string, x = 0, y = 0, w = 800, h = 400): IWidgetDto => ({
   id,
@@ -95,7 +102,9 @@ describe('useCanvas', () => {
     // Position should revert to original
     const widget = useCanvasStore.getState().widgets.find((w) => w.id === 'w1');
     expect(widget?.position.x).toBe(0);
-    expect(message.error).toHaveBeenCalledWith('Vị trí đã có widget khác');
+    expect(mockNotifyError).toHaveBeenCalledWith(
+      expect.objectContaining({ vi: 'Vị trí đã có widget khác' }),
+    );
   });
 
   it('debounce: fetch PATCH only called once after 300ms', async () => {
@@ -152,6 +161,8 @@ describe('useCanvas', () => {
       await Promise.resolve();
     });
 
-    expect(message.error).toHaveBeenCalledWith('Vị trí đã có widget khác (server)');
+    expect(mockNotifyError).toHaveBeenCalledWith(
+      expect.objectContaining({ vi: 'Vị trí đã có widget khác (server)' }),
+    );
   });
 });
