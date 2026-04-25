@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Form } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { FormModal } from '@sbrb/ui';
@@ -19,6 +20,11 @@ interface IDataSelectorModalProps {
 function DataSelectorContent({ businessId }: { businessId: string }) {
   const { t } = useTranslation(['datasheet']);
   const { dataSheets } = useDataSheets(businessId);
+  // Inactive sheets are archived — hide from widget data picker.
+  const activeSheets = useMemo(
+    () => dataSheets.filter((s) => s.status === 'active'),
+    [dataSheets],
+  );
 
   return (
     <Form.Item
@@ -26,7 +32,7 @@ function DataSelectorContent({ businessId }: { businessId: string }) {
       rules={[{ required: true, message: t('datasheet:select_dataset_error') }]}
       className="!mb-0"
     >
-      <SheetList sheets={dataSheets} maxHeight={320} />
+      <SheetList sheets={activeSheets} maxHeight={320} />
     </Form.Item>
   );
 }

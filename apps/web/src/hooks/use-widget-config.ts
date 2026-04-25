@@ -1,6 +1,5 @@
-import { useMutation } from '@apollo/client';
-import { message } from 'antd';
 import { t } from 'i18next';
+import { useAppMutation } from '@sbrb/shared-apollo-client';
 import {
   UPDATE_WIDGET_CONFIG_MUTATION,
   UPDATE_WIDGET_DATA_LINK_MUTATION,
@@ -19,46 +18,46 @@ export interface IUpdateDataLinkInput {
 }
 
 export function useWidgetConfig() {
-  const [updateConfigMutation, { loading: updatingConfig }] = useMutation(
+  const [updateConfigMutation, { loading: updatingConfig }] = useAppMutation(
     UPDATE_WIDGET_CONFIG_MUTATION,
+    {
+      notifyOnSuccess: false,
+      fallbackError: t('widget:update_config_error'),
+    },
   );
-  const [updateDataLinkMutation, { loading: updatingLink }] = useMutation(
+  const [updateDataLinkMutation, { loading: updatingLink }] = useAppMutation(
     UPDATE_WIDGET_DATA_LINK_MUTATION,
+    {
+      notifyOnSuccess: false,
+      fallbackError: t('widget:update_link_error'),
+    },
   );
-  const [removeDataLinkMutation, { loading: removingLink }] = useMutation(
+  const [removeDataLinkMutation, { loading: removingLink }] = useAppMutation(
     REMOVE_WIDGET_DATA_LINK_MUTATION,
+    {
+      notifyOnSuccess: false,
+      fallbackError: t('widget:remove_link_error'),
+    },
   );
 
   const updateConfig = async (id: string, config: Partial<IChartConfig> & { name?: string }) => {
-    try {
-      await updateConfigMutation({ variables: { id, config } });
-    } catch {
-      message.error(t('widget:update_config_error'));
-    }
+    await updateConfigMutation({ variables: { id, config } }).catch(() => undefined);
   };
 
   const updateDataLink = async (id: string, dataLink: IUpdateDataLinkInput) => {
-    try {
-      await updateDataLinkMutation({
-        variables: { id, input: dataLink },
-        refetchQueries: DATA_LINK_DEPENDENT_QUERIES,
-        awaitRefetchQueries: true,
-      });
-    } catch {
-      message.error(t('widget:update_link_error'));
-    }
+    await updateDataLinkMutation({
+      variables: { id, input: dataLink },
+      refetchQueries: DATA_LINK_DEPENDENT_QUERIES,
+      awaitRefetchQueries: true,
+    }).catch(() => undefined);
   };
 
   const removeDataLink = async (id: string) => {
-    try {
-      await removeDataLinkMutation({
-        variables: { id },
-        refetchQueries: DATA_LINK_DEPENDENT_QUERIES,
-        awaitRefetchQueries: true,
-      });
-    } catch {
-      message.error(t('widget:remove_link_error'));
-    }
+    await removeDataLinkMutation({
+      variables: { id },
+      refetchQueries: DATA_LINK_DEPENDENT_QUERIES,
+      awaitRefetchQueries: true,
+    }).catch(() => undefined);
   };
 
   return {

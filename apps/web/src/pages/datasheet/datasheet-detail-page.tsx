@@ -10,6 +10,7 @@ import { TableToolbar } from '../../components/datasheet/table-toolbar';
 import {
   useDataSheetDetail,
   useUpdateSeriesValue,
+  useUpsertCellValue,
 } from '../../hooks/use-datasheet-detail';
 import {
   useAddSeries,
@@ -19,6 +20,9 @@ import {
   useInsertPeriod,
   useInsertSeries,
   useDeleteSeriesByName,
+  useAddDepartmentToDatasheet,
+  useDeleteDepartmentFromDatasheet,
+  useRenameDepartment,
   useRenameSeries,
   useExportDataSheet,
 } from '../../hooks/use-datasheet-mutations';
@@ -32,6 +36,7 @@ export default function DataSheetDetailPage() {
 
   const { sheet, series, loading, error } = useDataSheetDetail(id);
   const { updateValue } = useUpdateSeriesValue();
+  const { upsertValue } = useUpsertCellValue();
   const { addSeries, loading: addSeriesLoading } = useAddSeries();
   const { deleteSeries } = useDeleteSeries();
   const { addPeriod, loading: addPeriodLoading } = useAddPeriod();
@@ -39,6 +44,9 @@ export default function DataSheetDetailPage() {
   const { insertPeriod, loading: insertPeriodLoading } = useInsertPeriod();
   const { insertSeries, loading: insertSeriesLoading } = useInsertSeries();
   const { deleteSeriesByName } = useDeleteSeriesByName();
+  const { addDepartment, loading: addDeptLoading } = useAddDepartmentToDatasheet();
+  const { deleteDepartment } = useDeleteDepartmentFromDatasheet();
+  const { renameDepartment } = useRenameDepartment();
   const { renameSeries } = useRenameSeries();
   const { exportSheet } = useExportDataSheet();
 
@@ -55,6 +63,14 @@ export default function DataSheetDetailPage() {
       updateValue(seriesId, period, value, row.values);
     },
     [seriesMap, updateValue],
+  );
+
+  const handleCellUpsert = useCallback(
+    (departmentId: string, seriesName: string, period: string, value: number | null) => {
+      if (!id) return;
+      upsertValue(id, departmentId, seriesName, period, value);
+    },
+    [id, upsertValue],
   );
 
   const handleAddSeries = useCallback(() => {
@@ -112,14 +128,39 @@ export default function DataSheetDetailPage() {
     [id, deleteSeriesByName],
   );
 
+  const handleAddDepartment = useCallback(() => {
+    if (!id) return;
+    addDepartment(id, t('new_department_name'));
+  }, [id, addDepartment, t]);
+
+  const handleDeleteDepartment = useCallback(
+    (departmentId: string) => {
+      if (!id) return;
+      deleteDepartment(id, departmentId);
+    },
+    [id, deleteDepartment],
+  );
+
+  const handleRenameDepartment = useCallback(
+    (departmentId: string, name: string) => renameDepartment(departmentId, name),
+    [renameDepartment],
+  );
+
   const handleRenameSeries = useCallback(
     (seriesId: string, newName: string) => renameSeries(seriesId, newName),
     [renameSeries],
   );
 
-  const isReady = sheet?.status === 'ready';
+  // Sheet is usable as long as it's not inactive — 'active' is the only usable state
+  // after the status refactor (old 'ready' / 'READY_WITH_WARNINGS' were migrated).
+  const isReady = sheet?.status === 'active';
   const mutationLoading =
-    addSeriesLoading || addPeriodLoading || insertPeriodLoading || insertSeriesLoading;
+    addSeriesLoading ||
+    addPeriodLoading ||
+    insertPeriodLoading ||
+    insertSeriesLoading ||
+    addDeptLoading;
+  const isDepartmentTemplate = sheet?.templateType === 'department';
 
   return (
     <Layout className="!min-h-screen">
@@ -158,18 +199,22 @@ export default function DataSheetDetailPage() {
                   onAddSeries={handleAddSeries}
                   onAddPeriod={handleAddPeriod}
                   onExport={handleExport}
+                  onAddDepartment={isDepartmentTemplate ? handleAddDepartment : undefined}
                   existingPeriods={sheet!.periodHeaders ?? []}
                   loading={mutationLoading}
                 />
-                {sheet!.templateType === 'department' ? (
+                {isDepartmentTemplate ? (
                   <DepartmentDataTable
                     series={series}
                     periodHeaders={sheet!.periodHeaders ?? []}
                     onCellEdit={handleCellEdit}
+                    onCellUpsert={handleCellUpsert}
                     onDeletePeriod={handleDeletePeriod}
                     onInsertPeriod={handleInsertPeriod}
                     onInsertSeries={handleInsertSeries}
                     onDeleteSeriesByName={handleDeleteSeriesByName}
+                    onDeleteDepartment={handleDeleteDepartment}
+                    onRenameDepartment={handleRenameDepartment}
                   />
                 ) : (
                   <DataTable

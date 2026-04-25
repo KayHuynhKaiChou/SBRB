@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { useQuery, useMutation } from '@apollo/client';
-import { message } from 'antd';
+import { useQuery } from '@apollo/client';
 import { useCanvasStore } from '../store/canvas.store';
+import { useAppMutation } from '@sbrb/shared-apollo-client';
 import {
   TABS_QUERY,
   CREATE_TAB_MUTATION,
@@ -35,10 +35,22 @@ export function useTabs(businessId: string) {
     fetchPolicy: 'cache-and-network',
   });
 
-  const [createTabMutation] = useMutation(CREATE_TAB_MUTATION);
-  const [updateTabMutation] = useMutation(UPDATE_TAB_MUTATION);
-  const [deleteTabMutation] = useMutation(DELETE_TAB_MUTATION);
-  const [reorderTabsMutation] = useMutation(REORDER_TABS_MUTATION);
+  const [createTabMutation] = useAppMutation(CREATE_TAB_MUTATION, {
+    notifyOnSuccess: false,
+    fallbackError: { vi: 'Tạo tab thất bại', en: 'Failed to create tab' },
+  });
+  const [updateTabMutation] = useAppMutation(UPDATE_TAB_MUTATION, {
+    notifyOnSuccess: false,
+    fallbackError: { vi: 'Cập nhật tab thất bại', en: 'Failed to update tab' },
+  });
+  const [deleteTabMutation] = useAppMutation(DELETE_TAB_MUTATION, {
+    notifyOnSuccess: false,
+    fallbackError: { vi: 'Xóa tab thất bại', en: 'Failed to delete tab' },
+  });
+  const [reorderTabsMutation] = useAppMutation(REORDER_TABS_MUTATION, {
+    notifyOnSuccess: false,
+    fallbackError: { vi: 'Sắp xếp tab thất bại', en: 'Failed to reorder tabs' },
+  });
 
   useEffect(() => {
     if (data?.tabs) {
@@ -51,99 +63,78 @@ export function useTabs(businessId: string) {
   }, [data, activeTabId, setTabs, setActiveTab]);
 
   const createTab = async (input: Omit<ICreateTabInput, 'businessId'>) => {
-    try {
-      await createTabMutation({
-        variables: { input: { ...input, businessId } },
-        update: (cache, { data: mutationData }) => {
-          const newTab = mutationData?.createTab;
-          if (!newTab) return;
-          const existing = cache.readQuery<{ tabs: unknown[] }>({
+    await createTabMutation({
+      variables: { input: { ...input, businessId } },
+      update: (cache, { data: mutationData }) => {
+        const newTab = mutationData?.createTab;
+        if (!newTab) return;
+        const existing = cache.readQuery<{ tabs: unknown[] }>({
+          query: TABS_QUERY,
+          variables: { businessId },
+        });
+        if (existing) {
+          cache.writeQuery({
             query: TABS_QUERY,
             variables: { businessId },
+            data: { tabs: [...existing.tabs, newTab] },
           });
-          if (existing) {
-            cache.writeQuery({
-              query: TABS_QUERY,
-              variables: { businessId },
-              data: { tabs: [...existing.tabs, newTab] },
-            });
-          } else {
-            // Fallback if cache miss
-            refetch().catch(() => null);
-          }
-        },
-      });
-    } catch (err) {
-      message.error('Tạo tab thất bại');
-      throw err;
-    }
+        } else {
+          refetch().catch(() => null);
+        }
+      },
+    });
   };
 
   const updateTab = async (id: string, input: IUpdateTabInput) => {
-    try {
-      await updateTabMutation({
-        variables: { id, input },
-        update: (cache, { data: mutationData }) => {
-          const updatedTab = mutationData?.updateTab;
-          if (!updatedTab) return;
-          const existing = cache.readQuery<{ tabs: Array<{ id: string }> }>({
+    await updateTabMutation({
+      variables: { id, input },
+      update: (cache, { data: mutationData }) => {
+        const updatedTab = mutationData?.updateTab;
+        if (!updatedTab) return;
+        const existing = cache.readQuery<{ tabs: Array<{ id: string }> }>({
+          query: TABS_QUERY,
+          variables: { businessId },
+        });
+        if (existing) {
+          cache.writeQuery({
             query: TABS_QUERY,
             variables: { businessId },
+            data: {
+              tabs: existing.tabs.map((t) => (t.id === id ? { ...t, ...updatedTab } : t)),
+            },
           });
-          if (existing) {
-            cache.writeQuery({
-              query: TABS_QUERY,
-              variables: { businessId },
-              data: {
-                tabs: existing.tabs.map((t) => (t.id === id ? { ...t, ...updatedTab } : t)),
-              },
-            });
-          } else {
-            refetch().catch(() => null);
-          }
-        },
-      });
-    } catch (err) {
-      message.error('Cập nhật tab thất bại');
-      throw err;
-    }
+        } else {
+          refetch().catch(() => null);
+        }
+      },
+    });
   };
 
   const deleteTab = async (id: string) => {
-    try {
-      await deleteTabMutation({
-        variables: { id },
-        update: (cache) => {
-          const existing = cache.readQuery<{ tabs: Array<{ id: string }> }>({
+    await deleteTabMutation({
+      variables: { id },
+      update: (cache) => {
+        const existing = cache.readQuery<{ tabs: Array<{ id: string }> }>({
+          query: TABS_QUERY,
+          variables: { businessId },
+        });
+        if (existing) {
+          cache.writeQuery({
             query: TABS_QUERY,
             variables: { businessId },
+            data: { tabs: existing.tabs.filter((t) => t.id !== id) },
           });
-          if (existing) {
-            cache.writeQuery({
-              query: TABS_QUERY,
-              variables: { businessId },
-              data: { tabs: existing.tabs.filter((t) => t.id !== id) },
-            });
-          } else {
-            refetch().catch(() => null);
-          }
-        },
-      });
-      if (activeTabId === id) setActiveTab(null);
-    } catch (err) {
-      message.error('Xóa tab thất bại');
-      throw err;
-    }
+        } else {
+          refetch().catch(() => null);
+        }
+      },
+    });
+    if (activeTabId === id) setActiveTab(null);
   };
 
   const reorderTabs = async (orders: Array<{ id: string; order: number }>) => {
-    try {
-      await reorderTabsMutation({ variables: { orders } });
-      await refetch();
-    } catch (err) {
-      message.error('Sắp xếp tab thất bại');
-      throw err;
-    }
+    await reorderTabsMutation({ variables: { orders } });
+    await refetch();
   };
 
   return { tabs, activeTabId, setActiveTab, createTab, updateTab, deleteTab, reorderTabs };

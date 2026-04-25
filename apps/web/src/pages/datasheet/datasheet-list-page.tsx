@@ -4,13 +4,15 @@ import {
   Button,
   Input,
   Space,
-  Badge,
+  Switch,
   Popconfirm,
   Typography,
   Tag,
   Tooltip,
   Empty,
   Layout,
+  Avatar,
+  Badge,
 } from 'antd';
 import { Sidebar } from '../../components/layout/sidebar';
 import {
@@ -25,8 +27,8 @@ import {
 } from '@ant-design/icons';
 import { IconButton } from '@sbrb/ui';
 import { useTranslation } from 'react-i18next';
-import { message } from 'antd';
 import { Navigate, useNavigate } from 'react-router-dom';
+import { useNotify } from '@sbrb/shared-apollo-client';
 import { useAuthStore } from '../../store/auth.store';
 import {
   useDataSheets,
@@ -34,36 +36,58 @@ import {
   useRenameDataSheet,
   useDownloadTemplate,
   type IDataSheetDto,
+  type IListDataSheetsFilter,
+  type DataSheetSortField,
+  type SortOrder,
 } from '../../hooks/use-datasheet';
+import type { TableProps, TableColumnsType } from 'antd';
+import { useToggleDataSheetStatus } from '../../hooks/use-datasheet-mutations';
 import { ImportDialog } from './import-dialog';
 import { ReimportDialog } from './reimport-dialog';
 
 const { Title } = Typography;
 
-const STATUS_CONFIG: Record<string, { color: string; label: string }> = {
-  processing: { color: 'processing', label: 'Đang xử lý' },
-  ready: { color: 'success', label: 'Sẵn sàng' },
-  error: { color: 'error', label: 'Lỗi' },
-  pending: { color: 'default', label: 'Chờ xử lý' },
-};
-
 export default function DataSheetListPage() {
   const { currentBusinessId } = useAuthStore();
-  const { t } = useTranslation(['datasheet', 'common']);
+  const { t, i18n } = useTranslation(['datasheet', 'common']);
   const navigate = useNavigate();
+  const notify = useNotify();
   const [search, setSearch] = useState('');
   const [importOpen, setImportOpen] = useState(false);
   const [reimportTarget, setReimportTarget] = useState<IDataSheetDto | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [page, setPage] = useState(1);
+  const [filter, setFilter] = useState<IListDataSheetsFilter>({});
 
   if (!currentBusinessId) return <Navigate to="/onboarding" replace />;
 
-  const { dataSheets, loading, refetch } = useDataSheets(currentBusinessId);
+  const { dataSheets, loading, refetch } = useDataSheets(currentBusinessId, filter);
+
+  const handleTableChange: TableProps<IDataSheetDto>['onChange'] = (_pagination, filters, sorter) => {
+    const s = Array.isArray(sorter) ? sorter[0] : sorter;
+    const sortKey = s?.columnKey as DataSheetSortField | undefined;
+    const sortBy: DataSheetSortField | undefined =
+      sortKey && s?.order ? sortKey : undefined;
+    const sortOrder: SortOrder | undefined =
+      s?.order === 'ascend' ? 'ASC' : s?.order === 'descend' ? 'DESC' : undefined;
+
+    setFilter({
+      status: (filters.status as string[] | null)?.length
+        ? (filters.status as IListDataSheetsFilter['status'])
+        : undefined,
+      templateType: (filters.templateType as string[] | null)?.length
+        ? (filters.templateType as IListDataSheetsFilter['templateType'])
+        : undefined,
+      sortBy,
+      sortOrder,
+    });
+    setPage(1);
+  };
   const { deleteDataSheet } = useDeleteDataSheet();
   const { renameDataSheet } = useRenameDataSheet();
   const { downloadTemplate, loading: templateLoading } = useDownloadTemplate();
+  const { toggleStatus, loading: toggleLoading } = useToggleDataSheetStatus();
 
   const filtered = dataSheets.filter((s) =>
     s.name.toLowerCase().includes(search.toLowerCase()),
@@ -71,7 +95,7 @@ export default function DataSheetListPage() {
 
   const handleDelete = async (id: string) => {
     await deleteDataSheet(id);
-    message.success(t('datasheet:deleted_success'));
+    notify.success(t('datasheet:deleted_success'));
     await refetch();
   };
 
@@ -84,7 +108,7 @@ export default function DataSheetListPage() {
     if (!renameValue.trim()) return;
     try {
       await renameDataSheet(id, renameValue.trim());
-      message.success(t('datasheet:renamed_success'));
+      notify.success(t('datasheet:renamed_success'));
       setRenamingId(null);
       await refetch();
     } catch {
@@ -97,9 +121,9 @@ export default function DataSheetListPage() {
     setRenameValue('');
   };
 
-  const columns = [
+  const columns: TableColumnsType<IDataSheetDto> = [
     {
-      title: 'Tên',
+      title: t('datasheet:col_name'),
       dataIndex: 'name',
       key: 'name',
       render: (name: string, record: IDataSheetDto) => {
@@ -133,37 +157,124 @@ export default function DataSheetListPage() {
       },
     },
     {
-      title: 'Trạng thái',
+      title: t('datasheet:status_col'),
       dataIndex: 'status',
       key: 'status',
       width: 130,
-      render: (status: string) => {
-        const cfg = STATUS_CONFIG[status] ?? { color: 'default', label: status };
-        return <Badge status={cfg.color as 'processing' | 'success' | 'error' | 'default'} text={cfg.label} />;
+      filters: [
+        { text: t('datasheet:status_active'), value: 'active' },
+        { text: t('datasheet:status_inactive'), value: 'inactive' },
+      ],
+      filteredValue: filter.status ?? null,
+      render: (status: string, record: IDataSheetDto) => {
+        const isActive = status === 'active';
+        return (
+          // Stop propagation so clicking the switch doesn't also trigger the row-level
+          // navigate-to-detail handler.
+          <span onClick={(e) => e.stopPropagation()}>
+            <Tooltip title={t('datasheet:toggle_status_tooltip')}>
+              <Switch
+                size="small"
+                checked={isActive}
+                loading={toggleLoading}
+                onChange={() => toggleStatus(record.id, status)}
+                checkedChildren={t('datasheet:status_active')}
+                unCheckedChildren={t('datasheet:status_inactive')}
+              />
+            </Tooltip>
+          </span>
+        );
       },
     },
     {
-      title: 'Số kỳ',
-      dataIndex: 'periodCount',
-      key: 'periodCount',
-      width: 80,
+      title: t('datasheet:col_type'),
+      dataIndex: 'templateType',
+      key: 'templateType',
+      width: 130,
+      filters: [
+        { text: `📊 ${t('datasheet:type_simple')}`, value: 'simple' },
+        { text: `🏢 ${t('datasheet:type_department')}`, value: 'department' },
+        { text: `💰 ${t('datasheet:type_pnl')}`, value: 'pnl' },
+      ],
+      filteredValue: filter.templateType ?? null,
+      render: (type: IDataSheetDto['templateType']) => {
+        const meta = {
+          simple: { icon: '📊', label: t('datasheet:type_simple'), color: 'blue' },
+          department: { icon: '🏢', label: t('datasheet:type_department'), color: 'purple' },
+          pnl: { icon: '💰', label: t('datasheet:type_pnl'), color: 'green' },
+        }[type ?? 'simple'] ?? { icon: '📊', label: type, color: 'default' };
+        return (
+          <Tag color={meta.color} className="!m-0">
+            <span className="mr-1">{meta.icon}</span>
+            {meta.label}
+          </Tag>
+        );
+      },
     },
     {
-      title: 'Số chuỗi',
-      dataIndex: 'seriesCount',
-      key: 'seriesCount',
-      width: 90,
+      title: t('datasheet:col_widget_count'),
+      dataIndex: 'widgetCount',
+      key: 'widgetCount',
+      width: 130,
+      sorter: true,
+      sortOrder:
+        filter.sortBy === 'widgetCount'
+          ? filter.sortOrder === 'ASC'
+            ? 'ascend'
+            : 'descend'
+          : null,
+      render: (count: number) => (
+        <Tooltip title={t('datasheet:widget_count_tooltip', { count: count ?? 0 })}>
+          <Badge
+            count={count ?? 0}
+            showZero
+            color={count > 0 ? '#D72A44' : '#bfbfbf'}
+            overflowCount={99}
+          />
+        </Tooltip>
+      ),
     },
     {
-      title: 'Ngày import',
+      title: t('datasheet:col_uploader'),
+      dataIndex: 'uploader',
+      key: 'uploader',
+      width: 180,
+      render: (uploader: IDataSheetDto['uploader']) => {
+        if (!uploader) return <span className="text-gray-400">—</span>;
+        const initial = (uploader.fullName || uploader.email || '?').charAt(0).toUpperCase();
+        return (
+          <Space size={8}>
+            <Avatar
+              size="small"
+              src={uploader.avatarUrl ?? undefined}
+              style={{ backgroundColor: '#D72A44', verticalAlign: 'middle' }}
+            >
+              {initial}
+            </Avatar>
+            <Tooltip title={uploader.email}>
+              <span className="text-sm">{uploader.fullName || uploader.email}</span>
+            </Tooltip>
+          </Space>
+        );
+      },
+    },
+    {
+      title: t('datasheet:col_import_date'),
       dataIndex: 'importedAt',
       key: 'importedAt',
       width: 150,
+      sorter: true,
+      sortOrder:
+        filter.sortBy === 'importedAt'
+          ? filter.sortOrder === 'ASC'
+            ? 'ascend'
+            : 'descend'
+          : null,
       render: (date: string | null) =>
-        date ? new Date(date).toLocaleDateString('vi-VN') : '-',
+        date ? new Date(date).toLocaleDateString(i18n.language === 'vi' ? 'vi-VN' : 'en-US') : '-',
     },
     {
-      title: 'Thao tác',
+      title: t('datasheet:col_actions'),
       key: 'actions',
       width: 120,
       render: (_: unknown, record: IDataSheetDto) => (
@@ -207,20 +318,19 @@ export default function DataSheetListPage() {
           {t('datasheet:manage_title')}
         </Title>
         <Space>
-          <Button
+          <IconButton
             icon={<DownloadOutlined />}
+            tooltip={t('datasheet:download_template')}
+            variant="ghost"
             loading={templateLoading}
             onClick={downloadTemplate}
-          >
-            {t('datasheet:download_template')}
-          </Button>
-          <Button
-            type="primary"
+          />
+          <IconButton
             icon={<PlusOutlined />}
+            tooltip={t('datasheet:import_title')}
+            variant="ghost"
             onClick={() => setImportOpen(true)}
-          >
-            {t('datasheet:import_title')}
-          </Button>
+          />
         </Space>
       </div>
 
@@ -237,7 +347,8 @@ export default function DataSheetListPage() {
         dataSource={filtered}
         columns={columns}
         rowKey="id"
-        loading={loading}
+        loading={loading && dataSheets.length === 0}
+        onChange={handleTableChange}
         onRow={(record) => ({
           onClick: (e) => {
             // Don't navigate when clicking action buttons

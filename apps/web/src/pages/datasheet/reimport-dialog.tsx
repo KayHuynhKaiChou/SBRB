@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Modal, Upload, Alert, Progress, Space, Typography, message } from 'antd';
+import { Modal, Upload, Alert, Progress, Space, Typography } from 'antd';
+import { useNotify } from '@sbrb/shared-apollo-client';
 import { CloseOutlined, CheckOutlined, InboxOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { IconButton } from '@sbrb/ui';
@@ -26,6 +27,7 @@ export function ReimportDialog({
   onSuccess,
 }: IReimportDialogProps) {
   const { t } = useTranslation(['datasheet', 'common']);
+  const notify = useNotify();
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -62,7 +64,7 @@ export function ReimportDialog({
     try {
       await apiClient.upload(`/api/v1/data-sheets/${datasheetId}/reimport`, formData);
       setProgress(100);
-      message.success(t('datasheet:reimport_started'));
+      notify.success(t('datasheet:reimport_started'));
       onSuccess();
       handleClose();
     } catch (err) {

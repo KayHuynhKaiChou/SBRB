@@ -9,8 +9,8 @@ import {
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { IconButton } from '@sbrb/ui';
-import { message } from 'antd';
 import type { UploadFile } from 'antd';
+import { useNotify } from '@sbrb/shared-apollo-client';
 import { useImportDataSheet } from '../../hooks/use-datasheet';
 import { validateUploadFile } from '../../utils/file-upload-validator';
 import { useAuthStore } from '../../store/auth.store';
@@ -40,6 +40,7 @@ interface IImportDialogProps {
 
 export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDialogProps) {
   const { t } = useTranslation(['datasheet', 'common', 'department']);
+  const notify = useNotify();
   const [step, setStep] = useState(0);
   const [templateType, setTemplateType] = useState<'simple' | 'department' | 'pnl'>('simple');
   const [file, setFile] = useState<File | null>(null);
@@ -133,7 +134,7 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
     if (doneRef.current) return; // dedup: poll + WebSocket may both fire
     doneRef.current = true;
     clearPoll();
-    message.success(t('datasheet:import_complete'));
+    notify.success(t('datasheet:import_complete'));
     setImporting(false);
     onSuccess();
     // Reset state inline instead of calling handleClose (avoids stale closure)
@@ -146,7 +147,7 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
     setPreviewData(null);
     setPreviewLoading(false);
     onClose();
-  }, [onSuccess, onClose, clearPoll, t]);
+  }, [onSuccess, onClose, clearPoll, t, notify]);
 
   const handleStartImport = async () => {
     if (!file || !importName.trim()) {
@@ -168,12 +169,10 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
           });
           if (!res.ok) return;
           const sheet = await res.json();
-          if (sheet.status === 'ready') handleImportDone();
-          else if (sheet.status === 'error') {
-            clearPoll();
-            setError(sheet.errorMessage ?? t('datasheet:import_failed'));
-            setImporting(false);
-          }
+          // After status refactor: successful import → 'active'. Failed import rolls
+          // the row back (not reachable via GET), so the only "stuck polling" case we'd
+          // still observe is a legitimate 'active' — stop and report done.
+          if (sheet.status === 'active') handleImportDone();
         } catch { /* ignore poll errors */ }
       }, 2000);
     } catch (err) {

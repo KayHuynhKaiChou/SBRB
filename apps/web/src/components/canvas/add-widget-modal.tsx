@@ -74,7 +74,7 @@ export function AddWidgetModal({
       name: string;
       status: string;
     }[];
-    return sheets.filter((s) => s.status === 'ready');
+    return sheets.filter((s) => s.status === 'active');
   }, [sheetsData]);
 
   // Fetch series for selected datasheet

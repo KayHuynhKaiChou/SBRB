@@ -1,6 +1,6 @@
-import { useQuery, useMutation } from '@apollo/client';
-import { message } from 'antd';
+import { useQuery } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
+import { useAppMutation } from '@sbrb/shared-apollo-client';
 import {
   DEPARTMENTS_QUERY,
   CREATE_DEPARTMENT_MUTATION,
@@ -39,97 +39,91 @@ export function useDepartments(businessId: string) {
 
   const departments: IDepartmentDto[] = data?.departments ?? [];
 
-  const [createMutation] = useMutation(CREATE_DEPARTMENT_MUTATION);
-  const [updateMutation] = useMutation(UPDATE_DEPARTMENT_MUTATION);
-  const [deleteMutation] = useMutation(DELETE_DEPARTMENT_MUTATION);
+  const [createMutation] = useAppMutation(CREATE_DEPARTMENT_MUTATION, {
+    fallbackSuccess: t('department:create_success'),
+    fallbackError: t('department:create_error'),
+  });
+  const [updateMutation] = useAppMutation(UPDATE_DEPARTMENT_MUTATION, {
+    fallbackSuccess: t('department:update_success'),
+    fallbackError: t('department:update_error'),
+  });
+  const [deleteMutation] = useAppMutation(DELETE_DEPARTMENT_MUTATION, {
+    fallbackSuccess: t('department:delete_success'),
+    fallbackError: t('department:delete_error'),
+  });
 
   const create = async (input: Omit<ICreateDepartmentInput, 'businessId'>) => {
-    try {
-      await createMutation({
-        variables: { input: { ...input, businessId } },
-        update: (cache, { data: mutationData }) => {
-          const newDept = mutationData?.createDepartment;
-          if (!newDept) return;
-          const existing = cache.readQuery<{ departments: IDepartmentDto[] }>({
+    const result = await createMutation({
+      variables: { input: { ...input, businessId } },
+      update: (cache, { data: mutationData }) => {
+        const newDept = mutationData?.createDepartment;
+        if (!newDept) return;
+        const existing = cache.readQuery<{ departments: IDepartmentDto[] }>({
+          query: DEPARTMENTS_QUERY,
+          variables: { businessId },
+        });
+        if (existing) {
+          cache.writeQuery({
             query: DEPARTMENTS_QUERY,
             variables: { businessId },
+            data: { departments: [...existing.departments, newDept] },
           });
-          if (existing) {
-            cache.writeQuery({
-              query: DEPARTMENTS_QUERY,
-              variables: { businessId },
-              data: { departments: [...existing.departments, newDept] },
-            });
-          } else {
-            refetch().catch(() => null);
-          }
-        },
-      });
-      message.success(t('department:create_success'));
-    } catch (err) {
-      message.error(t('department:create_error'));
-      throw err;
-    }
+        } else {
+          refetch().catch(() => null);
+        }
+      },
+    });
+    if (result.errors) throw new Error('create_failed');
   };
 
   const update = async (id: string, input: IUpdateDepartmentInput) => {
-    try {
-      await updateMutation({
-        variables: { id, input },
-        update: (cache, { data: mutationData }) => {
-          const updated = mutationData?.updateDepartment;
-          if (!updated) return;
-          const existing = cache.readQuery<{ departments: IDepartmentDto[] }>({
+    const result = await updateMutation({
+      variables: { id, input },
+      update: (cache, { data: mutationData }) => {
+        const updated = mutationData?.updateDepartment;
+        if (!updated) return;
+        const existing = cache.readQuery<{ departments: IDepartmentDto[] }>({
+          query: DEPARTMENTS_QUERY,
+          variables: { businessId },
+        });
+        if (existing) {
+          cache.writeQuery({
             query: DEPARTMENTS_QUERY,
             variables: { businessId },
+            data: {
+              departments: existing.departments.map((d) =>
+                d.id === id ? { ...d, ...updated } : d,
+              ),
+            },
           });
-          if (existing) {
-            cache.writeQuery({
-              query: DEPARTMENTS_QUERY,
-              variables: { businessId },
-              data: {
-                departments: existing.departments.map((d) =>
-                  d.id === id ? { ...d, ...updated } : d,
-                ),
-              },
-            });
-          } else {
-            refetch().catch(() => null);
-          }
-        },
-      });
-      message.success(t('department:update_success'));
-    } catch (err) {
-      message.error(t('department:update_error'));
-      throw err;
-    }
+        } else {
+          refetch().catch(() => null);
+        }
+      },
+    });
+    if (result.errors) throw new Error('update_failed');
   };
 
   const remove = async (id: string) => {
-    try {
-      await deleteMutation({
-        variables: { id },
-        update: (cache) => {
-          const existing = cache.readQuery<{ departments: IDepartmentDto[] }>({
+    const result = await deleteMutation({
+      variables: { id },
+      update: (cache) => {
+        const existing = cache.readQuery<{ departments: IDepartmentDto[] }>({
+          query: DEPARTMENTS_QUERY,
+          variables: { businessId },
+        });
+        if (existing) {
+          cache.writeQuery({
             query: DEPARTMENTS_QUERY,
             variables: { businessId },
+            data: { departments: existing.departments.filter((d) => d.id !== id) },
           });
-          if (existing) {
-            cache.writeQuery({
-              query: DEPARTMENTS_QUERY,
-              variables: { businessId },
-              data: { departments: existing.departments.filter((d) => d.id !== id) },
-            });
-          } else {
-            refetch().catch(() => null);
-          }
-        },
-      });
-      message.success(t('department:delete_success'));
-    } catch (err) {
-      message.error(t('department:delete_error'));
-      throw err;
-    }
+        } else {
+          refetch().catch(() => null);
+        }
+      },
+    });
+    if (result.errors) throw new Error('delete_failed');
   };
 
   return { departments, loading, refetch, create, update, remove };

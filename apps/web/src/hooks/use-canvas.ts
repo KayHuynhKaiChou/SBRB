@@ -1,9 +1,9 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation } from '@apollo/client';
-import { message } from 'antd';
 import { detectCollision } from '@sbrb/shared-utils';
 import { useCanvasStore } from '../store/canvas.store';
 import { apiClient } from '../services/api-client';
+import { useNotify } from '@sbrb/shared-apollo-client';
 import { WIDGETS_QUERY, UPDATE_WIDGET_MUTATION } from '../graphql/canvas.operations';
 import type { IWidgetPosition } from '@sbrb/shared-types';
 
@@ -15,6 +15,7 @@ export function useCanvas(tabId: string) {
   const { widgets, setWidgets, updateWidgetPosition, snapEnabled } = useCanvasStore();
   const lastValidPositions = useRef<Map<string, IWidgetPosition>>(new Map());
   const debounceTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const notify = useNotify();
 
   const { data } = useQuery(WIDGETS_QUERY, {
     variables: { tabId },
@@ -61,15 +62,21 @@ export function useCanvas(tabId: string) {
           if (last) {
             updateWidgetPosition(widgetId, last);
           }
-          message.error('Vị trí đã có widget khác (server)');
+          notify.error({
+            vi: 'Vị trí đã có widget khác (server)',
+            en: 'Another widget occupies this position (server)',
+          });
         } else {
           lastValidPositions.current.set(widgetId, pos);
         }
       } catch {
-        message.error('Không thể lưu vị trí widget');
+        notify.error({
+          vi: 'Không thể lưu vị trí widget',
+          en: 'Failed to save widget position',
+        });
       }
     },
-    [updateWidgetPosition],
+    [updateWidgetPosition, notify],
   );
 
   const debouncedPatch = useCallback(
@@ -99,7 +106,7 @@ export function useCanvas(tabId: string) {
       if (conflicts.length > 0) {
         const last = lastValidPositions.current.get(widgetId) || widget.position;
         updateWidgetPosition(widgetId, last);
-        message.error('Vị trí đã có widget khác');
+        notify.error({ vi: 'Vị trí đã có widget khác', en: 'Another widget occupies this position' });
         return;
       }
 
@@ -107,7 +114,7 @@ export function useCanvas(tabId: string) {
       updateWidgetPosition(widgetId, newPos);
       debouncedPatch(widgetId, newPos);
     },
-    [widgets, updateWidgetPosition, debouncedPatch],
+    [widgets, updateWidgetPosition, debouncedPatch, notify],
   );
 
   const handleResizeStop = useCallback(
@@ -128,7 +135,7 @@ export function useCanvas(tabId: string) {
       if (conflicts.length > 0) {
         const last = lastValidPositions.current.get(widgetId) || widget.position;
         updateWidgetPosition(widgetId, last);
-        message.error('Vị trí đã có widget khác');
+        notify.error({ vi: 'Vị trí đã có widget khác', en: 'Another widget occupies this position' });
         return;
       }
 
@@ -136,7 +143,7 @@ export function useCanvas(tabId: string) {
       updateWidgetPosition(widgetId, newPos);
       debouncedPatch(widgetId, newPos);
     },
-    [widgets, updateWidgetPosition, debouncedPatch],
+    [widgets, updateWidgetPosition, debouncedPatch, notify],
   );
 
   return { widgets, snapEnabled, handleDragStop, handleResizeStop };

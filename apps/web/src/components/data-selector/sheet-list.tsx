@@ -46,15 +46,9 @@ export function SheetList({ sheets, value, onChange, maxHeight = 240 }: ISheetLi
                 onClick={() => onChange?.(sheet.id)}
               >
                 <Radio value={sheet.id}>
-                  <div>
-                    <Text strong className="!text-[13px]">
-                      {sheet.name}
-                    </Text>
-                    <br />
-                    <Text type="secondary" className="!text-[11px]">
-                      {sheet.seriesCount} chuỗi · {sheet.periodCount} kỳ
-                    </Text>
-                  </div>
+                  <Text strong className="!text-[13px]">
+                    {sheet.name}
+                  </Text>
                 </Radio>
               </div>
             ))}

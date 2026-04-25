@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { Typography, message } from 'antd';
+import { Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { useMutation, useApolloClient } from '@apollo/client';
+import { useApolloClient } from '@apollo/client';
+import { useAppMutation } from '@sbrb/shared-apollo-client';
 import { useAuthStore } from '../../store/auth.store';
 import { useTabs } from '../../hooks/use-tabs';
 import { AppLayout } from '../../components/layout/app-layout';
@@ -38,7 +39,9 @@ export default function DashboardPage() {
 
   const { activeTabId: storeActiveTabId, zoom } = useCanvasStore();
   const apolloClient = useApolloClient();
-  const [createWidgetMutation] = useMutation(CREATE_WIDGET_MUTATION);
+  const [createWidgetMutation] = useAppMutation(CREATE_WIDGET_MUTATION, {
+    fallbackSuccess: t('widget:create_success'),
+  });
   const { updateDataLink } = useWidgetConfig();
 
   const handleEditTab = (tab: ITabDto) => {
@@ -108,7 +111,6 @@ export default function DashboardPage() {
         });
       });
     }
-    message.success(t('widget:create_success'));
   };
 
   return (
