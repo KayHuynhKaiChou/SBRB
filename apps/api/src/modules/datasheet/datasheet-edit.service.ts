@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { AuthorizationService } from '../../common/services/authorization.service';
+import { Department } from '../department/entities/department.entity';
 import { DataSheet } from './entities/data-sheet.entity';
 import { DataSeries } from './entities/data-series.entity';
 
@@ -16,6 +17,8 @@ export class DatasheetEditService {
     private readonly seriesRepo: Repository<DataSeries>,
     @InjectRepository(DataSheet)
     private readonly sheetRepo: Repository<DataSheet>,
+    @InjectRepository(Department)
+    private readonly departmentRepo: Repository<Department>,
     private readonly authorizationService: AuthorizationService,
     private readonly dataSource: DataSource,
   ) {}
@@ -91,13 +94,12 @@ export class DatasheetEditService {
       const values = Object.fromEntries(sheet.periodHeaders.map((h) => [h, 0]));
       series = em.create(DataSeries, { dataSheetId: datasheetId, seriesName: name, rowIndex: nextRowIndex, values });
       await em.save(DataSeries, series);
-      await em.increment(DataSheet, { id: datasheetId }, 'seriesCount', 1);
     });
 
     return series!;
   }
 
-  /** Delete a DataSeries row and decrement sheet.seriesCount atomically. */
+  /** Delete a DataSeries row. */
   async deleteSeries(seriesId: string, userId: string): Promise<boolean> {
     const series = await this.seriesRepo.findOne({
       where: { id: seriesId },
@@ -109,16 +111,7 @@ export class DatasheetEditService {
     if (!sheet) throw new NotFoundException('DataSheet not found');
     await this.authorizationService.requireManager(sheet.businessId, userId);
 
-    await this.dataSource.transaction(async (em) => {
-      await em.delete(DataSeries, { id: seriesId });
-      await em
-        .createQueryBuilder()
-        .update(DataSheet)
-        .set({ seriesCount: () => 'GREATEST(series_count - 1, 0)' })
-        .where('id = :id', { id: sheet.id })
-        .execute();
-    });
-
+    await this.seriesRepo.delete({ id: seriesId });
     return true;
   }
 
@@ -137,7 +130,6 @@ export class DatasheetEditService {
 
     await this.dataSource.transaction(async (em) => {
       sheet.periodHeaders = [...sheet.periodHeaders, periodName];
-      sheet.periodCount += 1;
       await em.save(DataSheet, sheet);
 
       // Bulk-patch all series: append new key with value 0
@@ -179,7 +171,6 @@ export class DatasheetEditService {
       const next = [...sheet.periodHeaders];
       next.splice(clampedIndex, 0, periodName);
       sheet.periodHeaders = next;
-      sheet.periodCount += 1;
       await em.save(DataSheet, sheet);
 
       // Bulk-patch all series: append new key with value 0 (key order in JSONB is
@@ -212,7 +203,6 @@ export class DatasheetEditService {
 
     await this.dataSource.transaction(async (em) => {
       sheet.periodHeaders = sheet.periodHeaders.filter((h) => h !== periodName);
-      sheet.periodCount = Math.max(0, sheet.periodCount - 1);
       await em.save(DataSheet, sheet);
 
       // Bulk-remove key from all series JSONB values
@@ -309,11 +299,8 @@ export class DatasheetEditService {
           values,
         })),
       );
-      await em.increment(DataSheet, { id: datasheetId }, 'seriesCount', deptIds.length);
     });
 
-    // Reflect in-memory increment to avoid an extra SELECT round-trip.
-    sheet.seriesCount += deptIds.length;
     return sheet;
   }
 
@@ -330,23 +317,223 @@ export class DatasheetEditService {
     if (!sheet) throw new NotFoundException('DataSheet not found');
     await this.authorizationService.requireManager(sheet.businessId, userId);
 
-    await this.dataSource.transaction(async (em) => {
-      const result = await em.delete(DataSeries, {
-        dataSheetId: datasheetId,
-        seriesName: name,
-      });
-      const removed = result.affected ?? 0;
-      if (removed > 0) {
-        await em
-          .createQueryBuilder()
-          .update(DataSheet)
-          .set({ seriesCount: () => `GREATEST(series_count - ${removed}, 0)` })
-          .where('id = :id', { id: datasheetId })
-          .execute();
-      }
+    await this.seriesRepo.delete({
+      dataSheetId: datasheetId,
+      seriesName: name,
     });
 
     return true;
+  }
+
+  /**
+   * Add a new department (column group) to a department-template datasheet.
+   * Creates the Department record (business-scoped) and auto-populates one DataSeries
+   * per existing unique seriesName. rowIndex values are `max+1..max+N` so the new
+   * department appears LAST while preserving the original row ordering.
+   * If `name` collides with an existing department in this sheet, auto-suffixes `(2)`, `(3)`…
+   */
+  async addDepartmentToDatasheet(
+    datasheetId: string,
+    name: string,
+    userId: string,
+  ): Promise<DataSheet> {
+    const trimmed = (name ?? '').trim();
+    if (!trimmed || trimmed.length > 100) {
+      throw new BadRequestException('Invalid department name');
+    }
+
+    const sheet = await this.sheetRepo.findOne({ where: { id: datasheetId } });
+    if (!sheet) throw new NotFoundException('DataSheet not found');
+    if (sheet.templateType !== 'department') {
+      throw new BadRequestException('Only department-template datasheets support this operation');
+    }
+    await this.authorizationService.requireManager(sheet.businessId, userId);
+
+    // Single pass: extract unique seriesNames (ordered), existing dept names, maxRowIndex.
+    const existing = await this.seriesRepo
+      .createQueryBuilder('s')
+      .leftJoin('s.department', 'd')
+      .select(['s.seriesName', 's.rowIndex', 'd.id', 'd.name'])
+      .where('s.dataSheetId = :id', { id: datasheetId })
+      .orderBy('s.rowIndex', 'ASC')
+      .getMany();
+
+    if (existing.length === 0) {
+      throw new BadRequestException('Cannot add a department to an empty datasheet');
+    }
+
+    const seriesNames: string[] = [];
+    const seenSeries = new Set<string>();
+    const existingDeptNames = new Set<string>();
+    let maxRowIndex = -1;
+    for (const s of existing) {
+      if (!seenSeries.has(s.seriesName)) {
+        seenSeries.add(s.seriesName);
+        seriesNames.push(s.seriesName);
+      }
+      if (s.department?.name) existingDeptNames.add(s.department.name);
+      if (s.rowIndex > maxRowIndex) maxRowIndex = s.rowIndex;
+    }
+
+    // Auto-suffix on name collision (within this sheet only).
+    let finalName = trimmed;
+    let suffix = 2;
+    while (existingDeptNames.has(finalName)) {
+      finalName = `${trimmed} (${suffix++})`;
+    }
+
+    const zeroValues = Object.fromEntries(sheet.periodHeaders.map((h) => [h, 0]));
+
+    let newDept!: Department;
+    await this.dataSource.transaction(async (em) => {
+      newDept = await em.save(
+        Department,
+        em.create(Department, { businessId: sheet.businessId, name: finalName }),
+      );
+
+      await em.insert(
+        DataSeries,
+        seriesNames.map((seriesName, i) => ({
+          dataSheetId: datasheetId,
+          departmentId: newDept.id,
+          seriesName,
+          rowIndex: maxRowIndex + 1 + i,
+          values: zeroValues,
+        })),
+      );
+    });
+
+    return sheet;
+  }
+
+  /**
+   * Remove a department from a department-template datasheet — deletes all DataSeries
+   * records linking the given departmentId within this sheet. The Department record
+   * itself is kept (business-scoped; may be referenced by other sheets).
+   * Rejects if ≤2 distinct departments remain — the department template requires a
+   * minimum of 2 columns per business rule.
+   */
+  async deleteDepartmentFromDatasheet(
+    datasheetId: string,
+    departmentId: string,
+    userId: string,
+  ): Promise<boolean> {
+    const sheet = await this.sheetRepo.findOne({ where: { id: datasheetId } });
+    if (!sheet) throw new NotFoundException('DataSheet not found');
+    if (sheet.templateType !== 'department') {
+      throw new BadRequestException('Only department-template datasheets support this operation');
+    }
+    await this.authorizationService.requireManager(sheet.businessId, userId);
+
+    const { distinctCount } = (await this.seriesRepo
+      .createQueryBuilder('s')
+      .select('COUNT(DISTINCT s.departmentId)', 'distinctCount')
+      .where('s.dataSheetId = :id AND s.departmentId IS NOT NULL', { id: datasheetId })
+      .getRawOne()) as { distinctCount: string };
+    if (Number(distinctCount) <= 2) {
+      throw new BadRequestException('Minimum 2 departments required');
+    }
+
+    await this.seriesRepo.delete({ dataSheetId: datasheetId, departmentId });
+    return true;
+  }
+
+  /**
+   * Upsert a single cell in a department-template datasheet — for editing "sparse"
+   * cells (no DataSeries record yet for a given dept × seriesName).
+   * - Existing row → atomic JSONB update (same as updateSeriesValue, avoids RMW).
+   * - Missing row → create DataSeries inheriting rowIndex from any row with the same
+   *   seriesName (keeps alignment across departments).
+   * - `value = null` on missing row → no-op (nothing to clear).
+   */
+  async upsertCellValue(
+    datasheetId: string,
+    departmentId: string,
+    seriesName: string,
+    period: string,
+    value: number | null,
+    userId: string,
+  ): Promise<DataSeries> {
+    const sheet = await this.sheetRepo.findOne({ where: { id: datasheetId } });
+    if (!sheet) throw new NotFoundException('DataSheet not found');
+    if (sheet.templateType !== 'department') {
+      throw new BadRequestException('Only department-template datasheets support this operation');
+    }
+    await this.authorizationService.requireManager(sheet.businessId, userId);
+
+    // Period must be in sheet's header list (allow-list — never interpolate user input into SQL)
+    if (!sheet.periodHeaders.includes(period)) {
+      throw new BadRequestException('Period does not exist in this datasheet');
+    }
+
+    const existing = await this.seriesRepo.findOne({
+      where: { dataSheetId: datasheetId, departmentId, seriesName },
+    });
+
+    if (existing) {
+      if (value === null) {
+        await this.seriesRepo
+          .createQueryBuilder()
+          .update(DataSeries)
+          .set({ values: () => `values - :period` })
+          .setParameter('period', period)
+          .where('id = :id', { id: existing.id })
+          .execute();
+      } else {
+        await this.seriesRepo
+          .createQueryBuilder()
+          .update(DataSeries)
+          .set({ values: () => `jsonb_set(values, ARRAY[:period], :val::jsonb)` })
+          .setParameter('period', period)
+          .setParameter('val', JSON.stringify(value))
+          .where('id = :id', { id: existing.id })
+          .execute();
+      }
+      return this.seriesRepo.findOneOrFail({ where: { id: existing.id } });
+    }
+
+    // No existing row to clear.
+    if (value === null) {
+      throw new BadRequestException('Cannot clear a cell that has no data');
+    }
+
+    // Inherit rowIndex from any sibling row with the same seriesName (to stay aligned
+    // across departments). If no sibling, append at end.
+    const sibling = await this.seriesRepo
+      .createQueryBuilder('s')
+      .select('s.rowIndex', 'rowIndex')
+      .where('s.dataSheetId = :id AND s.seriesName = :name', {
+        id: datasheetId,
+        name: seriesName,
+      })
+      .orderBy('s.rowIndex', 'ASC')
+      .limit(1)
+      .getRawOne<{ rowIndex: number }>();
+    let rowIndex: number;
+    if (sibling) {
+      rowIndex = Number(sibling.rowIndex);
+    } else {
+      const max = await this.seriesRepo
+        .createQueryBuilder('s')
+        .select('COALESCE(MAX(s.rowIndex), -1)', 'max')
+        .where('s.dataSheetId = :id', { id: datasheetId })
+        .getRawOne<{ max: string }>();
+      rowIndex = Number(max?.max ?? -1) + 1;
+    }
+
+    const values = Object.fromEntries(sheet.periodHeaders.map((h) => [h, 0]));
+    values[period] = value;
+
+    const created = await this.seriesRepo.save(
+      this.seriesRepo.create({
+        dataSheetId: datasheetId,
+        departmentId,
+        seriesName,
+        rowIndex,
+        values,
+      }),
+    );
+    return created;
   }
 
   /** Rename a DataSeries row. Manager+ only. */

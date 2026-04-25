@@ -5,11 +5,13 @@ import {
   Index,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { User } from '../../auth/entities/user.entity';
 import { Business } from '../../business/entities/business.entity';
+import { Widget } from '../../widget/entities/widget.entity';
 
 @Entity('data_sheets')
 export class DataSheet {
@@ -49,13 +51,10 @@ export class DataSheet {
   @Column({ name: 'period_headers', type: 'jsonb', default: '[]' })
   periodHeaders: string[];
 
-  @Column({ name: 'series_count', type: 'integer', default: 0 })
-  seriesCount: number;
-
-  @Column({ name: 'period_count', type: 'integer', default: 0 })
-  periodCount: number;
-
-  @Column({ type: 'varchar', length: 20, default: 'processing' })
+  /** Lifecycle flag: 'active' | 'inactive'. Inactive sheets are hidden from widget-
+   *  creation pickers but existing widgets keep their link. Failed imports are rolled
+   *  back (row deleted) so 'error' / 'processing' no longer appear here. */
+  @Column({ type: 'varchar', length: 20, default: 'active' })
   status: string;
 
   @Column({ name: 'error_message', type: 'text', nullable: true })
@@ -69,4 +68,7 @@ export class DataSheet {
 
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt: Date;
+
+  @OneToMany(() => Widget, (w) => w.dataSheet)
+  widgets: Widget[];
 }

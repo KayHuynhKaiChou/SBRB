@@ -10,11 +10,14 @@ import { AddPeriodDto } from './dto/add-period.dto';
 import { AddSeriesDto } from './dto/add-series.dto';
 import { InsertPeriodDto } from './dto/insert-period.dto';
 import { InsertSeriesDto } from './dto/insert-series.dto';
+import { AddDepartmentToDatasheetDto } from './dto/add-department.dto';
+import { UpsertCellValueDto } from './dto/upsert-cell-value.dto';
 import {
   DataSeriesType,
   DataSheetType,
   ImportProgressType,
 } from './dto/datasheet.type';
+import { ListDataSheetsInput } from './dto/list-datasheets.dto';
 import { UpdateDatasheetDto } from './dto/update-datasheet.dto';
 import { UpdateSeriesValueDto } from './dto/update-series-value.dto';
 
@@ -31,9 +34,11 @@ export class DatasheetResolver {
   @Query(() => [DataSheetType], { name: 'dataSheets' })
   async getDataSheets(
     @Args('businessId', { type: () => ID }) businessId: string,
+    @Args('filter', { type: () => ListDataSheetsInput, nullable: true })
+    filter: ListDataSheetsInput | undefined,
     @CurrentUser() user: IJwtPayload,
   ): Promise<DataSheetType[]> {
-    return this.datasheetService.findByBusiness(businessId, user.sub);
+    return this.datasheetService.findByBusiness(businessId, user.sub, filter);
   }
 
   @Query(() => DataSheetType, { name: 'dataSheet' })
@@ -71,12 +76,35 @@ export class DatasheetResolver {
     return true;
   }
 
+  @Mutation(() => DataSheetType)
+  async toggleDataSheetStatus(
+    @Args('id', { type: () => ID }) id: string,
+    @CurrentUser() user: IJwtPayload,
+  ): Promise<DataSheetType> {
+    return this.datasheetService.toggleStatus(id, user.sub);
+  }
+
   @Mutation(() => DataSeriesType)
   async updateSeriesValue(
     @Args('input') input: UpdateSeriesValueDto,
     @CurrentUser() user: IJwtPayload,
   ): Promise<DataSeriesType> {
     return this.editService.updateSeriesValue(input.seriesId, input.period, input.value, user.sub);
+  }
+
+  @Mutation(() => DataSeriesType)
+  async upsertCellValue(
+    @Args('input') input: UpsertCellValueDto,
+    @CurrentUser() user: IJwtPayload,
+  ): Promise<DataSeriesType> {
+    return this.editService.upsertCellValue(
+      input.datasheetId,
+      input.departmentId,
+      input.seriesName,
+      input.period,
+      input.value,
+      user.sub,
+    );
   }
 
   @Mutation(() => DataSeriesType)
@@ -115,6 +143,31 @@ export class DatasheetResolver {
     @CurrentUser() user: IJwtPayload,
   ): Promise<boolean> {
     return this.editService.deleteSeriesByName(datasheetId, name, user.sub);
+  }
+
+  @Mutation(() => DataSheetType)
+  async addDepartmentToDatasheet(
+    @Args('input') input: AddDepartmentToDatasheetDto,
+    @CurrentUser() user: IJwtPayload,
+  ): Promise<DataSheetType> {
+    return this.editService.addDepartmentToDatasheet(
+      input.datasheetId,
+      input.name,
+      user.sub,
+    );
+  }
+
+  @Mutation(() => Boolean)
+  async deleteDepartmentFromDatasheet(
+    @Args('datasheetId', { type: () => ID }) datasheetId: string,
+    @Args('departmentId', { type: () => ID }) departmentId: string,
+    @CurrentUser() user: IJwtPayload,
+  ): Promise<boolean> {
+    return this.editService.deleteDepartmentFromDatasheet(
+      datasheetId,
+      departmentId,
+      user.sub,
+    );
   }
 
   @Mutation(() => DataSheetType)

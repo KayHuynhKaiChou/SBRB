@@ -1,6 +1,7 @@
 import { Field, ID, Int, ObjectType, Float } from '@nestjs/graphql';
 import GraphQLJSON from 'graphql-type-json';
 import { DepartmentType } from '../../department/dto/department.type';
+import { UserType } from '../../auth/dto/user.type';
 
 /** GraphQL ObjectType for DataSheet */
 @ObjectType()
@@ -14,6 +15,11 @@ export class DataSheetType {
   @Field(() => ID)
   uploadedBy: string;
 
+  @Field(() => UserType, { nullable: true })
+  uploader?: UserType | null;
+
+  @Field(() => Int, { nullable: true })
+  widgetCount?: number;
 
   @Field(() => String)
   name: string;
@@ -29,12 +35,6 @@ export class DataSheetType {
 
   @Field(() => [String])
   periodHeaders: string[];
-
-  @Field(() => Int)
-  seriesCount: number;
-
-  @Field(() => Int)
-  periodCount: number;
 
   @Field(() => String)
   status: string;
