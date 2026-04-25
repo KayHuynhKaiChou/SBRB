@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { User } from '../../auth/entities/user.entity';
 import { Tab } from '../../tab/entities/tab.entity';
+import { DataSheet } from '../../datasheet/entities/data-sheet.entity';
 
 @Entity('widgets')
 @Index(['tabId', 'x', 'y'])
@@ -57,6 +58,10 @@ export class Widget {
 
   @Column({ name: 'data_sheet_id', type: 'uuid', nullable: true })
   dataSheetId: string | null;
+
+  @ManyToOne(() => DataSheet, (s) => s.widgets, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'data_sheet_id' })
+  dataSheet: DataSheet | null;
 
   @Column({ name: 'selected_series', type: 'jsonb', default: '[]' })
   selectedSeries: string[];
