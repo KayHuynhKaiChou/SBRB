@@ -4,7 +4,7 @@ import { DatasheetImportService } from '../datasheet-import.service';
 import { DatasheetTemplateService } from '../datasheet-template.service';
 
 // Mock the parser module used by DatasheetImportService
-jest.mock('../../../../../worker/src/processors/import-excel-parser', () => ({
+jest.mock('../import-parsers/import-excel-parser', () => ({
   parseFileBuffer: jest.fn().mockResolvedValue({
     headers: ['T1', 'T2', 'T3'],
     rows: [

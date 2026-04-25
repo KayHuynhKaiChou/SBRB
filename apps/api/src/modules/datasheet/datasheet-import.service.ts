@@ -7,7 +7,7 @@ import { Department } from '../department/entities/department.entity';
 import { DataSheet } from './entities/data-sheet.entity';
 import { DataSeries } from './entities/data-series.entity';
 import { ImportBatch } from './entities/import-batch.entity';
-import { parseFileBuffer, validateParseResult } from '../../../../worker/src/processors/import-excel-parser';
+import { parseFileBuffer, validateParseResult } from './import-parsers/import-excel-parser';
 
 const ALLOWED_MIMES = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -18,6 +18,12 @@ const ALLOWED_MIMES = [
   'text/csv',
   'text/plain',
 ];
+
+/** Strip .xlsx / .csv / .xls extension from a filename. Returns the original when no
+ *  supported extension matches so non-standard filenames aren't silently truncated. */
+function stripFileExtension(filename: string): string {
+  return filename.replace(/\.(xlsx|xls|csv)$/i, '');
+}
 
 /** Handles file import and reimport logic for DataSheet — SRS 4.7 / 4.8 */
 @Injectable()
@@ -51,17 +57,14 @@ export class DatasheetImportService {
     const sheet = this.sheetRepo.create({
       businessId,
       uploadedBy: userId,
-      name: file.originalname,
+      name: stripFileExtension(file.originalname),
       originalFilename: file.originalname,
-      status: 'processing',
+      status: 'active',
       templateType: templateType,
       periodHeaders: headers,
-      periodCount: headers.length,
-      seriesCount: rows.length,
     });
     if (warnings.length > 0) {
-      sheet.status = 'READY_WITH_WARNINGS';
-      sheet.validationErrors = warnings; // Store as JSON
+      sheet.validationErrors = warnings; // Info only — status stays 'active'.
     }
     const savedSheet = await this.sheetRepo.save(sheet);
 
@@ -115,7 +118,6 @@ export class DatasheetImportService {
       await this.seriesRepo.save(seriesEntities);
 
       await this.sheetRepo.update(savedSheet.id, {
-        status: 'ready',
         importedAt: new Date(),
         errorMessage: warnings.length ? warnings.join('; ') : null,
       });
@@ -128,13 +130,20 @@ export class DatasheetImportService {
       this.publishProgress(savedSheet.id, 100, 'done');
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      await this.sheetRepo.update(savedSheet.id, { status: 'error', errorMessage: msg });
+      // Rollback: delete any series that were partially inserted, then delete the
+      // sheet itself, so failed imports leave no orphan rows in the DB.
+      try {
+        await this.seriesRepo.delete({ dataSheetId: savedSheet.id });
+        await this.sheetRepo.delete(savedSheet.id);
+      } catch {
+        /* swallow — rollback is best-effort; the original error below is what matters */
+      }
       await this.batchRepo.update(savedBatch.id, { status: 'error', errorMessage: msg });
       this.publishProgress(savedSheet.id, 0, 'error', msg);
       throw new BadRequestException(`Import thất bại: ${msg}`);
     }
 
-    return { batchId: savedBatch.id, datasheetId: savedSheet.id, status: 'ready' };
+    return { batchId: savedBatch.id, datasheetId: savedSheet.id, status: 'active' };
   }
 
   /** Reimport: parse new file, replace all existing series */
@@ -202,12 +211,11 @@ export class DatasheetImportService {
       await this.seriesRepo.save(seriesEntities);
 
       await this.sheetRepo.update(datasheetId, {
-        status: warnings.length > 0 ? 'READY_WITH_WARNINGS' : 'ready',
+        // status stays as-is (active/inactive — user-controlled). Reimport doesn't
+        // change lifecycle state.
         validationErrors: (warnings.length > 0 ? warnings : null) as any,
         importedAt: new Date(),
         periodHeaders: headers,
-        periodCount: headers.length,
-        seriesCount: rows.length,
         originalFilename: file.originalname,
         errorMessage: warnings.length ? warnings.join('; ') : null,
       });
@@ -220,13 +228,15 @@ export class DatasheetImportService {
       this.publishProgress(datasheetId, 100, 'done');
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      await this.sheetRepo.update(datasheetId, { status: 'error', errorMessage: msg });
+      // Reimport failed — existing sheet's status stays as-is. Record the error
+      // message + import batch failure for audit, but don't touch lifecycle.
+      await this.sheetRepo.update(datasheetId, { errorMessage: msg });
       await this.batchRepo.update(savedBatch.id, { status: 'error', errorMessage: msg });
       this.publishProgress(datasheetId, 0, 'error', msg);
       throw new BadRequestException(`Reimport thất bại: ${msg}`);
     }
 
-    return { batchId: savedBatch.id, datasheetId, status: 'ready' };
+    return { batchId: savedBatch.id, datasheetId, status: 'active' };
   }
 
   /** Parse file and return preview data WITHOUT saving anything to DB — SRS 4.7 */
@@ -275,10 +285,10 @@ export class DatasheetImportService {
   private async parseFile(file: Express.Multer.File, templateType: 'simple' | 'department' | 'pnl' = 'simple') {
     let result;
     if (templateType === 'department') {
-      const { parseDepartmentBuffer } = await import('../../../../worker/src/processors/import-department-parser');
+      const { parseDepartmentBuffer } = await import('./import-parsers/import-department-parser');
       result = await parseDepartmentBuffer(file.buffer, file.originalname);
     } else if (templateType === 'pnl') {
-      const { parsePnlBuffer } = await import('../../../../worker/src/processors/import-pnl-parser');
+      const { parsePnlBuffer } = await import('./import-parsers/import-pnl-parser');
       result = await parsePnlBuffer(file.buffer, file.originalname);
     } else {
       result = await parseFileBuffer(file.buffer, file.originalname);

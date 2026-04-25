@@ -8,6 +8,11 @@ import { DataSeries } from './entities/data-series.entity';
 import { ImportBatch } from './entities/import-batch.entity';
 import { DatasheetImportService } from './datasheet-import.service';
 import { DatasheetTemplateService } from './datasheet-template.service';
+import {
+  DataSheetSortField,
+  ListDataSheetsInput,
+  SortOrder,
+} from './dto/list-datasheets.dto';
 
 /**
  * DataSheet facade service — delegates import and template work to sub-services.
@@ -79,12 +84,44 @@ export class DatasheetService {
   // CRUD operations
   // ---------------------------------------------------------------------------
 
-  async findByBusiness(businessId: string, userId: string): Promise<DataSheet[]> {
+  async findByBusiness(
+    businessId: string,
+    userId: string,
+    filter?: ListDataSheetsInput,
+  ): Promise<DataSheet[]> {
     await this.authorizationService.requireMember(businessId, userId);
     const qb = this.sheetRepo.createQueryBuilder('s')
-      .where('s.businessId = :businessId', { businessId })
-      .orderBy('s.createdAt', 'DESC');
-    
+      .leftJoinAndSelect('s.uploader', 'uploader')
+      .loadRelationCountAndMap('s.widgetCount', 's.widgets')
+      .where('s.businessId = :businessId', { businessId });
+
+    if (filter?.status?.length) {
+      qb.andWhere('s.status IN (:...statuses)', { statuses: filter.status });
+    }
+    if (filter?.templateType?.length) {
+      qb.andWhere('s.templateType IN (:...templateTypes)', {
+        templateTypes: filter.templateType,
+      });
+    }
+
+    const order = filter?.sortOrder ?? SortOrder.DESC;
+    switch (filter?.sortBy) {
+      case DataSheetSortField.widgetCount:
+        // `widgetCount` is computed via loadRelationCountAndMap; ORDER BY needs a
+        // correlated subquery so the sort happens in SQL, not in memory.
+        qb.addSelect(
+          '(SELECT COUNT(*) FROM widgets w WHERE w.data_sheet_id = s.id)',
+          'widget_count_sort',
+        ).orderBy('widget_count_sort', order);
+        break;
+      case DataSheetSortField.importedAt:
+        qb.orderBy('s.importedAt', order, 'NULLS LAST');
+        break;
+      case DataSheetSortField.createdAt:
+      default:
+        qb.orderBy('s.createdAt', order);
+    }
+
     return qb.getMany();
   }
 
@@ -117,6 +154,16 @@ export class DatasheetService {
     if (departmentId !== undefined) {
       // Ignored: DataSheet no longer has departmentId. Series have departmentId.
     }
+    return this.sheetRepo.save(sheet);
+  }
+
+  /** Flip a datasheet's lifecycle flag between 'active' and 'inactive'. Inactive
+   *  sheets are filtered out of widget-creation pickers; existing widget links stay
+   *  intact so already-wired widgets keep rendering data. */
+  async toggleStatus(id: string, userId: string): Promise<DataSheet> {
+    const sheet = await this.findSheetOrFail(id);
+    await this.authorizationService.requireManager(sheet.businessId, userId);
+    sheet.status = sheet.status === 'active' ? 'inactive' : 'active';
     return this.sheetRepo.save(sheet);
   }
 
