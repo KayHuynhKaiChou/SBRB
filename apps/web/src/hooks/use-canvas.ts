@@ -1,5 +1,6 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useCallback } from 'react';
 import { useQuery } from '@apollo/client';
+import debounce from 'lodash/debounce';
 import { detectCollision } from '@sbrb/shared-utils';
 import { useCanvasStore } from '../store/canvas.store';
 import { apiClient } from '../services/api-client';
@@ -11,10 +12,14 @@ interface IDebouncedPosition extends IWidgetPosition {
   widgetId: string;
 }
 
+type DebouncedFn = ReturnType<typeof debounce<(pos: IDebouncedPosition) => void>>;
+
 export function useCanvas(tabId: string) {
   const { widgets, setWidgets, updateWidgetPosition, snapEnabled } = useCanvasStore();
   const lastValidPositions = useRef<Map<string, IWidgetPosition>>(new Map());
-  const debounceTimers = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  // Per-widget lodash.debounce instance — keyed by widgetId so concurrent drags
+  // of different widgets don't share a single throttle window.
+  const debouncers = useRef<Map<string, DebouncedFn>>(new Map());
   const notify = useNotify();
 
   const { data } = useQuery(WIDGETS_QUERY, {
@@ -77,15 +82,24 @@ export function useCanvas(tabId: string) {
     [updateWidgetPosition, notify],
   );
 
+  // Cancel + flush all pending debounced patches when the hook unmounts so
+  // we never leak a network call after navigation.
+  useEffect(() => {
+    const map = debouncers.current;
+    return () => {
+      map.forEach((fn) => fn.cancel());
+      map.clear();
+    };
+  }, []);
+
   const debouncedPatch = useCallback(
     (widgetId: string, pos: IWidgetPosition) => {
-      const existing = debounceTimers.current.get(widgetId);
-      if (existing) clearTimeout(existing);
-      const timer = setTimeout(() => {
-        patchPosition({ widgetId, ...pos });
-        debounceTimers.current.delete(widgetId);
-      }, 300);
-      debounceTimers.current.set(widgetId, timer);
+      let fn = debouncers.current.get(widgetId);
+      if (!fn) {
+        fn = debounce(patchPosition, 300);
+        debouncers.current.set(widgetId, fn);
+      }
+      fn({ widgetId, ...pos });
     },
     [patchPosition],
   );
