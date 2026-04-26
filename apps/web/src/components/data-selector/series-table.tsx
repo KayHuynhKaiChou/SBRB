@@ -4,7 +4,7 @@ import { SearchOutlined, SortAscendingOutlined } from '@ant-design/icons';
 import { useQuery } from '@apollo/client';
 import { DATA_SERIES_QUERY } from '../../graphql/datasheet.operations';
 import type { IDataSeriesDto } from '../../hooks/use-datasheet';
-import { useDebounce } from '../../hooks/use-debounce';
+import { useDebounce } from '@uidotdev/usehooks';
 
 interface ISeriesTableProps {
   datasheetId: string | null;
