@@ -1,6 +1,7 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { InputNumber } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { useToggle } from '@uidotdev/usehooks';
 
 interface IEditableCellProps {
   value: number | null;
@@ -10,7 +11,7 @@ interface IEditableCellProps {
 /** Cell that shows a formatted number and switches to InputNumber on click */
 export const EditableCell = React.memo(function EditableCell({ value, onSave }: IEditableCellProps) {
   const { t, i18n } = useTranslation('datasheet');
-  const [editing, setEditing] = useState(false);
+  const [editing, toggleEditing] = useToggle(false);
   const [draft, setDraft] = useState<number | null>(value);
   const committedRef = useRef(false);
 
@@ -19,13 +20,13 @@ export const EditableCell = React.memo(function EditableCell({ value, onSave }: 
   const startEdit = () => {
     committedRef.current = false;
     setDraft(value);
-    setEditing(true);
+    toggleEditing(true);
   };
 
   const commit = () => {
     if (committedRef.current) return;
     committedRef.current = true;
-    setEditing(false);
+    toggleEditing(false);
     if (draft !== value) {
       onSave(draft);
     }
@@ -34,7 +35,7 @@ export const EditableCell = React.memo(function EditableCell({ value, onSave }: 
   const cancel = () => {
     committedRef.current = true;
     setDraft(value);
-    setEditing(false);
+    toggleEditing(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

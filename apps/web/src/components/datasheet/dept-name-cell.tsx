@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Input } from 'antd';
 import { EditOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useToggle } from '@uidotdev/usehooks';
 
 interface IDeptNameCellProps {
   deptId: string;
@@ -21,7 +22,7 @@ export const DeptNameCell = React.memo(function DeptNameCell({
   onRename,
 }: IDeptNameCellProps) {
   const { t } = useTranslation('datasheet');
-  const [editing, setEditing] = useState(false);
+  const [editing, toggleEditing] = useToggle(false);
   const [draft, setDraft] = useState(name);
   const committedRef = useRef(false);
 
@@ -30,13 +31,13 @@ export const DeptNameCell = React.memo(function DeptNameCell({
     if (!onRename) return;
     committedRef.current = false;
     setDraft(name);
-    setEditing(true);
+    toggleEditing(true);
   };
 
   const commit = () => {
     if (committedRef.current) return;
     committedRef.current = true;
-    setEditing(false);
+    toggleEditing(false);
     const trimmed = draft.trim();
     if (trimmed && trimmed !== name) {
       onRename?.(deptId, trimmed);
@@ -46,7 +47,7 @@ export const DeptNameCell = React.memo(function DeptNameCell({
   const cancel = () => {
     committedRef.current = true;
     setDraft(name);
-    setEditing(false);
+    toggleEditing(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
