@@ -42,12 +42,19 @@ export class TabService {
   async create(businessId: string, userId: string, dto: CreateTabDto): Promise<TabType> {
     const member = await this.authorizationService.requireMember(businessId, userId);
     if (!MANAGER_ROLES.includes(member.role)) {
-      throw new ForbiddenException('Manager or higher required to create tabs');
+      throw new ForbiddenException({
+        message: { vi: 'Cần quyền Quản lý để tạo Tab', en: 'Manager or higher required to create tabs' },
+      });
     }
 
     const count = await this.tabRepo.count({ where: { businessId } });
     if (count >= MAX_TABS_PER_BUSINESS) {
-      throw new BadRequestException(`Maximum ${MAX_TABS_PER_BUSINESS} tabs per business`);
+      throw new BadRequestException({
+        message: {
+          vi: `Tối đa ${MAX_TABS_PER_BUSINESS} Tab / Doanh nghiệp`,
+          en: `Maximum ${MAX_TABS_PER_BUSINESS} tabs per business`,
+        },
+      });
     }
 
     const maxPosition = await this.tabRepo
@@ -79,10 +86,14 @@ export class TabService {
     const member = await this.authorizationService.requireMember(tab.businessId, userId);
 
     if (!MANAGER_ROLES.includes(member.role)) {
-      throw new ForbiddenException('Manager or higher required to update tabs');
+      throw new ForbiddenException({
+        message: { vi: 'Cần quyền Quản lý để cập nhật Tab', en: 'Manager or higher required to update tabs' },
+      });
     }
     if (tab.isProtected && member.role !== 'owner') {
-      throw new ForbiddenException('Only the business owner can modify protected tabs');
+      throw new ForbiddenException({
+        message: { vi: 'Chỉ Chủ Doanh nghiệp mới được sửa Tab được bảo vệ', en: 'Only the business owner can modify protected tabs' },
+      });
     }
 
     if (dto.name !== undefined) tab.name = dto.name;
@@ -91,7 +102,9 @@ export class TabService {
     if (dto.isPinned !== undefined) tab.isPinned = dto.isPinned;
     if (dto.isProtected !== undefined) {
       if (dto.isProtected && member.role !== 'owner') {
-        throw new ForbiddenException('Only the business owner can set a tab as protected');
+        throw new ForbiddenException({
+          message: { vi: 'Chỉ Chủ Doanh nghiệp mới được đặt Tab dạng bảo vệ', en: 'Only the business owner can set a tab as protected' },
+        });
       }
       tab.isProtected = dto.isProtected;
     }
@@ -100,20 +113,26 @@ export class TabService {
     return this.mapTab(saved);
   }
 
-  /** Delete tab — Manager+; only Owner can delete protected tabs; cascades widgets */
-  async delete(id: string, userId: string): Promise<void> {
+  /** Delete tab — returns the deleted snapshot for FE cache patching. */
+  async delete(id: string, userId: string): Promise<TabType> {
     const tab = await this.findTabOrFail(id);
     const member = await this.authorizationService.requireMember(tab.businessId, userId);
 
     if (!MANAGER_ROLES.includes(member.role)) {
-      throw new ForbiddenException('Manager or higher required to delete tabs');
+      throw new ForbiddenException({
+        message: { vi: 'Cần quyền Quản lý để xoá Tab', en: 'Manager or higher required to delete tabs' },
+      });
     }
     if (tab.isProtected && member.role !== 'owner') {
-      throw new ForbiddenException('Only the business owner can delete protected tabs');
+      throw new ForbiddenException({
+        message: { vi: 'Chỉ Chủ Doanh nghiệp mới được xoá Tab được bảo vệ', en: 'Only the business owner can delete protected tabs' },
+      });
     }
 
+    const snapshot = this.mapTab(tab);
     // Widget cascade handled via DB onDelete: 'CASCADE' on widget.tabId
     await this.tabRepo.delete(id);
+    return snapshot;
   }
 
   /**
@@ -130,7 +149,9 @@ export class TabService {
     const firstTab = await this.findTabOrFail(orders[0].id);
     const member = await this.authorizationService.requireMember(firstTab.businessId, userId);
     if (!MANAGER_ROLES.includes(member.role)) {
-      throw new ForbiddenException('Manager or higher required to reorder tabs');
+      throw new ForbiddenException({
+        message: { vi: 'Cần quyền Quản lý để sắp xếp Tab', en: 'Manager or higher required to reorder tabs' },
+      });
     }
 
     await this.dataSource.transaction(async (em) => {
@@ -146,7 +167,11 @@ export class TabService {
 
   private async findTabOrFail(id: string): Promise<Tab> {
     const tab = await this.tabRepo.findOne({ where: { id } });
-    if (!tab) throw new NotFoundException(`Tab ${id} not found`);
+    if (!tab) {
+      throw new NotFoundException({
+        message: { vi: 'Không tìm thấy Tab', en: 'Tab not found' },
+      });
+    }
     return tab;
   }
 

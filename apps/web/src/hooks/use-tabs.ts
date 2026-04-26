@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { useQuery } from '@apollo/client';
 import { useCanvasStore } from '../store/canvas.store';
-import { useAppMutation } from '@sbrb/shared-apollo-client';
+import { useAppMutation, useListCache } from '@sbrb/shared-apollo-client';
+import type { IApiResponse, ITabDto } from '@sbrb/shared-types';
 import {
   TABS_QUERY,
   CREATE_TAB_MUTATION,
@@ -26,114 +27,84 @@ export interface IUpdateTabInput {
   isProtected?: boolean;
 }
 
+interface ITabsQueryResult {
+  tabs: ITabDto[];
+}
+
+interface ICreateTabResult {
+  createTab: IApiResponse<ITabDto>;
+}
+
+interface IUpdateTabResult {
+  updateTab: IApiResponse<ITabDto>;
+}
+
+interface IDeleteTabResult {
+  deleteTab: IApiResponse<{ id: string; businessId: string }>;
+}
+
 export function useTabs(businessId: string) {
   const { tabs, activeTabId, setTabs, setActiveTab } = useCanvasStore();
 
-  const { data, refetch } = useQuery(TABS_QUERY, {
+  const { data, refetch } = useQuery<ITabsQueryResult>(TABS_QUERY, {
     variables: { businessId },
     skip: !businessId,
     fetchPolicy: 'cache-and-network',
   });
 
-  const [createTabMutation] = useAppMutation(CREATE_TAB_MUTATION, {
-    notifyOnSuccess: false,
-    fallbackError: { vi: 'Tạo tab thất bại', en: 'Failed to create tab' },
+  // Bind list-cache helpers for the Tabs query under this business.
+  const tabCache = useListCache<ITabsQueryResult, { businessId: string }, ITabDto>({
+    query: TABS_QUERY,
+    variables: { businessId },
+    read: (d) => d.tabs,
+    write: (d, items) => ({ ...d, tabs: items }),
   });
-  const [updateTabMutation] = useAppMutation(UPDATE_TAB_MUTATION, {
-    notifyOnSuccess: false,
-    fallbackError: { vi: 'Cập nhật tab thất bại', en: 'Failed to update tab' },
+
+  const [createTabMutation] = useAppMutation<ICreateTabResult>(CREATE_TAB_MUTATION);
+  const [updateTabMutation] = useAppMutation<IUpdateTabResult>(UPDATE_TAB_MUTATION);
+  const [deleteTabMutation] = useAppMutation<IDeleteTabResult>(DELETE_TAB_MUTATION, {
+    onSuccess: ({ deleteTab }) => {
+      const deleted = deleteTab.data;
+      if (!deleted) return;
+      tabCache.removeById(deleted.id);
+      tabCache.evict('Tab', deleted.id);
+    },
   });
-  const [deleteTabMutation] = useAppMutation(DELETE_TAB_MUTATION, {
-    notifyOnSuccess: false,
-    fallbackError: { vi: 'Xóa tab thất bại', en: 'Failed to delete tab' },
-  });
-  const [reorderTabsMutation] = useAppMutation(REORDER_TABS_MUTATION, {
-    notifyOnSuccess: false,
-    fallbackError: { vi: 'Sắp xếp tab thất bại', en: 'Failed to reorder tabs' },
-  });
+  const [reorderTabsMutation] = useAppMutation(REORDER_TABS_MUTATION);
 
   useEffect(() => {
     if (data?.tabs) {
       setTabs(data.tabs);
       if (!activeTabId && data.tabs.length > 0) {
-        const pinned = data.tabs.find((t: { isPinned: boolean }) => t.isPinned);
+        const pinned = data.tabs.find((t) => t.isPinned);
         setActiveTab(pinned ? pinned.id : data.tabs[0].id);
       }
     }
   }, [data, activeTabId, setTabs, setActiveTab]);
 
   const createTab = async (input: Omit<ICreateTabInput, 'businessId'>) => {
-    await createTabMutation({
+    const result = await createTabMutation({
       variables: { input: { ...input, businessId } },
-      update: (cache, { data: mutationData }) => {
-        const newTab = mutationData?.createTab;
-        if (!newTab) return;
-        const existing = cache.readQuery<{ tabs: unknown[] }>({
-          query: TABS_QUERY,
-          variables: { businessId },
-        });
-        if (existing) {
-          cache.writeQuery({
-            query: TABS_QUERY,
-            variables: { businessId },
-            data: { tabs: [...existing.tabs, newTab] },
-          });
-        } else {
-          refetch().catch(() => null);
-        }
-      },
     });
+    const newTab = result.data?.createTab?.data;
+    if (newTab) tabCache.append(newTab);
   };
 
   const updateTab = async (id: string, input: IUpdateTabInput) => {
-    await updateTabMutation({
-      variables: { id, input },
-      update: (cache, { data: mutationData }) => {
-        const updatedTab = mutationData?.updateTab;
-        if (!updatedTab) return;
-        const existing = cache.readQuery<{ tabs: Array<{ id: string }> }>({
-          query: TABS_QUERY,
-          variables: { businessId },
-        });
-        if (existing) {
-          cache.writeQuery({
-            query: TABS_QUERY,
-            variables: { businessId },
-            data: {
-              tabs: existing.tabs.map((t) => (t.id === id ? { ...t, ...updatedTab } : t)),
-            },
-          });
-        } else {
-          refetch().catch(() => null);
-        }
-      },
-    });
+    // BE returns the updated Tab; Apollo's keyFields:['id'] on Tab auto-normalizes,
+    // so the canvas tab list refreshes without a manual cache write.
+    await updateTabMutation({ variables: { id, input } });
   };
 
   const deleteTab = async (id: string) => {
-    await deleteTabMutation({
-      variables: { id },
-      update: (cache) => {
-        const existing = cache.readQuery<{ tabs: Array<{ id: string }> }>({
-          query: TABS_QUERY,
-          variables: { businessId },
-        });
-        if (existing) {
-          cache.writeQuery({
-            query: TABS_QUERY,
-            variables: { businessId },
-            data: { tabs: existing.tabs.filter((t) => t.id !== id) },
-          });
-        } else {
-          refetch().catch(() => null);
-        }
-      },
-    });
+    await deleteTabMutation({ variables: { id } });
     if (activeTabId === id) setActiveTab(null);
   };
 
   const reorderTabs = async (orders: Array<{ id: string; order: number }>) => {
     await reorderTabsMutation({ variables: { orders } });
+    // Reorder rewrites positions across many rows — refetch is simpler than
+    // patching local order in cache.
     await refetch();
   };
 
