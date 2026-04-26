@@ -9,7 +9,12 @@ import { refreshAccessToken } from '../services/token-refresh-manager';
  */
 export const apolloErrorLink = onError(({ graphQLErrors, networkError, operation, forward }) => {
   const isAuthError =
-    graphQLErrors?.some((e) => e.extensions?.code === 'UNAUTHENTICATED') ||
+    graphQLErrors?.some((e) => {
+      // Legacy: NestJS @nestjs/graphql throws UNAUTHENTICATED for missing/invalid token.
+      // New: GqlGlobalExceptionFilter sets numeric code (401) per IApiResponse contract.
+      const code = e.extensions?.code as string | number | undefined;
+      return code === 'UNAUTHENTICATED' || code === 401;
+    }) ||
     (networkError && 'statusCode' in networkError && networkError.statusCode === 401);
 
   if (!isAuthError) return;

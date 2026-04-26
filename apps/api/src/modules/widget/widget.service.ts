@@ -38,10 +38,18 @@ export class WidgetService {
   /** Verify user is Manager+ in the business that owns the tab */
   private async assertManagerRole(tabId: string, userId: string): Promise<{ tab: Tab; business: Business }> {
     const tab = await this.tabRepo.findOne({ where: { id: tabId } });
-    if (!tab) throw new NotFoundException('Tab not found');
+    if (!tab) {
+      throw new NotFoundException({
+        message: { vi: 'Không tìm thấy Tab', en: 'Tab not found' },
+      });
+    }
 
     const business = await this.businessRepo.findOne({ where: { id: tab.businessId } });
-    if (!business) throw new NotFoundException('Business not found');
+    if (!business) {
+      throw new NotFoundException({
+        message: { vi: 'Không tìm thấy Doanh nghiệp', en: 'Business not found' },
+      });
+    }
 
     await this.authorizationService.requireManager(tab.businessId, userId);
 
@@ -51,7 +59,11 @@ export class WidgetService {
   /** Verify user is a member (any role) in the business that owns the tab */
   private async assertMemberAccess(tabId: string, userId: string): Promise<Tab> {
     const tab = await this.tabRepo.findOne({ where: { id: tabId } });
-    if (!tab) throw new NotFoundException('Tab not found');
+    if (!tab) {
+      throw new NotFoundException({
+        message: { vi: 'Không tìm thấy Tab', en: 'Tab not found' },
+      });
+    }
 
     await this.authorizationService.requireMember(tab.businessId, userId);
 
@@ -66,10 +78,18 @@ export class WidgetService {
 
   async findById(id: string, userId: string): Promise<WidgetType> {
     const widget = await this.widgetRepo.findOne({ where: { id } });
-    if (!widget) throw new NotFoundException('Widget not found');
+    if (!widget) {
+      throw new NotFoundException({
+        message: { vi: 'Không tìm thấy Widget', en: 'Widget not found' },
+      });
+    }
 
     const tab = await this.tabRepo.findOne({ where: { id: widget.tabId } });
-    if (!tab) throw new NotFoundException('Tab not found');
+    if (!tab) {
+      throw new NotFoundException({
+        message: { vi: 'Không tìm thấy Tab', en: 'Tab not found' },
+      });
+    }
 
     await this.authorizationService.requireMember(tab.businessId, userId);
 
@@ -81,7 +101,12 @@ export class WidgetService {
 
     const count = await this.widgetRepo.count({ where: { tabId } });
     if (count >= MAX_WIDGETS_PER_TAB) {
-      throw new BadRequestException(`Maximum ${MAX_WIDGETS_PER_TAB} widgets per tab reached`);
+      throw new BadRequestException({
+        message: {
+          vi: `Tối đa ${MAX_WIDGETS_PER_TAB} Widget / Tab`,
+          en: `Maximum ${MAX_WIDGETS_PER_TAB} widgets per tab reached`,
+        },
+      });
     }
 
     // Find first empty position to avoid overlap on creation
@@ -127,12 +152,16 @@ export class WidgetService {
     return this.mapWidget(saved, businessId);
   }
 
-  async delete(id: string, userId: string): Promise<void> {
-    const { widget } = await this.widgetAuth.assertManagerByWidgetId(id, userId);
+  /** Delete a widget and return the deleted entity snapshot so the caller can patch caches. */
+  async delete(id: string, userId: string): Promise<WidgetType> {
+    const { widget, businessId } = await this.widgetAuth.assertManagerByWidgetId(id, userId);
+    const snapshot = this.mapWidget(widget, businessId);
 
     // Cascade delete alert thresholds first (FK has CASCADE but we ensure it explicitly)
     await this.alertRepo.delete({ widgetId: widget.id });
     await this.widgetRepo.delete(widget.id);
+
+    return snapshot;
   }
 
   /**

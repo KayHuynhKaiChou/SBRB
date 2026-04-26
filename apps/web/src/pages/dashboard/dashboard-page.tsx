@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { useApolloClient } from '@apollo/client';
-import { useAppMutation } from '@sbrb/shared-apollo-client';
+import { useAppMutation, useListCache } from '@sbrb/shared-apollo-client';
+import type { IApiResponse, IWidgetDto } from '@sbrb/shared-types';
 import { useAuthStore } from '../../store/auth.store';
 import { useTabs } from '../../hooks/use-tabs';
 import { AppLayout } from '../../components/layout/app-layout';
@@ -12,12 +12,28 @@ import { AddTabModal } from '../../components/tab/add-tab-modal';
 import { EditTabModal } from '../../components/tab/edit-tab-modal';
 import { AddWidgetModal } from '../../components/canvas/add-widget-modal';
 import { DataSelectorModal } from '../../components/data-selector/data-selector-modal';
-import { CREATE_WIDGET_MUTATION, WIDGETS_QUERY } from '../../graphql/canvas.operations';
+import {
+  CREATE_WIDGET_MUTATION,
+  DELETE_WIDGET_MUTATION,
+  WIDGETS_QUERY,
+} from '../../graphql/canvas.operations';
 import { useCanvasStore } from '../../store/canvas.store';
 import { useWidgetConfig } from '../../hooks/use-widget-config';
 import type { ITabDto } from '@sbrb/shared-types';
 
 const { Text } = Typography;
+
+interface IWidgetsQueryResult {
+  widgets: IWidgetDto[];
+}
+
+interface ICreateWidgetResult {
+  createWidget: IApiResponse<IWidgetDto>;
+}
+
+interface IDeleteWidgetResult {
+  deleteWidget: IApiResponse<{ id: string; tabId: string }>;
+}
 
 export default function DashboardPage() {
   const { t } = useTranslation(['dashboard', 'widget']);
@@ -38,11 +54,29 @@ export default function DashboardPage() {
   const [dataSelectorWidgetId, setDataSelectorWidgetId] = useState<string | null>(null);
 
   const { activeTabId: storeActiveTabId, zoom } = useCanvasStore();
-  const apolloClient = useApolloClient();
-  const [createWidgetMutation] = useAppMutation(CREATE_WIDGET_MUTATION, {
-    fallbackSuccess: t('widget:create_success'),
+
+  // Bind cache helpers for the Widgets list under the active tab.
+  const widgetCache = useListCache<IWidgetsQueryResult, { tabId: string }, IWidgetDto>({
+    query: WIDGETS_QUERY,
+    variables: storeActiveTabId ? { tabId: storeActiveTabId } : ({} as { tabId: string }),
+    read: (d) => d.widgets,
+    write: (d, items) => ({ ...d, widgets: items }),
+  });
+
+  const [createWidgetMutation] = useAppMutation<ICreateWidgetResult>(CREATE_WIDGET_MUTATION);
+  const [deleteWidgetMutation] = useAppMutation<IDeleteWidgetResult>(DELETE_WIDGET_MUTATION, {
+    onSuccess: ({ deleteWidget }) => {
+      const deleted = deleteWidget.data;
+      if (!deleted) return;
+      widgetCache.removeById(deleted.id);
+      widgetCache.evict('Widget', deleted.id);
+    },
   });
   const { updateDataLink } = useWidgetConfig();
+
+  const handleDeleteWidget = (widgetId: string) => {
+    void deleteWidgetMutation({ variables: { id: widgetId } });
+  };
 
   const handleEditTab = (tab: ITabDto) => {
     setEditingTab(tab);
@@ -86,20 +120,24 @@ export default function DashboardPage() {
         },
       },
     });
-    // Link data source if selected during creation
-    const widgetId = result.data?.createWidget?.id;
-    if (widgetId && input.dataSheetId && input.selectedSeries.length > 0) {
-      await updateDataLink(widgetId, {
+    const newWidget = result.data?.createWidget?.data;
+    if (!newWidget) return;
+
+    // Append into the active tab's Widgets list — no refetch needed.
+    widgetCache.append(newWidget);
+
+    // Link data source if selected during creation. Apollo auto-normalizes the
+    // returned Widget by id, so the canvas card updates without an extra refetch.
+    if (input.dataSheetId && input.selectedSeries.length > 0) {
+      await updateDataLink(newWidget.id, {
         dataSheetId: input.dataSheetId,
         selectedSeries: input.selectedSeries,
         selectedPeriods: null,
       });
     }
-    // Single refetch after all mutations complete — widget appears with data ready
-    await apolloClient.refetchQueries({ include: ['Widgets'] });
 
-    // Scroll canvas to new widget position + toast
-    const pos = result.data?.createWidget?.position;
+    // Scroll canvas to new widget position
+    const pos = newWidget.position;
     if (pos) {
       requestAnimationFrame(() => {
         const container = document.querySelector('[data-canvas-scroll]');
@@ -128,7 +166,7 @@ export default function DashboardPage() {
           tabId={activeTabId}
           onAddWidget={() => setAddWidgetOpen(true)}
           onEditWidget={() => { /* Phase 11 */ }}
-          onDeleteWidget={() => { /* Phase 11 */ }}
+          onDeleteWidget={handleDeleteWidget}
           onOpenDataSelector={handleOpenDataSelector}
         />
       ) : (

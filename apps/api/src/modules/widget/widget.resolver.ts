@@ -1,11 +1,14 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
+import type { IApiResponse } from '@sbrb/shared-types';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { GqlJwtAuthGuard } from '../../common/guards/gql-jwt-auth.guard';
+import { created, ok } from '../../common/utils/api-response.util';
 import { IJwtPayload } from '../auth/jwt.strategy';
 import { CreateWidgetDto } from './dto/create-widget.dto';
 import { UpdateWidgetDto } from './dto/update-widget.dto';
 import { WidgetType } from './dto/widget.type';
+import { WidgetResponse } from './dto/widget-response.type';
 import { WidgetService } from './widget.service';
 
 /** GraphQL resolver for Widget — SRS 4.4 / 4.5 */
@@ -30,29 +33,31 @@ export class WidgetResolver {
     return this.widgetService.findById(id, user.sub);
   }
 
-  @Mutation(() => WidgetType)
+  @Mutation(() => WidgetResponse)
   async createWidget(
     @Args('input') input: CreateWidgetDto,
     @CurrentUser() user: IJwtPayload,
-  ): Promise<WidgetType> {
-    return this.widgetService.create(input.tabId, user.sub, input);
+  ): Promise<IApiResponse<WidgetType>> {
+    const widget = await this.widgetService.create(input.tabId, user.sub, input);
+    return created(widget, { vi: 'Đã tạo Widget', en: 'Widget created' });
   }
 
-  @Mutation(() => WidgetType)
+  @Mutation(() => WidgetResponse)
   async updateWidget(
     @Args('id', { type: () => ID }) id: string,
     @Args('input') input: UpdateWidgetDto,
     @CurrentUser() user: IJwtPayload,
-  ): Promise<WidgetType> {
-    return this.widgetService.update(id, user.sub, input);
+  ): Promise<IApiResponse<WidgetType>> {
+    const widget = await this.widgetService.update(id, user.sub, input);
+    return ok(widget, { vi: 'Đã cập nhật Widget', en: 'Widget updated' });
   }
 
-  @Mutation(() => Boolean)
+  @Mutation(() => WidgetResponse)
   async deleteWidget(
     @Args('id', { type: () => ID }) id: string,
     @CurrentUser() user: IJwtPayload,
-  ): Promise<boolean> {
-    await this.widgetService.delete(id, user.sub);
-    return true;
+  ): Promise<IApiResponse<WidgetType>> {
+    const snapshot = await this.widgetService.delete(id, user.sub);
+    return ok(snapshot, { vi: 'Đã xoá Widget', en: 'Widget deleted' });
   }
 }

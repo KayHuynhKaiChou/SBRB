@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Rnd } from 'react-rnd';
+import { Popconfirm } from 'antd';
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { IWidgetDto } from '@sbrb/shared-types';
@@ -97,12 +98,20 @@ export function WidgetCard({
                 size="small"
                 onClick={handleEditClick}
               />
-              <IconButton
-                icon={<DeleteOutlined />}
-                tooltip={t('widget:delete_tooltip')}
-                size="small"
-                onClick={() => onDelete(widget.id)}
-              />
+              <Popconfirm
+                title={t('common:confirm_delete_title')}
+                description={t('widget:delete_confirm')}
+                okText={t('common:delete')}
+                cancelText={t('common:cancel')}
+                okButtonProps={{ danger: true }}
+                onConfirm={() => onDelete(widget.id)}
+              >
+                <IconButton
+                  icon={<DeleteOutlined />}
+                  tooltip={t('widget:delete_tooltip')}
+                  size="small"
+                />
+              </Popconfirm>
             </div>
           )}
 

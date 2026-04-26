@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { Modal, Input, Divider, Typography, Form } from 'antd';
 import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useApolloClient } from '@apollo/client';
 import { IconButton } from '@sbrb/ui';
 import type { IWidgetDto, IChartConfig } from '@sbrb/shared-types';
 import { useChartData, useAvailableSeries } from '../../hooks/use-chart-data';
@@ -104,12 +103,11 @@ export function WidgetModal({ widget, open, onClose, onOpenDataSelector }: IWidg
   const { updateConfig, updateDataLink, loading: saving } = useWidgetConfig();
   const { removeDataLink } = useWidgetConfig();
 
-  const apolloClient = useApolloClient();
-
   const handleSave = async () => {
     savingRef.current = true;
     const values = form.getFieldsValue(true);
-    // Save config (chart settings + seriesColors) — no refetch yet
+    // Save config (chart settings + seriesColors). BE returns the updated Widget;
+    // Apollo auto-normalizes by id, so the canvas card refreshes without refetching.
     await updateConfig(widget.id, {
       name: values.name,
       type: values.type,
@@ -124,7 +122,8 @@ export function WidgetModal({ widget, open, onClose, onOpenDataSelector }: IWidg
       yAxisNameRight: values.yAxisNameRight,
       xAxisGroup: values.xAxisGroup,
     } as Parameters<typeof updateConfig>[1]);
-    // Save series selection + period selection (separate field on widget entity)
+    // Save series/period selection. updateDataLink internally refetches the
+    // dependent chart-data queries; we don't refetch the Widget itself.
     if (widget.dataLink?.datasheetId) {
       const periods = values.selectedPeriods;
       await updateDataLink(widget.id, {
@@ -133,9 +132,7 @@ export function WidgetModal({ widget, open, onClose, onOpenDataSelector }: IWidg
         selectedPeriods: (!periods || periods.length === 0 || periods.length === allPeriods.length) ? null : periods,
       });
     }
-    // Close first, then refetch — prevents useEffect from resetting form mid-save
     onClose();
-    apolloClient.refetchQueries({ include: 'active' });
   };
 
   const handleRemoveLink = async () => {

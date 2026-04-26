@@ -17,6 +17,11 @@ input AddSeriesDto {
   name: String!
 }
 
+type ApiError {
+  details: String
+  stack: String
+}
+
 input AssignWidgetsDto {
   widgetIds: [String!]!
 }
@@ -163,6 +168,13 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+type DepartmentListResponse {
+  code: Int!
+  data: [DepartmentType!]
+  error: ApiError
+  message: LocalizedMessage!
+}
+
 type DepartmentMember {
   businessRole: String
   departmentId: ID!
@@ -173,10 +185,24 @@ type DepartmentMember {
   userId: ID!
 }
 
+type DepartmentMemberResponse {
+  code: Int!
+  data: DepartmentMember
+  error: ApiError
+  message: LocalizedMessage!
+}
+
 input DepartmentPositionInput {
   id: ID!
   positionX: Float!
   positionY: Float!
+}
+
+type DepartmentResponse {
+  code: Int!
+  data: DepartmentType
+  error: ApiError
+  message: LocalizedMessage!
 }
 
 type DepartmentType {
@@ -241,6 +267,11 @@ input ListDataSheetsInput {
   templateType: [DataSheetTemplateType!]
 }
 
+type LocalizedMessage {
+  en: String!
+  vi: String!
+}
+
 input LoginDto {
   email: String!
   password: String!
@@ -259,7 +290,7 @@ type MemberType {
 
 type Mutation {
   acceptInvitation(token: String!): MemberType!
-  addDepartmentMember(departmentId: ID!, userId: ID!): DepartmentMember!
+  addDepartmentMember(departmentId: ID!, userId: ID!): DepartmentMemberResponse!
   addDepartmentToDatasheet(input: AddDepartmentToDatasheetDto!): DataSheetType!
   addPeriod(input: AddPeriodDto!): DataSheetType!
   addSeries(input: AddSeriesDto!): DataSeriesType!
@@ -268,21 +299,21 @@ type Mutation {
   changeMemberRole(businessId: ID!, input: UpdateMemberRoleDto!, targetUserId: ID!): MemberType!
   changePassword(input: ChangePasswordDto!): Boolean!
   createBusiness(input: CreateBusinessDto!): BusinessType!
-  createDepartment(input: CreateDepartmentDto!): DepartmentType!
-  createTab(input: CreateTabInput!): Tab!
-  createWidget(input: CreateWidgetInput!): Widget!
+  createDepartment(input: CreateDepartmentDto!): DepartmentResponse!
+  createTab(input: CreateTabInput!): TabResponse!
+  createWidget(input: CreateWidgetInput!): WidgetResponse!
   declineInvitation(token: String!): Boolean!
   deleteAccount: Boolean!
   deleteBusiness(confirmName: String!, id: ID!): Boolean!
   deleteDataSheet(id: ID!): Boolean!
-  deleteDepartment(id: ID!): Boolean!
+  deleteDepartment(id: ID!): DepartmentResponse!
   deleteDepartmentFromDatasheet(datasheetId: ID!, departmentId: ID!): Boolean!
   deletePeriod(datasheetId: ID!, periodName: String!): DataSheetType!
   deleteSeries(seriesId: ID!): Boolean!
   deleteSeriesByName(datasheetId: ID!, name: String!): Boolean!
   deleteSession(id: ID!): Boolean!
-  deleteTab(id: ID!): Boolean!
-  deleteWidget(id: ID!): Boolean!
+  deleteTab(id: ID!): TabResponse!
+  deleteWidget(id: ID!): WidgetResponse!
   forgotPassword(email: String!): Boolean!
   insertPeriod(input: InsertPeriodDto!): DataSheetType!
   insertSeries(input: InsertSeriesDto!): DataSheetType!
@@ -291,25 +322,25 @@ type Mutation {
   logout: Boolean!
   refreshToken: AuthResult!
   register(input: RegisterDto!): AuthResult!
-  removeDepartmentMember(departmentId: ID!, userId: ID!): Boolean!
+  removeDepartmentMember(departmentId: ID!, userId: ID!): DepartmentMemberResponse!
   removeMember(businessId: ID!, targetUserId: ID!): Boolean!
-  removeWidgetDataLink(id: ID!): Widget!
+  removeWidgetDataLink(id: ID!): WidgetResponse!
   renameDataSheet(id: ID!, input: UpdateDatasheetDto!): DataSheetType!
   renameSeries(name: String!, seriesId: ID!): DataSeriesType!
-  reorderTabs(orders: [TabOrderInput!]!): Boolean!
+  reorderTabs(orders: [TabOrderInput!]!): TabResponse
   resetPassword(input: ResetPasswordDto!): Boolean!
-  setDepartmentManager(departmentId: ID!, userId: ID!): DepartmentMember!
+  setDepartmentManager(departmentId: ID!, userId: ID!): DepartmentMemberResponse!
   toggleDataSheetStatus(id: ID!): DataSheetType!
   transferOwnership(id: ID!, newOwnerId: ID!): Boolean!
   updateBusiness(id: ID!, input: UpdateBusinessDto!): BusinessType!
-  updateDepartment(id: ID!, input: UpdateDepartmentDto!): DepartmentType!
-  updateDepartmentPositions(businessId: ID!, positions: [DepartmentPositionInput!]!): [DepartmentType!]!
+  updateDepartment(id: ID!, input: UpdateDepartmentDto!): DepartmentResponse!
+  updateDepartmentPositions(businessId: ID!, positions: [DepartmentPositionInput!]!): DepartmentListResponse!
   updateMe(input: UpdateProfileDto!): User!
   updateSeriesValue(input: UpdateSeriesValueDto!): DataSeriesType!
-  updateTab(id: ID!, input: UpdateTabInput!): Tab!
-  updateWidget(id: ID!, input: UpdateWidgetInput!): Widget!
-  updateWidgetConfig(config: JSON!, id: ID!): Widget!
-  updateWidgetDataLink(id: ID!, input: UpdateDataLinkDto!): Widget!
+  updateTab(id: ID!, input: UpdateTabInput!): TabResponse!
+  updateWidget(id: ID!, input: UpdateWidgetInput!): WidgetResponse!
+  updateWidgetConfig(config: JSON!, id: ID!): WidgetResponse!
+  updateWidgetDataLink(id: ID!, input: UpdateDataLinkDto!): WidgetResponse!
   upsertCellValue(input: UpsertCellValueDto!): DataSeriesType!
   verifyEmail(token: String!): Boolean!
 }
@@ -380,6 +411,13 @@ type Tab {
 input TabOrderInput {
   id: ID!
   order: Int!
+}
+
+type TabResponse {
+  code: Int!
+  data: Tab
+  error: ApiError
+  message: LocalizedMessage!
 }
 
 type TrendBadge {
@@ -497,4 +535,11 @@ input WidgetPositionInput {
   w: Int = 1000
   x: Int = 20
   y: Int = 20
+}
+
+type WidgetResponse {
+  code: Int!
+  data: Widget
+  error: ApiError
+  message: LocalizedMessage!
 }

@@ -1,10 +1,10 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { useQuery, useMutation } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import { detectCollision } from '@sbrb/shared-utils';
 import { useCanvasStore } from '../store/canvas.store';
 import { apiClient } from '../services/api-client';
 import { useNotify } from '@sbrb/shared-apollo-client';
-import { WIDGETS_QUERY, UPDATE_WIDGET_MUTATION } from '../graphql/canvas.operations';
+import { WIDGETS_QUERY } from '../graphql/canvas.operations';
 import type { IWidgetPosition } from '@sbrb/shared-types';
 
 interface IDebouncedPosition extends IWidgetPosition {
@@ -22,8 +22,6 @@ export function useCanvas(tabId: string) {
     skip: !tabId,
     fetchPolicy: 'cache-and-network',
   });
-
-  const [updateWidgetMutation] = useMutation(UPDATE_WIDGET_MUTATION);
 
   useEffect(() => {
     if (data?.widgets) {

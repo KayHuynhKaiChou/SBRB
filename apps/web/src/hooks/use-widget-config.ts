@@ -1,4 +1,3 @@
-import { t } from 'i18next';
 import { useAppMutation } from '@sbrb/shared-apollo-client';
 import {
   UPDATE_WIDGET_CONFIG_MUTATION,
@@ -7,8 +6,10 @@ import {
 } from '../graphql/widget-config.operations';
 import type { IChartConfig } from '@sbrb/shared-types';
 
-// Queries that depend on widget data link — must refetch after link mutations.
-const DATA_LINK_DEPENDENT_QUERIES = ['WidgetChartData', 'AvailableSeries', 'Widgets'];
+// WidgetChartData and AvailableSeries are computed from the data link in a
+// separate resolver, so they do NOT auto-update via Apollo's entity
+// normalization when the Widget is patched. Refetch them explicitly.
+const DATA_LINK_DEPENDENT_QUERIES = ['WidgetChartData', 'AvailableSeries'];
 
 /** Input shape matching GraphQL UpdateDataLinkDto */
 export interface IUpdateDataLinkInput {
@@ -20,24 +21,15 @@ export interface IUpdateDataLinkInput {
 export function useWidgetConfig() {
   const [updateConfigMutation, { loading: updatingConfig }] = useAppMutation(
     UPDATE_WIDGET_CONFIG_MUTATION,
-    {
-      notifyOnSuccess: false,
-      fallbackError: t('widget:update_config_error'),
-    },
+    { notifyOnSuccess: false },
   );
   const [updateDataLinkMutation, { loading: updatingLink }] = useAppMutation(
     UPDATE_WIDGET_DATA_LINK_MUTATION,
-    {
-      notifyOnSuccess: false,
-      fallbackError: t('widget:update_link_error'),
-    },
+    { notifyOnSuccess: false },
   );
   const [removeDataLinkMutation, { loading: removingLink }] = useAppMutation(
     REMOVE_WIDGET_DATA_LINK_MUTATION,
-    {
-      notifyOnSuccess: false,
-      fallbackError: t('widget:remove_link_error'),
-    },
+    { notifyOnSuccess: false },
   );
 
   const updateConfig = async (id: string, config: Partial<IChartConfig> & { name?: string }) => {
