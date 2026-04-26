@@ -3,7 +3,6 @@ import { Rnd } from 'react-rnd';
 import { Popconfirm } from 'antd';
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useHover } from '@uidotdev/usehooks';
 import type { IWidgetDto } from '@sbrb/shared-types';
 import { IconButton } from '@sbrb/ui';
 import { useChartData, useAvailableSeries } from '../../hooks/use-chart-data';
@@ -33,7 +32,6 @@ export function WidgetCard({
   const { position } = widget;
   const { t } = useTranslation(['widget', 'common']);
   const [modalOpen, setModalOpen] = useState(false);
-  const [hoverRef, hovered] = useHover<HTMLDivElement>();
   const { chartData: rawChartData, loading } = useChartData(widget.id);
   const { series: availableSeries } = useAvailableSeries(widget.dataLink?.datasheetId ? widget.id : null);
 
@@ -81,39 +79,36 @@ export function WidgetCard({
         maxHeight={800}
         style={{ zIndex: 1 }}
       >
-        {/* boxShadow is dynamic (hovered state) — kept as inline */}
-        <div
-          ref={hoverRef}
-          style={{
-            boxShadow: hovered ? '0 4px 20px rgba(0,0,0,0.12)' : '0 2px 12px rgba(0,0,0,0.06)',
-          }}
-          className="w-full h-full bg-white rounded-xl flex flex-col overflow-hidden transition-shadow duration-200 relative"
-        >
-          {/* Hover action buttons — top-right corner */}
-          {hovered && (
-            <div className="absolute top-2 right-2 flex gap-1 z-[5]">
+        {/*
+          Use CSS hover (group-hover) instead of JS state so the Popconfirm
+          trigger stays mounted across the whole interaction. Conditional
+          render unmounted the trigger when the mouse left the card to reach
+          the popup, which dropped the click → onConfirm chain.
+        */}
+        <div className="group w-full h-full bg-white rounded-xl flex flex-col overflow-hidden relative shadow-[0_2px_12px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.12)] transition-shadow duration-200">
+          {/* Hover action buttons — top-right corner. Always mounted; opacity reveals on hover. */}
+          <div className="absolute top-2 right-2 flex gap-1 z-[5] opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150">
+            <IconButton
+              icon={<EditOutlined />}
+              tooltip={t('common:edit')}
+              size="small"
+              onClick={handleEditClick}
+            />
+            <Popconfirm
+              title={t('common:confirm_delete_title')}
+              description={t('widget:delete_confirm')}
+              okText={t('common:delete')}
+              cancelText={t('common:cancel')}
+              okButtonProps={{ danger: true }}
+              onConfirm={() => onDelete(widget.id)}
+            >
               <IconButton
-                icon={<EditOutlined />}
-                tooltip={t('common:edit')}
+                icon={<DeleteOutlined />}
+                tooltip={t('widget:delete_tooltip')}
                 size="small"
-                onClick={handleEditClick}
               />
-              <Popconfirm
-                title={t('common:confirm_delete_title')}
-                description={t('widget:delete_confirm')}
-                okText={t('common:delete')}
-                cancelText={t('common:cancel')}
-                okButtonProps={{ danger: true }}
-                onConfirm={() => onDelete(widget.id)}
-              >
-                <IconButton
-                  icon={<DeleteOutlined />}
-                  tooltip={t('widget:delete_tooltip')}
-                  size="small"
-                />
-              </Popconfirm>
-            </div>
-          )}
+            </Popconfirm>
+          </div>
 
           <WidgetHeader
             widget={widget}
