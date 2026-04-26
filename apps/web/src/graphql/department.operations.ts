@@ -91,7 +91,9 @@ export const DEPARTMENT_MEMBERS_QUERY = gql`
 export const CREATE_DEPARTMENT_MUTATION = gql`
   mutation CreateDepartment($input: CreateDepartmentDto!) {
     createDepartment(input: $input) {
-      ...DepartmentFields
+      code
+      message { vi en }
+      data { ...DepartmentFields }
     }
   }
   ${DEPARTMENT_FIELDS}
@@ -100,7 +102,9 @@ export const CREATE_DEPARTMENT_MUTATION = gql`
 export const UPDATE_DEPARTMENT_MUTATION = gql`
   mutation UpdateDepartment($id: ID!, $input: UpdateDepartmentDto!) {
     updateDepartment(id: $id, input: $input) {
-      ...DepartmentFields
+      code
+      message { vi en }
+      data { ...DepartmentFields }
     }
   }
   ${DEPARTMENT_FIELDS}
@@ -108,14 +112,20 @@ export const UPDATE_DEPARTMENT_MUTATION = gql`
 
 export const DELETE_DEPARTMENT_MUTATION = gql`
   mutation DeleteDepartment($id: ID!) {
-    deleteDepartment(id: $id)
+    deleteDepartment(id: $id) {
+      code
+      message { vi en }
+      data { id businessId parentId }
+    }
   }
 `;
 
 export const ADD_DEPARTMENT_MEMBER_MUTATION = gql`
   mutation AddDepartmentMember($departmentId: ID!, $userId: ID!) {
     addDepartmentMember(departmentId: $departmentId, userId: $userId) {
-      ...DepartmentMemberFields
+      code
+      message { vi en }
+      data { ...DepartmentMemberFields }
     }
   }
   ${DEPARTMENT_MEMBER_FIELDS}
@@ -123,8 +133,13 @@ export const ADD_DEPARTMENT_MEMBER_MUTATION = gql`
 
 export const REMOVE_DEPARTMENT_MEMBER_MUTATION = gql`
   mutation RemoveDepartmentMember($departmentId: ID!, $userId: ID!) {
-    removeDepartmentMember(departmentId: $departmentId, userId: $userId)
+    removeDepartmentMember(departmentId: $departmentId, userId: $userId) {
+      code
+      message { vi en }
+      data { ...DepartmentMemberFields }
+    }
   }
+  ${DEPARTMENT_MEMBER_FIELDS}
 `;
 
 export const MY_BUSINESS_ROLE_QUERY = gql`
@@ -139,9 +154,13 @@ export const UPDATE_DEPARTMENT_POSITIONS_MUTATION = gql`
     $positions: [DepartmentPositionInput!]!
   ) {
     updateDepartmentPositions(businessId: $businessId, positions: $positions) {
-      id
-      positionX
-      positionY
+      code
+      message { vi en }
+      data {
+        id
+        positionX
+        positionY
+      }
     }
   }
 `;
@@ -149,7 +168,9 @@ export const UPDATE_DEPARTMENT_POSITIONS_MUTATION = gql`
 export const SET_DEPARTMENT_MANAGER_MUTATION = gql`
   mutation SetDepartmentManager($departmentId: ID!, $userId: ID!) {
     setDepartmentManager(departmentId: $departmentId, userId: $userId) {
-      ...DepartmentMemberFields
+      code
+      message { vi en }
+      data { ...DepartmentMemberFields }
     }
   }
   ${DEPARTMENT_MEMBER_FIELDS}

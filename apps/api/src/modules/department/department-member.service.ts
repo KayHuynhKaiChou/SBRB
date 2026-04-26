@@ -68,7 +68,7 @@ export class DepartmentMemberService {
       where: { departmentId, userId },
     });
     if (existing) {
-      throw new BadRequestException('User is already a member of this department');
+      throw new BadRequestException({ message: { vi: 'Đã là thành viên Phòng ban', en: 'User is already a member of this department' } });
     }
 
     return this.memberRepo.save({
@@ -82,22 +82,21 @@ export class DepartmentMemberService {
     departmentId: string,
     userId: string,
     actorId: string,
-  ): Promise<void> {
+  ): Promise<DepartmentMember> {
     const dept = await this.requireDept(departmentId);
     await this.departmentService.assertBusinessMember(dept.businessId, actorId);
 
     const member = await this.memberRepo.findOne({
       where: { departmentId, userId },
     });
-    if (!member) throw new NotFoundException('Member not found in this department');
+    if (!member) throw new NotFoundException({ message: { vi: 'Không tìm thấy thành viên Phòng ban', en: 'Member not found in this department' } });
 
     if (member.isManager) {
-      throw new BadRequestException(
-        'Cannot remove the current manager — assign a new manager first',
-      );
+      throw new BadRequestException({ message: { vi: 'Không thể xoá Trưởng phòng — hãy chỉ định Trưởng phòng mới trước', en: 'Cannot remove the current manager — assign a new manager first' } });
     }
 
     await this.memberRepo.delete(member.id);
+    return member;
   }
 
   /** Atomic swap: demote old manager + promote/insert new (B3/B7/B13) */
@@ -111,9 +110,7 @@ export class DepartmentMemberService {
 
     const targetBizMember = await this.requireBusinessRole(dept.businessId, userId);
     if (!MANAGER_ALLOWED_ROLES.has(targetBizMember.role)) {
-      throw new BadRequestException(
-        'User must have business role of owner or manager to be department manager',
-      );
+      throw new BadRequestException({ message: { vi: 'Chỉ Chủ hoặc Quản lý mới có thể làm Trưởng phòng', en: 'User must have business role of owner or manager to be department manager' } });
     }
 
     return this.dataSource.transaction(async (mgr) => {
@@ -142,7 +139,7 @@ export class DepartmentMemberService {
 
   private async requireDept(departmentId: string): Promise<Department> {
     const dept = await this.deptRepo.findOne({ where: { id: departmentId } });
-    if (!dept) throw new NotFoundException('Department not found');
+    if (!dept) throw new NotFoundException({ message: { vi: 'Không tìm thấy Phòng ban', en: 'Department not found' } });
     return dept;
   }
 
@@ -154,7 +151,7 @@ export class DepartmentMemberService {
       where: { businessId, userId },
     });
     if (!member) {
-      throw new ForbiddenException('User is not a member of this business');
+      throw new ForbiddenException({ message: { vi: 'Không phải thành viên Doanh nghiệp', en: 'User is not a member of this business' } });
     }
     return member;
   }

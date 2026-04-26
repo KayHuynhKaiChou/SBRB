@@ -1,6 +1,6 @@
 import { useQuery } from '@apollo/client';
-import { useTranslation } from 'react-i18next';
-import { useAppMutation } from '@sbrb/shared-apollo-client';
+import { useAppMutation, useListCache } from '@sbrb/shared-apollo-client';
+import type { IApiResponse } from '@sbrb/shared-types';
 import {
   DEPARTMENTS_QUERY,
   CREATE_DEPARTMENT_MUTATION,
@@ -28,10 +28,18 @@ export interface IUpdateDepartmentInput {
   parentId?: string | null;
 }
 
-export function useDepartments(businessId: string) {
-  const { t } = useTranslation(['department']);
+interface IDepartmentsQueryResult {
+  departments: IDepartmentDto[];
+}
 
-  const { data, loading, refetch } = useQuery(DEPARTMENTS_QUERY, {
+interface IDepartmentMutationResult {
+  createDepartment?: IApiResponse<IDepartmentDto>;
+  updateDepartment?: IApiResponse<IDepartmentDto>;
+  deleteDepartment?: IApiResponse<{ id: string; businessId: string; parentId: string | null }>;
+}
+
+export function useDepartments(businessId: string) {
+  const { data, loading, refetch } = useQuery<IDepartmentsQueryResult>(DEPARTMENTS_QUERY, {
     variables: { businessId },
     skip: !businessId,
     fetchPolicy: 'cache-and-network',
@@ -39,90 +47,39 @@ export function useDepartments(businessId: string) {
 
   const departments: IDepartmentDto[] = data?.departments ?? [];
 
-  const [createMutation] = useAppMutation(CREATE_DEPARTMENT_MUTATION, {
-    fallbackSuccess: t('department:create_success'),
-    fallbackError: t('department:create_error'),
+  const deptCache = useListCache<IDepartmentsQueryResult, { businessId: string }, IDepartmentDto>({
+    query: DEPARTMENTS_QUERY,
+    variables: { businessId },
+    read: (d) => d.departments,
+    write: (d, items) => ({ ...d, departments: items }),
   });
-  const [updateMutation] = useAppMutation(UPDATE_DEPARTMENT_MUTATION, {
-    fallbackSuccess: t('department:update_success'),
-    fallbackError: t('department:update_error'),
-  });
-  const [deleteMutation] = useAppMutation(DELETE_DEPARTMENT_MUTATION, {
-    fallbackSuccess: t('department:delete_success'),
-    fallbackError: t('department:delete_error'),
+
+  const [createMutation] = useAppMutation<IDepartmentMutationResult>(CREATE_DEPARTMENT_MUTATION);
+  const [updateMutation] = useAppMutation<IDepartmentMutationResult>(UPDATE_DEPARTMENT_MUTATION);
+  const [deleteMutation] = useAppMutation<IDepartmentMutationResult>(DELETE_DEPARTMENT_MUTATION, {
+    onSuccess: (data) => {
+      const deleted = data?.deleteDepartment?.data;
+      if (!deleted) return;
+      deptCache.removeById(deleted.id);
+      deptCache.evict('DepartmentType', deleted.id);
+    },
   });
 
   const create = async (input: Omit<ICreateDepartmentInput, 'businessId'>) => {
-    const result = await createMutation({
-      variables: { input: { ...input, businessId } },
-      update: (cache, { data: mutationData }) => {
-        const newDept = mutationData?.createDepartment;
-        if (!newDept) return;
-        const existing = cache.readQuery<{ departments: IDepartmentDto[] }>({
-          query: DEPARTMENTS_QUERY,
-          variables: { businessId },
-        });
-        if (existing) {
-          cache.writeQuery({
-            query: DEPARTMENTS_QUERY,
-            variables: { businessId },
-            data: { departments: [...existing.departments, newDept] },
-          });
-        } else {
-          refetch().catch(() => null);
-        }
-      },
-    });
+    const result = await createMutation({ variables: { input: { ...input, businessId } } });
+    const newDept = result.data?.createDepartment?.data;
+    if (newDept) deptCache.append(newDept);
     if (result.errors) throw new Error('create_failed');
   };
 
   const update = async (id: string, input: IUpdateDepartmentInput) => {
-    const result = await updateMutation({
-      variables: { id, input },
-      update: (cache, { data: mutationData }) => {
-        const updated = mutationData?.updateDepartment;
-        if (!updated) return;
-        const existing = cache.readQuery<{ departments: IDepartmentDto[] }>({
-          query: DEPARTMENTS_QUERY,
-          variables: { businessId },
-        });
-        if (existing) {
-          cache.writeQuery({
-            query: DEPARTMENTS_QUERY,
-            variables: { businessId },
-            data: {
-              departments: existing.departments.map((d) =>
-                d.id === id ? { ...d, ...updated } : d,
-              ),
-            },
-          });
-        } else {
-          refetch().catch(() => null);
-        }
-      },
-    });
+    // Apollo normalizes the returned Department by id; the list view auto-refreshes.
+    const result = await updateMutation({ variables: { id, input } });
     if (result.errors) throw new Error('update_failed');
   };
 
   const remove = async (id: string) => {
-    const result = await deleteMutation({
-      variables: { id },
-      update: (cache) => {
-        const existing = cache.readQuery<{ departments: IDepartmentDto[] }>({
-          query: DEPARTMENTS_QUERY,
-          variables: { businessId },
-        });
-        if (existing) {
-          cache.writeQuery({
-            query: DEPARTMENTS_QUERY,
-            variables: { businessId },
-            data: { departments: existing.departments.filter((d) => d.id !== id) },
-          });
-        } else {
-          refetch().catch(() => null);
-        }
-      },
-    });
+    const result = await deleteMutation({ variables: { id } });
     if (result.errors) throw new Error('delete_failed');
   };
 

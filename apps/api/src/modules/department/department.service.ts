@@ -111,7 +111,7 @@ export class DepartmentService {
 
   async update(id: string, userId: string, dto: UpdateDepartmentDto): Promise<Department> {
     const dept = await this.deptRepo.findOne({ where: { id } });
-    if (!dept) throw new NotFoundException('Department not found');
+    if (!dept) throw new NotFoundException({ message: { vi: 'Không tìm thấy Phòng ban', en: 'Department not found' } });
 
     await this.assertBusinessMember(dept.businessId, userId);
 
@@ -133,22 +133,23 @@ export class DepartmentService {
     return this.deptRepo.save(dept);
   }
 
-  async delete(id: string, userId: string): Promise<void> {
+  async delete(id: string, userId: string): Promise<Department> {
     const dept = await this.deptRepo.findOne({ where: { id } });
-    if (!dept) throw new NotFoundException('Department not found');
+    if (!dept) throw new NotFoundException({ message: { vi: 'Không tìm thấy Phòng ban', en: 'Department not found' } });
 
     await this.assertBusinessMember(dept.businessId, userId);
 
     if (dept.isRoot) {
-      throw new BadRequestException('Cannot delete root department');
+      throw new BadRequestException({ message: { vi: 'Không thể xoá Phòng ban gốc', en: 'Cannot delete root department' } });
     }
 
     const childCount = await this.deptRepo.count({ where: { parentId: id } });
     if (childCount > 0) {
-      throw new BadRequestException('Cannot delete department with children');
+      throw new BadRequestException({ message: { vi: 'Không thể xoá Phòng ban còn Phòng con', en: 'Cannot delete department with children' } });
     }
 
     await this.deptRepo.delete(id);
+    return dept;
   }
 
   /** Owner-only: persist positions for multiple departments at once. */
@@ -159,7 +160,7 @@ export class DepartmentService {
   ): Promise<Department[]> {
     const member = await this.assertBusinessMember(businessId, userId);
     if (member.role !== 'owner') {
-      throw new ForbiddenException('Only the business owner can edit chart positions');
+      throw new ForbiddenException({ message: { vi: 'Chỉ Chủ Doanh nghiệp mới được sửa vị trí sơ đồ', en: 'Only the business owner can edit chart positions' } });
     }
     if (!positions.length) return [];
 
@@ -206,7 +207,7 @@ export class DepartmentService {
     const member = await this.bizMemberRepo.findOne({
       where: { businessId, userId },
     });
-    if (!member) throw new ForbiddenException('Not a member of this business');
+    if (!member) throw new ForbiddenException({ message: { vi: 'Không phải thành viên Doanh nghiệp', en: 'Not a member of this business' } });
     return member;
   }
 
