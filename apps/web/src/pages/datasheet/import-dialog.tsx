@@ -12,9 +12,9 @@ import { IconButton } from '@sbrb/ui';
 import type { UploadFile } from 'antd';
 import { useNotify } from '@sbrb/shared-apollo-client';
 import { useImportDataSheet } from '../../hooks/use-datasheet';
+import { useInterval } from '../../hooks/use-interval';
 import { validateUploadFile } from '../../utils/file-upload-validator';
 import { useAuthStore } from '../../store/auth.store';
-import { apiClient } from '../../services/api-client';
 import { ImportPreviewTable } from '../../components/datasheet/import-preview-table';
 import { ImportTemplateSelector } from '../../components/datasheet/import-template-selector';
 import { DepartmentSelect } from '../../components/department/department-select';
@@ -52,17 +52,12 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
   const [previewLoading, setPreviewLoading] = useState(false);
 
   const { upload, progress, isUploading } = useImportDataSheet(businessId);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const clearPoll = useCallback(() => {
-    if (pollRef.current) {
-      clearInterval(pollRef.current);
-      pollRef.current = null;
-    }
-  }, []);
+  // Setting this to a datasheet id starts the REST polling fallback (useInterval below).
+  // null pauses + clears the interval.
+  const [pollingDatasheetId, setPollingDatasheetId] = useState<string | null>(null);
 
   const handleClose = () => {
-    clearPoll();
+    setPollingDatasheetId(null);
     setStep(0);
     setTemplateType('simple');
     setFile(null);
@@ -133,7 +128,7 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
   const handleImportDone = useCallback(() => {
     if (doneRef.current) return; // dedup: poll + WebSocket may both fire
     doneRef.current = true;
-    clearPoll();
+    setPollingDatasheetId(null);
     notify.success(t('datasheet:import_complete'));
     setImporting(false);
     onSuccess();
@@ -147,7 +142,7 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
     setPreviewData(null);
     setPreviewLoading(false);
     onClose();
-  }, [onSuccess, onClose, clearPoll, t, notify]);
+  }, [onSuccess, onClose, t, notify]);
 
   const handleStartImport = async () => {
     if (!file || !importName.trim()) {
@@ -159,22 +154,9 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
     doneRef.current = false;
     try {
       const datasheetId = await upload(file, importName.trim(), departmentId, templateType);
-      // REST polling fallback (WebSocket may miss if job completes before subscription)
-      clearPoll();
-      pollRef.current = setInterval(async () => {
-        try {
-          const token = useAuthStore.getState().accessToken;
-          const res = await fetch(`/api/v1/data-sheets/${datasheetId}`, {
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-          });
-          if (!res.ok) return;
-          const sheet = await res.json();
-          // After status refactor: successful import → 'active'. Failed import rolls
-          // the row back (not reachable via GET), so the only "stuck polling" case we'd
-          // still observe is a legitimate 'active' — stop and report done.
-          if (sheet.status === 'active') handleImportDone();
-        } catch { /* ignore poll errors */ }
-      }, 2000);
+      // REST polling fallback (WebSocket may miss if job completes before subscription).
+      // useInterval below picks up the new id and starts polling.
+      setPollingDatasheetId(datasheetId);
     } catch (err) {
       const msg = err instanceof Error ? err.message : t('datasheet:import_failed');
       setError(msg);
@@ -182,8 +164,26 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
     }
   };
 
-  // Cleanup polling on unmount
-  React.useEffect(() => clearPoll, [clearPoll]);
+  // Poll the datasheet status every 2s while pollingDatasheetId is set.
+  // Auto-cleans on unmount or when id flips back to null (handleImportDone/handleClose).
+  useInterval(
+    async () => {
+      if (!pollingDatasheetId) return;
+      try {
+        const token = useAuthStore.getState().accessToken;
+        const res = await fetch(`/api/v1/data-sheets/${pollingDatasheetId}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!res.ok) return;
+        const sheet = await res.json();
+        // After status refactor: successful import → 'active'. Failed import rolls
+        // the row back (not reachable via GET), so the only "stuck polling" case we'd
+        // still observe is a legitimate 'active' — stop and report done.
+        if (sheet.status === 'active') handleImportDone();
+      } catch { /* ignore poll errors */ }
+    },
+    pollingDatasheetId ? 2000 : null,
+  );
 
   // Watch progress completion (dedup via doneRef — poll handler may also fire)
   React.useEffect(() => {
