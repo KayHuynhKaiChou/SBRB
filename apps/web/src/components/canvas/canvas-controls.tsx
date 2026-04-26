@@ -1,10 +1,10 @@
-import React, { useEffect } from 'react';
-import { Button, Space, Tooltip, Typography } from 'antd';
+import React from 'react';
+import { Button, Tooltip } from 'antd';
 import { AppstoreOutlined } from '@ant-design/icons';
+import { useEventListener } from '../../hooks/use-event-listener';
 import type { ZoomLevel } from '@sbrb/shared-types';
 import { useCanvasStore } from '../../store/canvas.store';
 
-const { Text } = Typography;
 const ZOOM_LEVELS: ZoomLevel[] = [50, 75, 100, 125];
 
 interface ICanvasControlsProps {
@@ -15,16 +15,12 @@ export function CanvasControls({ onAddWidget }: ICanvasControlsProps) {
   const { zoom, setZoom, snapEnabled, toggleSnap } = useCanvasStore();
 
   // Alt key toggles snap
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Alt') {
-        e.preventDefault();
-        toggleSnap();
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [toggleSnap]);
+  useEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Alt') {
+      e.preventDefault();
+      toggleSnap();
+    }
+  });
 
   return (
     <div className="absolute bottom-6 right-6 flex flex-col gap-2 z-10">

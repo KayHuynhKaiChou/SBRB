@@ -1,7 +1,8 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Layout, Select, Tooltip } from 'antd';
 import { PlusOutlined, AppstoreOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useEventListener } from '../../hooks/use-event-listener';
 import type { ITabDto } from '@sbrb/shared-types';
 import type { ZoomLevel } from '@sbrb/shared-types';
 import { IconButton } from '@sbrb/ui';
@@ -37,16 +38,12 @@ export function Header({
   const sorted = sortTabsByPinnedThenOrder(tabs);
 
   // Alt key toggles snap
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Alt') {
-        e.preventDefault();
-        toggleSnap();
-      }
-    };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, [toggleSnap]);
+  useEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Alt') {
+      e.preventDefault();
+      toggleSnap();
+    }
+  });
 
   return (
     <AntHeader className="!bg-white !border-b !border-[#e8e8e8] !px-3 !pl-4 !flex !items-center !h-[52px] !leading-[52px] !shadow-[0_1px_4px_rgba(0,0,0,0.06)] !z-[100] !gap-3">
