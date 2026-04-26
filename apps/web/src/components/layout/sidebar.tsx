@@ -1,5 +1,6 @@
 import React from 'react';
 import { Layout, Tooltip, Avatar, Badge } from 'antd';
+import { useHover } from '@uidotdev/usehooks';
 import {
   AppstoreOutlined,
   TableOutlined,
@@ -33,7 +34,7 @@ interface INavIconProps {
 }
 
 function NavIcon({ icon, label, active, onClick, disabled }: INavIconProps) {
-  const [hovered, setHovered] = React.useState(false);
+  const [hoverRef, hovered] = useHover<HTMLDivElement>();
 
   const bg = active ? ICON_ACTIVE_BG : hovered && !disabled ? ICON_HOVER_BG : 'transparent';
   const color = active ? ICON_ACTIVE_COLOR : ICON_COLOR;
@@ -41,9 +42,8 @@ function NavIcon({ icon, label, active, onClick, disabled }: INavIconProps) {
   return (
     <Tooltip title={disabled ? `${label} (sắp ra mắt)` : label} placement="right">
       <div
+        ref={hoverRef}
         onClick={disabled ? undefined : onClick}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
         style={{
           background: bg,
           color,

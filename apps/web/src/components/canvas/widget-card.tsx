@@ -3,6 +3,7 @@ import { Rnd } from 'react-rnd';
 import { Popconfirm } from 'antd';
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useHover } from '@uidotdev/usehooks';
 import type { IWidgetDto } from '@sbrb/shared-types';
 import { IconButton } from '@sbrb/ui';
 import { useChartData, useAvailableSeries } from '../../hooks/use-chart-data';
@@ -32,7 +33,7 @@ export function WidgetCard({
   const { position } = widget;
   const { t } = useTranslation(['widget', 'common']);
   const [modalOpen, setModalOpen] = useState(false);
-  const [hovered, setHovered] = useState(false);
+  const [hoverRef, hovered] = useHover<HTMLDivElement>();
   const { chartData: rawChartData, loading } = useChartData(widget.id);
   const { series: availableSeries } = useAvailableSeries(widget.dataLink?.datasheetId ? widget.id : null);
 
@@ -82,12 +83,11 @@ export function WidgetCard({
       >
         {/* boxShadow is dynamic (hovered state) — kept as inline */}
         <div
+          ref={hoverRef}
           style={{
             boxShadow: hovered ? '0 4px 20px rgba(0,0,0,0.12)' : '0 2px 12px rgba(0,0,0,0.06)',
           }}
           className="w-full h-full bg-white rounded-xl flex flex-col overflow-hidden transition-shadow duration-200 relative"
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
         >
           {/* Hover action buttons — top-right corner */}
           {hovered && (

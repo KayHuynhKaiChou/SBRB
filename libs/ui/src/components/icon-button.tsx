@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button, Tooltip } from 'antd';
+import { useHover } from '@uidotdev/usehooks';
 
 /**
  * SBRB Icon Button — SRS 6.2
@@ -91,12 +92,13 @@ export function IconButton({
   style,
   htmlType,
 }: IIconButtonProps) {
-  const [hovered, setHovered] = React.useState(false);
+  const [hoverRef, hovered] = useHover<HTMLButtonElement>();
   const dims = SIZE_MAP[size];
   const variantStyle = getVariantStyles(variant, active, hovered, disabled);
 
   const button = (
     <Button
+      ref={hoverRef}
       type="text"
       shape="circle"
       icon={icon}
@@ -104,8 +106,6 @@ export function IconButton({
       disabled={disabled || loading}
       loading={loading}
       onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
       className={className}
       style={{
         width: dims.button,
