@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GraphQLModule } from '@nestjs/graphql';
@@ -6,6 +7,7 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
 import { databaseConfig } from './config/database.config';
 import { appConfig } from './config/app.config';
+import { GqlGlobalExceptionFilter } from '../common/filters/graphql-exception.filter';
 import { AuthModule } from '../modules/auth/auth.module';
 import { BusinessModule } from '../modules/business/business.module';
 import { TabModule } from '../modules/tab/tab.module';
@@ -68,6 +70,11 @@ import { UserModule } from '../modules/user/user.module';
     DatasheetModule,
     NotificationModule,
     AuditModule,
+  ],
+  providers: [
+    // Global GraphQL exception filter — maps HttpExceptions to IApiResponse-shaped extensions.
+    // Skips non-GraphQL contexts; REST traffic continues to use NestJS default error handling.
+    { provide: APP_FILTER, useClass: GqlGlobalExceptionFilter },
   ],
 })
 export class AppModule {}
