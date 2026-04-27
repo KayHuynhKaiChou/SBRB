@@ -1,9 +1,9 @@
 import { useAuthStore } from '../store/auth.store';
-import { refreshAccessToken } from './token-refresh-manager';
+import { authSession } from './auth-session';
 
 /**
  * Centralized HTTP client with automatic 401 refresh.
- * Token injection + retry on 401 via token-refresh-manager.
+ * Token injection + retry on 401 via authSession.
  */
 class ApiClient {
   private getAuthHeaders(): Record<string, string> {
@@ -16,7 +16,7 @@ class ApiClient {
 
     // 401 → refresh token and retry once
     if (res.status === 401) {
-      const newToken = await refreshAccessToken();
+      const newToken = await authSession.refresh();
       const retryRes = await fetch(url, {
         ...init,
         headers: { ...init.headers, Authorization: `Bearer ${newToken}` },
@@ -61,7 +61,7 @@ class ApiClient {
     });
 
     if (res.status === 401) {
-      const newToken = await refreshAccessToken();
+      const newToken = await authSession.refresh();
       const retryRes = await fetch(url, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${newToken}` },

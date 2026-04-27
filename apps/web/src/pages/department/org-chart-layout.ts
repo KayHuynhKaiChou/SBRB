@@ -1,8 +1,10 @@
 import type { Edge, Node } from '@xyflow/react';
 import type { IDepartmentNode } from '../../hooks/use-department-tree';
 
-const NODE_W = 240;
-const NODE_H = 110;
+import { DEPT_NODE_W, DEPT_NODE_H } from '@sbrb/shared-constants';
+
+const NODE_W = DEPT_NODE_W;
+const NODE_H = DEPT_NODE_H;
 const RING_GAP = 280;
 const SUBTREE_GAP = 200;
 
@@ -161,5 +163,4 @@ export function computeLayout(
   return { nodes, edges };
 }
 
-export const DEPT_NODE_W = NODE_W;
-export const DEPT_NODE_H = NODE_H;
+export { DEPT_NODE_W, DEPT_NODE_H } from '@sbrb/shared-constants';

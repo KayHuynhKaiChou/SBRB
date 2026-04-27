@@ -9,9 +9,9 @@ import { ImportBatch } from './entities/import-batch.entity';
 import { DatasheetImportService } from './datasheet-import.service';
 import { DatasheetTemplateService } from './datasheet-template.service';
 import {
-  DataSheetSortField,
+  EDataSheetSortField,
+  ESortOrder,
   ListDataSheetsInput,
-  SortOrder,
 } from './dto/list-datasheets.dto';
 
 /**
@@ -104,9 +104,9 @@ export class DatasheetService {
       });
     }
 
-    const order = filter?.sortOrder ?? SortOrder.DESC;
+    const order = filter?.sortOrder ?? ESortOrder.DESC;
     switch (filter?.sortBy) {
-      case DataSheetSortField.widgetCount:
+      case EDataSheetSortField.widgetCount:
         // `widgetCount` is computed via loadRelationCountAndMap; ORDER BY needs a
         // correlated subquery so the sort happens in SQL, not in memory.
         qb.addSelect(
@@ -114,10 +114,10 @@ export class DatasheetService {
           'widget_count_sort',
         ).orderBy('widget_count_sort', order);
         break;
-      case DataSheetSortField.importedAt:
+      case EDataSheetSortField.importedAt:
         qb.orderBy('s.importedAt', order, 'NULLS LAST');
         break;
-      case DataSheetSortField.createdAt:
+      case EDataSheetSortField.createdAt:
       default:
         qb.orderBy('s.createdAt', order);
     }

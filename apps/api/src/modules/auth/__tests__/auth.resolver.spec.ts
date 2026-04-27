@@ -45,7 +45,7 @@ describe('AuthResolver', () => {
 
   it('should call authService.logout and return true', async () => {
     (mockAuthService.logout as jest.Mock).mockResolvedValue(undefined);
-    const result = await resolver.logout(mockUser, mockCtx());
+    const result = await resolver.logout(mockCtx());
     expect(result).toBe(true);
   });
 

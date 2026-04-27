@@ -1,37 +1,36 @@
-import { useMutation, useLazyQuery } from '@apollo/client';
+import { useEffect, useState } from 'react';
+import { useMutation } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
 import { useAppMutation } from '@sbrb/shared-apollo-client';
+import { APP_ROUTES } from '@sbrb/shared-constants';
+import type { ILoginInput, IRegisterInput } from '@sbrb/shared-types';
 import { useAuthStore } from '../store/auth.store';
+import { authSession } from '../lib/auth-session';
+import { apolloClient } from '../apollo/apollo-client';
 import {
   LOGIN_MUTATION,
-  ME_QUERY,
-  MY_BUSINESSES_QUERY,
   REGISTER_MUTATION,
   FORGOT_PASSWORD_MUTATION,
   RESET_PASSWORD_MUTATION,
   VERIFY_EMAIL_MUTATION,
 } from '../graphql/auth.operations';
 
-interface LoginInput {
-  email: string;
-  password: string;
-}
-
-interface RegisterInput {
-  fullName: string;
-  email: string;
-  password: string;
-}
+export type TAuthStatus = 'loading' | 'authenticated' | 'guest';
+/** @deprecated Use `TAuthStatus`. */
+export type AuthStatus = TAuthStatus;
 
 export function useAuth() {
   const navigate = useNavigate();
-  const { setAuth, clearAuth, currentBusinessId } = useAuthStore();
 
-  // Login is silent on success (we navigate) — keep raw useMutation, no auto notify.
+  // Granular Zustand selectors — re-render only on subscribed slice change
+  const user = useAuthStore((s) => s.user);
+  const accessToken = useAuthStore((s) => s.accessToken);
+  const hasHydrated = useAuthStore((s) => s._hasHydrated);
+
+  const [bootstrapping, setBootstrapping] = useState(true);
+
+  // Mutations
   const [loginMutation, { loading: loginLoading }] = useMutation(LOGIN_MUTATION);
-  const [fetchMe] = useLazyQuery(ME_QUERY, { fetchPolicy: 'network-only' });
-  const [fetchMyBusinesses] = useLazyQuery(MY_BUSINESSES_QUERY, { fetchPolicy: 'network-only' });
-
   const [registerMutation, { loading: registerLoading }] = useAppMutation(REGISTER_MUTATION, {
     fallbackSuccess: {
       vi: 'Vui lòng kiểm tra email để xác nhận tài khoản',
@@ -54,52 +53,67 @@ export function useAuth() {
         vi: 'Mật khẩu đã được đặt lại thành công',
         en: 'Password has been reset successfully',
       },
-      onSuccess: () => navigate('/auth/login'),
+      onSuccess: () => navigate(APP_ROUTES.LOGIN),
     },
   );
   const [verifyEmailMutation, { loading: verifyLoading }] = useAppMutation(VERIFY_EMAIL_MUTATION, {
     fallbackSuccess: { vi: 'Email đã được xác nhận', en: 'Email verified' },
-    onSuccess: () => navigate('/auth/login'),
+    onSuccess: () => navigate(APP_ROUTES.LOGIN),
   });
 
-  const login = async (input: LoginInput) => {
+  // Bootstrap on mount — mutex'd in service, safe across N mounts + StrictMode
+  useEffect(() => {
+    if (!hasHydrated) return;
+    let cancelled = false;
+    authSession
+      .bootstrap()
+      .finally(() => {
+        if (!cancelled) setBootstrapping(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasHydrated]);
+
+  // Status derivation
+  const status: TAuthStatus = bootstrapping
+    ? 'loading'
+    : accessToken && user
+      ? 'authenticated'
+      : 'guest';
+  const isAuthenticated = status === 'authenticated';
+
+  const login = async (input: ILoginInput) => {
+    if (loginLoading) return; // IMP-4: double-tap guard
+
     const { data } = await loginMutation({ variables: { input } });
-    const { accessToken } = data.login;
+    const newToken = data.login.accessToken;
+
+    // Set placeholder so authLink injects token for fetchUserContext queries
     useAuthStore.getState().setAuth(
       { id: '', email: '', name: '', isEmailVerified: false, createdAt: '' },
-      accessToken,
-    );
-    const { data: meData } = await fetchMe();
-    const u = meData?.me;
-    setAuth(
-      {
-        id: u.id,
-        email: u.email,
-        name: u.fullName,
-        avatarUrl: u.avatarUrl,
-        isEmailVerified: u.emailVerified,
-        createdAt: u.createdAt,
-      },
-      accessToken,
+      newToken,
     );
 
-    const { data: bizData } = await fetchMyBusinesses();
-    const businesses = bizData?.myBusinesses ?? [];
-    const validBusiness = businesses.find((b: { id: string }) => b.id === currentBusinessId);
+    const { user: u, businesses } = await authSession.fetchUserContext();
+    useAuthStore.getState().setAuth(u, newToken);
 
-    if (validBusiness) {
-      navigate('/dashboard');
-    } else if (businesses.length > 0) {
-      const firstBizId = businesses[0].id;
-      useAuthStore.getState().setCurrentBusiness(firstBizId);
-      navigate('/dashboard');
+    // BUG-3: clear cache from any previous user, refetch active queries with new auth
+    await apolloClient.resetStore();
+
+    const currentBusinessId = useAuthStore.getState().currentBusinessId;
+    const targetBiz = authSession.resolveCurrentBusiness(businesses, currentBusinessId);
+    if (targetBiz) {
+      useAuthStore.getState().setCurrentBusiness(targetBiz.id);
+      navigate(APP_ROUTES.DASHBOARD);
     } else {
       useAuthStore.getState().setCurrentBusiness(null);
-      navigate('/onboarding');
+      navigate(APP_ROUTES.ONBOARDING);
     }
   };
 
-  const register = async (input: RegisterInput) => {
+  const register = async (input: IRegisterInput) => {
     await registerMutation({ variables: { input } });
   };
 
@@ -115,22 +129,29 @@ export function useAuth() {
     await verifyEmailMutation({ variables: { token } });
   };
 
-  const logout = () => {
-    clearAuth();
-    navigate('/auth/login');
-  };
+  const logout = () => authSession.logout();
 
   return {
+    // State
+    user,
+    accessToken,
+    status,
+    isAuthenticated,
+    bootstrapping,
+
+    // Actions
     login,
-    loginLoading,
     register,
-    registerLoading,
-    forgotPassword,
-    forgotLoading,
-    resetPassword,
-    resetLoading,
-    verifyEmail,
-    verifyLoading,
     logout,
+    forgotPassword,
+    resetPassword,
+    verifyEmail,
+
+    // Loading flags
+    loginLoading,
+    registerLoading,
+    forgotLoading,
+    resetLoading,
+    verifyLoading,
   };
 }

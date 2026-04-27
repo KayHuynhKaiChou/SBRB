@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { IconButton } from '@sbrb/ui';
 import type { UploadFile } from 'antd';
 import { useNotify } from '@sbrb/shared-apollo-client';
+import { API_ROUTES } from '@sbrb/shared-constants';
 import { useImportDataSheet } from '../../hooks/use-datasheet';
 import { useInterval } from '../../hooks/use-interval';
 import { validateUploadFile } from '../../utils/file-upload-validator';
@@ -90,7 +91,7 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
       const token = useAuthStore.getState().accessToken;
       const formData = new FormData();
       formData.append('file', f);
-      const response = await fetch(`/api/v1/data-sheets/preview?templateType=${templateType}`, {
+      const response = await fetch(`${API_ROUTES.DATA_SHEET.PREVIEW}?templateType=${templateType}`, {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData,
@@ -171,7 +172,7 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
       if (!pollingDatasheetId) return;
       try {
         const token = useAuthStore.getState().accessToken;
-        const res = await fetch(`/api/v1/data-sheets/${pollingDatasheetId}`, {
+        const res = await fetch(API_ROUTES.DATA_SHEET.DETAIL(pollingDatasheetId), {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (!res.ok) return;

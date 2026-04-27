@@ -5,7 +5,8 @@ import { CloseOutlined, CheckOutlined, InboxOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { IconButton } from '@sbrb/ui';
 import type { UploadFile } from 'antd';
-import { apiClient } from '../../services/api-client';
+import { apiClient } from '../../lib/api-client';
+import { API_ROUTES } from '@sbrb/shared-constants';
 import { validateUploadFile } from '../../utils/file-upload-validator';
 
 const { Dragger } = Upload;
@@ -62,7 +63,7 @@ export function ReimportDialog({
     formData.append('file', file);
 
     try {
-      await apiClient.upload(`/api/v1/data-sheets/${datasheetId}/reimport`, formData);
+      await apiClient.upload(API_ROUTES.DATA_SHEET.REIMPORT(datasheetId), formData);
       setProgress(100);
       notify.success(t('datasheet:reimport_started'));
       onSuccess();

@@ -20,6 +20,8 @@ import {
 import { useQuery } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
 import { IconButton } from '@sbrb/ui';
+import { UNIT_PRESETS } from '@sbrb/shared-constants';
+import type { IAddWidgetResult } from '@sbrb/shared-types';
 import {
   DATA_SHEETS_QUERY,
   DATA_SERIES_QUERY,
@@ -27,15 +29,8 @@ import {
 
 const { Text } = Typography;
 
-/** Preset unit options for the unit selector */
-const UNIT_PRESETS = ['VND', 'USD', 'EUR', '%', 'Người', 'Điểm'];
-
-export interface IAddWidgetResult {
-  name: string;
-  unit: string;
-  dataSheetId: string | null;
-  selectedSeries: string[];
-}
+// Re-export for back-compat with existing consumers in this app.
+export type { IAddWidgetResult };
 
 interface IAddWidgetModalProps {
   open: boolean;

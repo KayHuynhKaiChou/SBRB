@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
+import { isManagerRole } from '@sbrb/shared-constants';
 import { AuthorizationService } from '../../common/services/authorization.service';
 import { CreateTabDto } from './dto/create-tab.dto';
 import { TabOrderItemDto } from './dto/reorder-tabs.dto';
@@ -14,7 +15,6 @@ import { UpdateTabDto } from './dto/update-tab.dto';
 import { Tab } from './entities/tab.entity';
 
 const MAX_TABS_PER_BUSINESS = 20;
-const MANAGER_ROLES = ['owner', 'manager'];
 
 /** Tab CRUD service — SRS 4.3 */
 @Injectable()
@@ -41,7 +41,7 @@ export class TabService {
   /** Create a new tab — Manager+ only; max 20 tabs/business */
   async create(businessId: string, userId: string, dto: CreateTabDto): Promise<TabType> {
     const member = await this.authorizationService.requireMember(businessId, userId);
-    if (!MANAGER_ROLES.includes(member.role)) {
+    if (!isManagerRole(member.role)) {
       throw new ForbiddenException({
         message: { vi: 'Cần quyền Quản lý để tạo Tab', en: 'Manager or higher required to create tabs' },
       });
@@ -85,7 +85,7 @@ export class TabService {
     const tab = await this.findTabOrFail(id);
     const member = await this.authorizationService.requireMember(tab.businessId, userId);
 
-    if (!MANAGER_ROLES.includes(member.role)) {
+    if (!isManagerRole(member.role)) {
       throw new ForbiddenException({
         message: { vi: 'Cần quyền Quản lý để cập nhật Tab', en: 'Manager or higher required to update tabs' },
       });
@@ -118,7 +118,7 @@ export class TabService {
     const tab = await this.findTabOrFail(id);
     const member = await this.authorizationService.requireMember(tab.businessId, userId);
 
-    if (!MANAGER_ROLES.includes(member.role)) {
+    if (!isManagerRole(member.role)) {
       throw new ForbiddenException({
         message: { vi: 'Cần quyền Quản lý để xoá Tab', en: 'Manager or higher required to delete tabs' },
       });
@@ -148,7 +148,7 @@ export class TabService {
     // Verify user is a member with manager+ on the first tab's business
     const firstTab = await this.findTabOrFail(orders[0].id);
     const member = await this.authorizationService.requireMember(firstTab.businessId, userId);
-    if (!MANAGER_ROLES.includes(member.role)) {
+    if (!isManagerRole(member.role)) {
       throw new ForbiddenException({
         message: { vi: 'Cần quyền Quản lý để sắp xếp Tab', en: 'Manager or higher required to reorder tabs' },
       });

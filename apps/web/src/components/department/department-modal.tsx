@@ -15,6 +15,7 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconButton } from '@sbrb/ui';
+import { isManagerRole } from '@sbrb/shared-constants';
 import { useDepartmentMembers, type IDepartmentMember } from '../../hooks/use-department-members';
 import {
   useDeleteDepartment,
@@ -23,8 +24,6 @@ import {
   useUpdateDepartment,
 } from '../../hooks/use-department-mutations';
 import type { IDepartmentNode } from '../../hooks/use-department-tree';
-
-const MANAGER_ROLES = new Set(['owner', 'manager']);
 
 interface IProps {
   open: boolean;
@@ -129,7 +128,7 @@ export function DepartmentModal({
       title: t('department:col_actions'),
       key: 'actions',
       render: (_: unknown, r: IDepartmentMember) => {
-        const canBeManager = MANAGER_ROLES.has(r.businessRole ?? '');
+        const canBeManager = isManagerRole(r.businessRole);
         return (
           <div className="flex gap-1">
             <Popconfirm

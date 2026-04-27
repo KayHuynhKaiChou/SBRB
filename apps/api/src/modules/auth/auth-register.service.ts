@@ -11,6 +11,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
+import { EMAIL_VERIFY_LINK_EXPIRY_HOURS } from '@sbrb/shared-constants';
 import { EmailVerification } from './entities/email-verification.entity';
 import { User } from './entities/user.entity';
 import { MailService } from '../mail/mail.service';
@@ -18,7 +19,6 @@ import { RedisRateLimitService } from './redis-rate-limit.service';
 import { RegisterDto } from './dto/register.dto';
 
 const BCRYPT_ROUNDS = 12;
-const VERIFY_TTL_HOURS = 24;
 const RESEND_KEY = (email: string) => `auth:resend:${email}`;
 const RESEND_TTL = 60; // 1 minute
 
@@ -78,7 +78,7 @@ export class AuthRegisterService {
   private async sendVerificationEmail(user: User): Promise<void> {
     const token = uuidv4();
     const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + VERIFY_TTL_HOURS);
+    expiresAt.setHours(expiresAt.getHours() + EMAIL_VERIFY_LINK_EXPIRY_HOURS);
 
     const record = this.verifyRepo.create({ userId: user.id, token, expiresAt });
     await this.verifyRepo.save(record);

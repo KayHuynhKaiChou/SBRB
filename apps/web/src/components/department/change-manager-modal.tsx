@@ -5,10 +5,9 @@ import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconButton } from '@sbrb/ui';
+import { isManagerRole } from '@sbrb/shared-constants';
 import { useDepartmentMembers } from '../../hooks/use-department-members';
 import { useSetDepartmentManager } from '../../hooks/use-department-mutations';
-
-const ELIGIBLE_ROLES = new Set(['owner', 'manager']);
 
 interface IProps {
   open: boolean;
@@ -32,7 +31,7 @@ export function ChangeManagerModal({ open, departmentId, onClose }: IProps) {
   const eligible = useMemo(
     () =>
       members.filter(
-        (m) => !m.isManager && ELIGIBLE_ROLES.has(m.businessRole ?? ''),
+        (m) => !m.isManager && isManagerRole(m.businessRole),
       ),
     [members],
   );

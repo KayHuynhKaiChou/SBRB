@@ -2,7 +2,12 @@ import { useEffect } from 'react';
 import { useQuery } from '@apollo/client';
 import { useCanvasStore } from '../store/canvas.store';
 import { useAppMutation, useListCache } from '@sbrb/shared-apollo-client';
-import type { IApiResponse, ITabDto } from '@sbrb/shared-types';
+import type {
+  IApiResponse,
+  ICreateTabInput,
+  ITabDto,
+  IUpdateTabInput,
+} from '@sbrb/shared-types';
 import {
   TABS_QUERY,
   CREATE_TAB_MUTATION,
@@ -11,21 +16,8 @@ import {
   REORDER_TABS_MUTATION,
 } from '../graphql/canvas.operations';
 
-export interface ICreateTabInput {
-  businessId: string;
-  name: string;
-  iconColor?: string;
-  iconName?: string;
-  isPinned?: boolean;
-}
-
-export interface IUpdateTabInput {
-  name?: string;
-  iconColor?: string;
-  iconName?: string;
-  isPinned?: boolean;
-  isProtected?: boolean;
-}
+// Re-export for back-compat with existing consumers in this app.
+export type { ICreateTabInput, IUpdateTabInput };
 
 interface ITabsQueryResult {
   tabs: ITabDto[];

@@ -38,13 +38,13 @@ export class AuthResolver {
     return this.authService.login(input, ip, ua, ctx.res);
   }
 
+  @Public()
   @Mutation(() => Boolean)
-  async logout(
-    @CurrentUser() user: IJwtPayload,
-    @Context() ctx: { req: Request; res: Response },
-  ): Promise<boolean> {
+  async logout(@Context() ctx: { req: Request; res: Response }): Promise<boolean> {
+    // Public — refresh_token cookie is the auth proof. Allows logout when
+    // access has expired without leaving zombie refresh rows (C-2).
     const token = ctx.req.cookies?.['refresh_token'];
-    await this.authService.logout(user.sub, token, ctx.res);
+    await this.authService.logout(token, ctx.res);
     return true;
   }
 

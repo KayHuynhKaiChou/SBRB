@@ -1,6 +1,9 @@
 /** Business & role types — SRS 3.1 / 4.2 */
 
-export type BusinessRole = 'owner' | 'manager' | 'staff' | 'viewer';
+import type { TBusinessRole } from '@sbrb/shared-constants';
+
+/** @deprecated Use `TBusinessRole` from `@sbrb/shared-constants` directly. */
+export type BusinessRole = TBusinessRole;
 
 export interface IBusinessDto {
   id: string;
@@ -40,4 +43,20 @@ export interface ITabDto {
   isPinned: boolean;
   isProtected: boolean;
   createdAt: string;
+}
+
+export interface ICreateTabInput {
+  businessId: string;
+  name: string;
+  iconColor?: string;
+  iconName?: string;
+  isPinned?: boolean;
+}
+
+export interface IUpdateTabInput {
+  name?: string;
+  iconColor?: string;
+  iconName?: string;
+  isPinned?: boolean;
+  isProtected?: boolean;
 }

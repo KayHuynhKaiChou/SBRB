@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Request, Response } from 'express';
+import { API_CODE, type IApiResponse } from '@sbrb/shared-types';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -22,6 +23,13 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { IGoogleProfile } from './google.strategy';
 import { IJwtPayload } from './jwt.strategy';
 
+const ok = <T>(data: T, en = 'Success', vi = 'Thành công'): IApiResponse<T> => ({
+  code: API_CODE.OK,
+  message: { en, vi },
+  data,
+  error: null,
+});
+
 /** REST auth endpoints — SRS 4.1 */
 @Controller('auth')
 @UseGuards(JwtAuthGuard)
@@ -30,61 +38,81 @@ export class AuthController {
 
   @Public()
   @Post('register')
-  register(@Body() dto: RegisterDto) {
-    return this.authService.register(dto);
+  async register(@Body() dto: RegisterDto) {
+    const result = await this.authService.register(dto);
+    return ok(result, 'Registration successful', 'Đăng ký thành công');
   }
 
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  login(@Body() dto: LoginDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    return this.authService.login(dto, req.ip ?? '', req.headers['user-agent'] ?? '', res);
-  }
-
-  @Post('logout')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  logout(
-    @CurrentUser() user: IJwtPayload,
+  async login(
+    @Body() dto: LoginDto,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
-    return this.authService.logout(user.sub, req.cookies?.['refresh_token'], res);
+    const tokens = await this.authService.login(
+      dto,
+      req.ip ?? '',
+      req.headers['user-agent'] ?? '',
+      res,
+    );
+    return ok(tokens, 'Login successful', 'Đăng nhập thành công');
+  }
+
+  @Public()
+  @Post('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    // Public — refresh_token cookie is the auth proof. Allows logout when
+    // access token has already expired without leaving zombie refresh rows.
+    return this.authService.logout(req.cookies?.['refresh_token'], res);
   }
 
   @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+  async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const token = req.cookies?.['refresh_token'];
-    return this.authService.refresh(token, req.ip ?? '', req.headers['user-agent'] ?? '', res);
+    const tokens = await this.authService.refresh(
+      token,
+      req.ip ?? '',
+      req.headers['user-agent'] ?? '',
+      res,
+    );
+    return ok(tokens, 'Token refreshed', 'Làm mới token thành công');
   }
 
   @Public()
   @Get('verify-email/:token')
   @HttpCode(HttpStatus.OK)
-  verifyEmail(@Param('token') token: string) {
-    return this.authService.verifyEmail(token);
+  async verifyEmail(@Param('token') token: string) {
+    const result = await this.authService.verifyEmail(token);
+    return ok(result, 'Email verified', 'Xác thực email thành công');
   }
 
   @Public()
   @Post('resend-verification')
   @HttpCode(HttpStatus.OK)
-  resendVerification(@Body('email') email: string) {
-    return this.authService.resendVerification(email);
+  async resendVerification(@Body('email') email: string) {
+    const result = await this.authService.resendVerification(email);
+    return ok(result, 'Verification email sent', 'Email xác thực đã gửi');
   }
 
   @Public()
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
-  forgotPassword(@Body('email') email: string) {
-    return this.authService.forgotPassword(email);
+  async forgotPassword(@Body('email') email: string) {
+    const result = await this.authService.forgotPassword(email);
+    return ok(result, 'Password reset email sent', 'Email đặt lại mật khẩu đã gửi');
   }
 
   @Public()
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
-  resetPassword(@Body() dto: ResetPasswordDto) {
-    return this.authService.resetPassword(dto.token, dto.newPassword);
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    const result = await this.authService.resetPassword(dto.token, dto.newPassword);
+    return ok(result, 'Password reset successfully', 'Đặt lại mật khẩu thành công');
   }
 
   @Public()

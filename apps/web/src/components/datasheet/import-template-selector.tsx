@@ -1,8 +1,9 @@
 import { Button, Alert, Tag } from 'antd';
 import { DownloadOutlined, FileExcelOutlined, ApartmentOutlined, AlignLeftOutlined, CheckCircleFilled } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { apiClient } from '../../services/api-client';
+import { apiClient } from '../../lib/api-client';
 import { useNotify } from '@sbrb/shared-apollo-client';
+import { API_ROUTES } from '@sbrb/shared-constants';
 
 type TemplateType = 'simple' | 'department' | 'pnl';
 
@@ -65,7 +66,7 @@ export function ImportTemplateSelector({
   const handleDownloadSample = async () => {
     try {
       const blob = await apiClient.getBlob(
-        `/api/v1/data-sheets/sample-template?templateType=${templateType}`,
+        `${API_ROUTES.DATA_SHEET.SAMPLE_TEMPLATE}?templateType=${templateType}`,
       );
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');

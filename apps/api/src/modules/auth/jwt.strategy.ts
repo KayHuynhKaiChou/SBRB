@@ -3,12 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import type { IJwtPayload } from '@sbrb/shared-types';
 
-export interface IJwtPayload {
-  sub: string;
-  email: string;
-  businessId?: string;
-}
+// Re-export for legacy import paths within auth module.
+export type { IJwtPayload };
 
 /** Extract JWT from Authorization: Bearer OR access_token cookie */
 @Injectable()

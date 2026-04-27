@@ -11,13 +11,13 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
+import { PASSWORD_RESET_EXPIRY_HOURS } from '@sbrb/shared-constants';
 import { PasswordReset } from './entities/password-reset.entity';
 import { User } from './entities/user.entity';
 import { MailService } from '../mail/mail.service';
 import { RedisRateLimitService } from './redis-rate-limit.service';
 
 const BCRYPT_ROUNDS = 12;
-const RESET_TTL_HOURS = 1;
 const FORGOT_KEY = (email: string) => `auth:forgot:${email}`;
 const FORGOT_LIMIT = 3;
 const FORGOT_TTL = 60 * 60; // 1 hour
@@ -44,7 +44,7 @@ export class AuthPasswordService {
 
     const token = uuidv4();
     const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + RESET_TTL_HOURS);
+    expiresAt.setHours(expiresAt.getHours() + PASSWORD_RESET_EXPIRY_HOURS);
 
     await this.resetRepo.save(this.resetRepo.create({ userId: user.id, token, expiresAt }));
 

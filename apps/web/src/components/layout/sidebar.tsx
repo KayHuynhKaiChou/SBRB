@@ -13,16 +13,16 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  SIDEBAR_BG,
+  SIDEBAR_ICON_ACTIVE_BG,
+  SIDEBAR_ICON_ACTIVE_COLOR,
+  SIDEBAR_ICON_COLOR,
+  SIDEBAR_ICON_HOVER_BG,
+} from '@sbrb/shared-constants';
 import { useAuthStore } from '../../store/auth.store';
 
 const { Sider } = Layout;
-
-/** sbrb sidebar: 60px icon-only, dark wine red */
-const SIDEBAR_BG = '#7A1528';
-const ICON_COLOR = 'rgba(255,255,255,0.55)';
-const ICON_ACTIVE_COLOR = '#ffffff';
-const ICON_ACTIVE_BG = 'rgba(255,255,255,0.15)';
-const ICON_HOVER_BG = 'rgba(255,255,255,0.08)';
 
 interface INavIconProps {
   icon: React.ReactNode;
@@ -36,8 +36,8 @@ interface INavIconProps {
 function NavIcon({ icon, label, active, onClick, disabled }: INavIconProps) {
   const [hoverRef, hovered] = useHover<HTMLDivElement>();
 
-  const bg = active ? ICON_ACTIVE_BG : hovered && !disabled ? ICON_HOVER_BG : 'transparent';
-  const color = active ? ICON_ACTIVE_COLOR : ICON_COLOR;
+  const bg = active ? SIDEBAR_ICON_ACTIVE_BG : hovered && !disabled ? SIDEBAR_ICON_HOVER_BG : 'transparent';
+  const color = active ? SIDEBAR_ICON_ACTIVE_COLOR : SIDEBAR_ICON_COLOR;
 
   return (
     <Tooltip title={disabled ? `${label} (sắp ra mắt)` : label} placement="right">
@@ -131,11 +131,11 @@ export function Sidebar() {
         <NavIcon icon={<SettingOutlined />} label="Cài đặt" active={false} disabled onClick={() => undefined} />
         <Tooltip title="Thông báo" placement="right">
           <div
-            style={{ color: ICON_COLOR }}
+            style={{ color: SIDEBAR_ICON_COLOR }}
             className="w-11 h-11 rounded-[10px] flex items-center justify-center cursor-pointer mx-2 my-0.5 text-lg"
           >
             <Badge dot offset={[2, -2]}>
-              <BellOutlined style={{ color: ICON_COLOR, fontSize: 18 }} />
+              <BellOutlined style={{ color: SIDEBAR_ICON_COLOR, fontSize: 18 }} />
             </Badge>
           </div>
         </Tooltip>

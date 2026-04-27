@@ -35,20 +35,22 @@ describe('AuthController', () => {
     jest.clearAllMocks();
   });
 
-  it('should call authService.register', async () => {
+  it('should call authService.register and wrap in IApiResponse', async () => {
     (mockAuthService.register as jest.Mock).mockResolvedValue({ message: 'Verification email sent' });
     const result = await controller.register({ email: 'a@a.com', password: 'Pass1word', fullName: 'A' });
-    expect(result.message).toBe('Verification email sent');
+    expect(result.code).toBe(200);
+    expect(result.data?.message).toBe('Verification email sent');
   });
 
-  it('should call authService.login', async () => {
+  it('should call authService.login and wrap accessToken', async () => {
     (mockAuthService.login as jest.Mock).mockResolvedValue({ accessToken: 'tok' });
     const result = await controller.login(
       { email: 'a@a.com', password: 'Pass1word' },
       mockReq(),
       mockRes(),
     );
-    expect(result.accessToken).toBe('tok');
+    expect(result.code).toBe(200);
+    expect(result.data?.accessToken).toBe('tok');
   });
 
   it('should call authService.verifyEmail', async () => {

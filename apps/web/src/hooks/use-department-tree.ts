@@ -1,4 +1,5 @@
 import { useQuery } from '@apollo/client';
+import type { TBusinessRole } from '@sbrb/shared-constants';
 import { DEPARTMENT_TREE_QUERY } from '../graphql/department.operations';
 
 export interface IDepartmentMemberRef {
@@ -6,7 +7,7 @@ export interface IDepartmentMemberRef {
   departmentId: string;
   userId: string;
   isManager: boolean;
-  businessRole: string | null;
+  businessRole: TBusinessRole | null;
   joinedAt: string;
   user: {
     id: string;

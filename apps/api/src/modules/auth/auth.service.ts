@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Response } from 'express';
-import { AuthLoginService, IAuthTokens } from './auth-login.service';
+import type { IAuthTokens } from '@sbrb/shared-types';
+import { AuthLoginService } from './auth-login.service';
 import { AuthPasswordService } from './auth-password.service';
 import { AuthRegisterService } from './auth-register.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -44,8 +45,8 @@ export class AuthService {
     return this.loginService.refresh(rawToken, ip, userAgent, res);
   }
 
-  logout(userId: string, rawToken: string | undefined, res: Response): Promise<void> {
-    return this.loginService.logout(userId, rawToken, res);
+  logout(rawToken: string | undefined, res: Response): Promise<void> {
+    return this.loginService.logoutByCookie(rawToken, res);
   }
 
   forgotPassword(email: string) {

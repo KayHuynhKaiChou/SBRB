@@ -9,10 +9,15 @@ import {
   ACCEPT_INVITATION_MUTATION,
 } from '../../graphql/auth.operations';
 
+import {
+  BRAND_COLOR,
+  CURRENCIES,
+  INDUSTRIES,
+  TIMEZONES,
+} from '@sbrb/shared-constants';
+
 const { Option } = Select;
 const { Title, Text, Paragraph } = Typography;
-
-const BRAND = '#D72A44';
 
 interface CreateBusinessValues {
   name: string;
@@ -24,24 +29,6 @@ interface CreateBusinessValues {
 interface JoinBusinessValues {
   code: string;
 }
-
-const INDUSTRIES = [
-  'Bán lẻ', 'Nhà hàng / F&B', 'Dịch vụ', 'Sản xuất',
-  'Công nghệ', 'Giáo dục', 'Y tế', 'Khác',
-];
-
-const TIMEZONES = [
-  { value: 'Asia/Ho_Chi_Minh', label: 'Hà Nội / TP.HCM (UTC+7)' },
-  { value: 'Asia/Bangkok', label: 'Bangkok (UTC+7)' },
-  { value: 'Asia/Singapore', label: 'Singapore (UTC+8)' },
-  { value: 'UTC', label: 'UTC' },
-];
-
-const CURRENCIES = [
-  { value: 'VND', label: 'VND — Đồng Việt Nam' },
-  { value: 'USD', label: 'USD — Đô la Mỹ' },
-  { value: 'EUR', label: 'EUR — Euro' },
-];
 
 /** Form for creating a new business */
 function CreateBusinessForm({ onBack }: { onBack: () => void }) {
@@ -220,7 +207,7 @@ function OptionCard({ icon, title, description, onClick }: IOptionCardProps) {
       onMouseLeave={() => setHovered(false)}
       className="!rounded-xl !cursor-pointer"
       style={{
-        border: hovered ? `2px solid ${BRAND}` : '2px solid #e8e8e8',
+        border: hovered ? `2px solid ${BRAND_COLOR}` : '2px solid #e8e8e8',
         transition: 'border-color 0.2s, box-shadow 0.2s',
         boxShadow: hovered ? '0 4px 16px rgba(215,42,68,0.15)' : '0 1px 4px rgba(0,0,0,0.06)',
         padding: '8px 0',
@@ -230,7 +217,7 @@ function OptionCard({ icon, title, description, onClick }: IOptionCardProps) {
       <div
         className="w-14 h-14 rounded-[14px] flex items-center justify-center mx-auto mb-4 text-2xl"
         style={{
-          background: hovered ? BRAND : '#f5f5f5',
+          background: hovered ? BRAND_COLOR : '#f5f5f5',
           color: hovered ? '#fff' : '#666',
           transition: 'background 0.2s, color 0.2s',
         }}

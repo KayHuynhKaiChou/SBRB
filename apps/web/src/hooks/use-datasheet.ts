@@ -1,7 +1,14 @@
 import { useState } from 'react';
 import { useQuery, useSubscription } from '@apollo/client';
-import { apiClient } from '../services/api-client';
+import { apiClient } from '../lib/api-client';
 import { useAppMutation, useNotify } from '@sbrb/shared-apollo-client';
+import { API_ROUTES } from '@sbrb/shared-constants';
+import {
+  EDataSheetSortField,
+  EDataSheetStatusFilter,
+  EDataSheetTemplateType,
+  ESortOrder,
+} from '@sbrb/shared-types';
 import {
   DATA_SHEETS_QUERY,
   DATA_SERIES_QUERY,
@@ -17,16 +24,26 @@ export interface IUploaderInfo {
   avatarUrl?: string | null;
 }
 
-export type TemplateType = 'simple' | 'department' | 'pnl';
-export type DataSheetStatus = 'active' | 'inactive';
-export type DataSheetSortField = 'widgetCount' | 'importedAt' | 'createdAt';
-export type SortOrder = 'ASC' | 'DESC';
+// Re-export for back-compat with existing consumers in this app.
+export type TTemplateType = `${EDataSheetTemplateType}`;
+export type TDataSheetStatus = `${EDataSheetStatusFilter}`;
+export type TDataSheetSortField = `${EDataSheetSortField}`;
+export type TSortOrder = `${ESortOrder}`;
+
+/** @deprecated Use `TTemplateType`. */
+export type TemplateType = TTemplateType;
+/** @deprecated Use `TDataSheetStatus`. */
+export type DataSheetStatus = TDataSheetStatus;
+/** @deprecated Use `TDataSheetSortField`. */
+export type DataSheetSortField = TDataSheetSortField;
+/** @deprecated Use `TSortOrder`. */
+export type SortOrder = TSortOrder;
 
 export interface IListDataSheetsFilter {
-  status?: DataSheetStatus[];
-  templateType?: TemplateType[];
-  sortBy?: DataSheetSortField;
-  sortOrder?: SortOrder;
+  status?: TDataSheetStatus[];
+  templateType?: TTemplateType[];
+  sortBy?: TDataSheetSortField;
+  sortOrder?: TSortOrder;
 }
 
 export interface IDataSheetDto {
@@ -124,7 +141,7 @@ export function useImportDataSheet(businessId: string) {
 
     try {
       const result = await apiClient.upload<{ datasheetId: string }>(
-        `/api/v1/businesses/${businessId}/data-sheets/upload?${urlParams.toString()}`,
+        `${API_ROUTES.DATA_SHEET.UPLOAD(businessId)}?${urlParams.toString()}`,
         formData,
       );
       setUploadedDatasheetId(result.datasheetId);
@@ -144,7 +161,7 @@ export function useReimport() {
   const reimport = async (datasheetId: string) => {
     setLoading(true);
     try {
-      await apiClient.post(`/api/v1/data-sheets/${datasheetId}/reimport`);
+      await apiClient.post(API_ROUTES.DATA_SHEET.REIMPORT(datasheetId));
     } finally {
       setLoading(false);
     }
@@ -191,7 +208,7 @@ export function useDownloadTemplate() {
   const downloadTemplate = async () => {
     setLoading(true);
     try {
-      const blob = await apiClient.getBlob('/api/v1/data-sheets/export-template');
+      const blob = await apiClient.getBlob(API_ROUTES.DATA_SHEET.EXPORT_TEMPLATE);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;

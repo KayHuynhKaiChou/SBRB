@@ -7,6 +7,7 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
 import { databaseConfig } from './config/database.config';
 import { appConfig } from './config/app.config';
+import { GlobalExceptionFilter } from '../common/filters/global-exception.filter';
 import { GqlGlobalExceptionFilter } from '../common/filters/graphql-exception.filter';
 import { AuthModule } from '../modules/auth/auth.module';
 import { BusinessModule } from '../modules/business/business.module';
@@ -72,9 +73,11 @@ import { UserModule } from '../modules/user/user.module';
     AuditModule,
   ],
   providers: [
-    // Global GraphQL exception filter — maps HttpExceptions to IApiResponse-shaped extensions.
-    // Skips non-GraphQL contexts; REST traffic continues to use NestJS default error handling.
+    // Order matters: GraphQL filter handles GraphQL contexts, re-throws for REST.
+    // REST filter then catches and converts to standard JSON error response.
+    // Without REST filter, re-thrown exceptions become unhandled rejections → process crash.
     { provide: APP_FILTER, useClass: GqlGlobalExceptionFilter },
+    { provide: APP_FILTER, useClass: GlobalExceptionFilter },
   ],
 })
 export class AppModule {}

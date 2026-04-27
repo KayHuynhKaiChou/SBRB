@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppMutation, useNotify } from '@sbrb/shared-apollo-client';
+import { API_ROUTES } from '@sbrb/shared-constants';
 import { useAuthStore } from '../store/auth.store';
 import {
   ADD_SERIES_MUTATION,
@@ -250,7 +251,7 @@ export function useExportDataSheet() {
   const exportSheet = async (datasheetId: string) => {
     try {
       const token = useAuthStore.getState().accessToken ?? '';
-      const res = await fetch(`/api/v1/data-sheets/${datasheetId}/export`, {
+      const res = await fetch(API_ROUTES.DATA_SHEET.EXPORT(datasheetId), {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);

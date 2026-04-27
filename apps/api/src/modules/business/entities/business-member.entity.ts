@@ -8,6 +8,7 @@ import {
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
+import { EBusinessRole, type TBusinessRole } from '@sbrb/shared-constants';
 import { User } from '../../auth/entities/user.entity';
 import { Business } from './business.entity';
 
@@ -33,8 +34,8 @@ export class BusinessMember {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column({ type: 'varchar', length: 20, default: 'viewer' })
-  role: string;
+  @Column({ type: 'varchar', length: 20, default: EBusinessRole.VIEWER })
+  role: TBusinessRole;
 
   @Column({ name: 'invited_by', type: 'uuid', nullable: true })
   invitedBy: string | null;

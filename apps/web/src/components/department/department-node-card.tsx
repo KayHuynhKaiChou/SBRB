@@ -2,9 +2,8 @@ import { Avatar } from 'antd';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { BRAND_COLOR } from '@sbrb/shared-constants';
 import type { IOrgChartNodeData } from '../../pages/department/org-chart-layout';
-
-const BRAND = '#D72A44';
 
 function DepartmentNodeCardInner({ data }: NodeProps) {
   const { t } = useTranslation(['department']);
@@ -18,7 +17,7 @@ function DepartmentNodeCardInner({ data }: NodeProps) {
         width: 240,
         height: 110,
         borderStyle: 'solid',
-        borderColor: node.isRoot ? BRAND : '#e5e7eb',
+        borderColor: node.isRoot ? BRAND_COLOR : '#e5e7eb',
         borderWidth: node.isRoot ? 2 : 1,
       }}
     >

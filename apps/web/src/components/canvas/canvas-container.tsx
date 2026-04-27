@@ -1,13 +1,11 @@
 import React from 'react';
 import { Typography } from 'antd';
+import { CANVAS_DEFAULT_WIDTH, CANVAS_DEFAULT_HEIGHT } from '@sbrb/shared-constants';
 import { useCanvas } from '../../hooks/use-canvas';
 import { useCanvasStore } from '../../store/canvas.store';
 import { WidgetCard } from './widget-card';
 
 const { Text } = Typography;
-
-const CANVAS_WIDTH = 3200;
-const CANVAS_HEIGHT = 4800;
 
 interface ICanvasContainerProps {
   tabId: string;
@@ -32,16 +30,16 @@ export function CanvasContainer({
       {/* Scrollable canvas area — width/height are dynamic (zoom-computed), kept as inline */}
       <div
         style={{
-          width: CANVAS_WIDTH * (zoom / 100),
-          height: CANVAS_HEIGHT * (zoom / 100),
+          width: CANVAS_DEFAULT_WIDTH * (zoom / 100),
+          height: CANVAS_DEFAULT_HEIGHT * (zoom / 100),
         }}
         className="relative min-w-full min-h-full"
       >
         {/* Canvas surface with zoom transform — transform/size/bg-image are dynamic, kept as inline */}
         <div
           style={{
-            width: CANVAS_WIDTH,
-            height: CANVAS_HEIGHT,
+            width: CANVAS_DEFAULT_WIDTH,
+            height: CANVAS_DEFAULT_HEIGHT,
             transform: `scale(${zoom / 100})`,
             transformOrigin: 'top left',
             backgroundImage: snapEnabled

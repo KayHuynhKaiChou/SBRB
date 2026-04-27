@@ -70,3 +70,18 @@ export interface ICollisionConflictDto {
     h: number;
   }>;
 }
+
+/** Input shape matching GraphQL UpdateDataLinkDto */
+export interface IUpdateDataLinkInput {
+  dataSheetId: string;
+  selectedSeries: string[];
+  selectedPeriods: string[] | null;
+}
+
+/** Result shape returned from add-widget modal */
+export interface IAddWidgetResult {
+  name: string;
+  unit: string;
+  dataSheetId: string | null;
+  selectedSeries: string[];
+}

@@ -12,23 +12,21 @@ import * as bcrypt from 'bcrypt';
 import { Response } from 'express';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
+import {
+  LOGIN_MAX_ATTEMPTS,
+  LOGIN_LOCKOUT_MINUTES,
+  REFRESH_COOKIE_NAME,
+} from '@sbrb/shared-constants';
+import type { IAuthTokens, IJwtPayload } from '@sbrb/shared-types';
+import { hashRefreshToken, parseDurationMs } from '@sbrb/shared-utils/auth-token-hash.util';
 import { LoginDto } from './dto/login.dto';
 import { RefreshToken } from './entities/refresh-token.entity';
 import { User } from './entities/user.entity';
 import { IGoogleProfile } from './google.strategy';
-import { IJwtPayload } from './jwt.strategy';
 import { RedisRateLimitService } from './redis-rate-limit.service';
 
-const BCRYPT_ROUNDS = 12;
 const ATTEMPT_KEY = (email: string) => `auth:attempts:${email}`;
-const ATTEMPT_LIMIT = 5;
-const ATTEMPT_TTL = 15 * 60; // 15 min
-const REFRESH_TTL_DAYS = 365;
-const COOKIE_NAME = 'refresh_token';
-
-export interface IAuthTokens {
-  accessToken: string;
-}
+const ATTEMPT_TTL_SECONDS = LOGIN_LOCKOUT_MINUTES * 60;
 
 @Injectable()
 export class AuthLoginService {
@@ -52,13 +50,13 @@ export class AuthLoginService {
     if (!user.emailVerified) throw new ForbiddenException('Email not verified');
 
     const attempts = await this.redis.get(ATTEMPT_KEY(dto.email));
-    if (attempts >= ATTEMPT_LIMIT) {
+    if (attempts >= LOGIN_MAX_ATTEMPTS) {
       throw new HttpException('Too many failed attempts. Try again in 15 minutes.', HttpStatus.TOO_MANY_REQUESTS);
     }
 
     const valid = await bcrypt.compare(dto.password, user.passwordHash ?? '');
     if (!valid) {
-      await this.redis.increment(ATTEMPT_KEY(dto.email), ATTEMPT_TTL);
+      await this.redis.increment(ATTEMPT_KEY(dto.email), ATTEMPT_TTL_SECONDS);
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -90,45 +88,82 @@ export class AuthLoginService {
   }
 
   async refresh(rawToken: string, ip: string, userAgent: string, res: Response): Promise<IAuthTokens> {
-    if (!rawToken) throw new UnauthorizedException('No refresh token');
-    // Find by hash is not efficient — iterate is required since we hash differently each time.
-    // Use a deterministic approach: store the raw token hashed with a fixed approach.
-    // We use bcrypt.compare against stored hash.
-    const records = await this.tokenRepo.find({
-      where: { revokedAt: null as unknown as undefined },
+    if (!rawToken) {
+      res.clearCookie(REFRESH_COOKIE_NAME);
+      throw new UnauthorizedException('No refresh token');
+    }
+    const tokenHash = hashRefreshToken(rawToken);
+
+    // Lookup by hash REGARDLESS of revoked status — needed to detect reuse of revoked tokens.
+    const matched = await this.tokenRepo.findOne({
+      where: { tokenHash },
       relations: ['user'],
     });
 
-    let matched: RefreshToken | null = null;
-    for (const r of records) {
-      if (await bcrypt.compare(rawToken, r.tokenHash)) {
-        matched = r;
-        break;
-      }
+    if (!matched) {
+      res.clearCookie(REFRESH_COOKIE_NAME);
+      throw new UnauthorizedException('Invalid refresh token');
     }
 
-    if (!matched) throw new UnauthorizedException('Invalid refresh token');
-    if (matched.expiresAt < new Date()) throw new UnauthorizedException('Refresh token expired');
+    // REUSE DETECTION (H-1): a previously-revoked token presented again indicates
+    // either an attacker replaying a stolen token or a buggy client. Treat as
+    // compromise — revoke entire token family for this user, force full re-login.
+    if (matched.revokedAt) {
+      await this.revokeFamily(matched.userId);
+      res.clearCookie(REFRESH_COOKIE_NAME);
+      throw new UnauthorizedException('Refresh token reuse detected');
+    }
 
-    // Revoke old token
-    await this.tokenRepo.update(matched.id, { revokedAt: new Date() });
+    if (matched.expiresAt < new Date()) {
+      await this.tokenRepo.delete(matched.id);
+      res.clearCookie(REFRESH_COOKIE_NAME);
+      throw new UnauthorizedException('Refresh token expired');
+    }
+
+    // ATOMIC CAS (C-1): UPDATE ... WHERE id=? AND revoked_at IS NULL.
+    // If 0 rows affected → another concurrent refresh already consumed this token →
+    // race lost → treat as reuse, revoke family.
+    const result = await this.tokenRepo
+      .createQueryBuilder()
+      .update(RefreshToken)
+      .set({ revokedAt: new Date() })
+      .where('id = :id AND revoked_at IS NULL', { id: matched.id })
+      .execute();
+
+    if (result.affected === 0) {
+      await this.revokeFamily(matched.userId);
+      res.clearCookie(REFRESH_COOKIE_NAME);
+      throw new UnauthorizedException('Refresh token reuse detected');
+    }
 
     return this.issueTokens(matched.user, ip, userAgent, res);
   }
 
-  async logout(userId: string, rawToken: string | undefined, res: Response): Promise<void> {
+  /**
+   * Defense response to reuse detection: hard-delete ALL tokens for the user
+   * (active + already-revoked). Forces full re-login on every device.
+   * Hard-delete (vs soft-revoke) keeps GC simple and removes audit ambiguity —
+   * a compromised user shouldn't leave a stale family in DB.
+   */
+  private async revokeFamily(userId: string): Promise<void> {
+    await this.tokenRepo.delete({ userId });
+  }
+
+  /**
+   * Logout via refresh cookie alone — no access token required (C-2).
+   * Allows logout when access has expired without leaving zombie refresh rows.
+   */
+  async logoutByCookie(rawToken: string | undefined, res: Response): Promise<void> {
     if (rawToken) {
-      const records = await this.tokenRepo.find({
-        where: { userId, revokedAt: null as unknown as undefined },
-      });
-      for (const r of records) {
-        if (await bcrypt.compare(rawToken, r.tokenHash)) {
-          await this.tokenRepo.update(r.id, { revokedAt: new Date() });
-          break;
-        }
-      }
+      const tokenHash = hashRefreshToken(rawToken);
+      await this.tokenRepo.delete({ tokenHash });
     }
-    res.clearCookie(COOKIE_NAME);
+    res.clearCookie(REFRESH_COOKIE_NAME);
+  }
+
+  private getRefreshTtlMs(): number {
+    const raw = this.config.get<string>('JWT_REFRESH_EXPIRY', '30d');
+    return parseDurationMs(raw);
   }
 
   async issueTokens(user: User, ip: string, userAgent: string, res: Response): Promise<IAuthTokens> {
@@ -136,9 +171,20 @@ export class AuthLoginService {
     const accessToken = this.jwtService.sign(payload);
 
     const rawRefresh = uuidv4();
-    const tokenHash = await bcrypt.hash(rawRefresh, BCRYPT_ROUNDS);
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + REFRESH_TTL_DAYS);
+    const tokenHash = hashRefreshToken(rawRefresh);
+    const refreshTtlMs = this.getRefreshTtlMs();
+    const expiresAt = new Date(Date.now() + refreshTtlMs);
+
+    // GC: drop user's stale rows (expired or revoked) before inserting fresh one.
+    // Cheap (1 indexed query), prevents unbounded accumulation without a cron.
+    await this.tokenRepo
+      .createQueryBuilder()
+      .delete()
+      .where(
+        'user_id = :uid AND (expires_at < now() OR revoked_at IS NOT NULL)',
+        { uid: user.id },
+      )
+      .execute();
 
     await this.tokenRepo.save(
       this.tokenRepo.create({
@@ -151,11 +197,11 @@ export class AuthLoginService {
     );
 
     const isProd = this.config.get('NODE_ENV') === 'production';
-    res.cookie(COOKIE_NAME, rawRefresh, {
+    res.cookie(REFRESH_COOKIE_NAME, rawRefresh, {
       httpOnly: true,
       secure: isProd,
       sameSite: 'strict',
-      maxAge: REFRESH_TTL_DAYS * 24 * 60 * 60 * 1000,
+      maxAge: refreshTtlMs,
     });
 
     return { accessToken };

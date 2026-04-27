@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import type { TBusinessRole } from '@sbrb/shared-constants';
 import { AuditService } from '../audit/audit.service';
 import { BusinessMember } from './entities/business-member.entity';
 
@@ -28,7 +29,7 @@ export class MemberService {
     businessId: string,
     adminId: string,
     targetUserId: string,
-    role: string,
+    role: TBusinessRole,
   ): Promise<BusinessMember> {
     const admin = await this.memberRepo.findOne({ where: { businessId, userId: adminId } });
     if (!admin || admin.role !== 'owner') {

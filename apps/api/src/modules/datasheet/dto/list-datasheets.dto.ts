@@ -1,51 +1,45 @@
 import { ArgsType, Field, InputType, registerEnumType } from '@nestjs/graphql';
 import { IsEnum, IsOptional } from 'class-validator';
+import {
+  EDataSheetSortField,
+  EDataSheetStatusFilter,
+  EDataSheetTemplateType,
+  ESortOrder,
+} from '@sbrb/shared-types';
 
-export enum DataSheetStatusFilter {
-  active = 'active',
-  inactive = 'inactive',
-}
-registerEnumType(DataSheetStatusFilter, { name: 'DataSheetStatusFilter' });
+// Re-export for back-compat with existing imports.
+export {
+  EDataSheetSortField,
+  EDataSheetStatusFilter,
+  EDataSheetTemplateType,
+  ESortOrder,
+};
 
-export enum DataSheetTemplateType {
-  simple = 'simple',
-  department = 'department',
-  pnl = 'pnl',
-}
-registerEnumType(DataSheetTemplateType, { name: 'DataSheetTemplateType' });
-
-export enum DataSheetSortField {
-  widgetCount = 'widgetCount',
-  importedAt = 'importedAt',
-  createdAt = 'createdAt',
-}
-registerEnumType(DataSheetSortField, { name: 'DataSheetSortField' });
-
-export enum SortOrder {
-  ASC = 'ASC',
-  DESC = 'DESC',
-}
-registerEnumType(SortOrder, { name: 'SortOrder' });
+// Register with GraphQL — keep external schema names unchanged so FE queries don't break.
+registerEnumType(EDataSheetStatusFilter, { name: 'DataSheetStatusFilter' });
+registerEnumType(EDataSheetTemplateType, { name: 'DataSheetTemplateType' });
+registerEnumType(EDataSheetSortField, { name: 'DataSheetSortField' });
+registerEnumType(ESortOrder, { name: 'SortOrder' });
 
 @InputType()
 export class ListDataSheetsInput {
-  @Field(() => [DataSheetStatusFilter], { nullable: true })
+  @Field(() => [EDataSheetStatusFilter], { nullable: true })
   @IsOptional()
-  @IsEnum(DataSheetStatusFilter, { each: true })
-  status?: DataSheetStatusFilter[];
+  @IsEnum(EDataSheetStatusFilter, { each: true })
+  status?: EDataSheetStatusFilter[];
 
-  @Field(() => [DataSheetTemplateType], { nullable: true })
+  @Field(() => [EDataSheetTemplateType], { nullable: true })
   @IsOptional()
-  @IsEnum(DataSheetTemplateType, { each: true })
-  templateType?: DataSheetTemplateType[];
+  @IsEnum(EDataSheetTemplateType, { each: true })
+  templateType?: EDataSheetTemplateType[];
 
-  @Field(() => DataSheetSortField, { nullable: true })
+  @Field(() => EDataSheetSortField, { nullable: true })
   @IsOptional()
-  @IsEnum(DataSheetSortField)
-  sortBy?: DataSheetSortField;
+  @IsEnum(EDataSheetSortField)
+  sortBy?: EDataSheetSortField;
 
-  @Field(() => SortOrder, { nullable: true })
+  @Field(() => ESortOrder, { nullable: true })
   @IsOptional()
-  @IsEnum(SortOrder)
-  sortOrder?: SortOrder;
+  @IsEnum(ESortOrder)
+  sortOrder?: ESortOrder;
 }

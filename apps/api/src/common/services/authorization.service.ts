@@ -1,9 +1,8 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { isManagerRole } from '@sbrb/shared-constants';
 import { BusinessMember } from '../../modules/business/entities/business-member.entity';
-
-const MANAGER_ROLES = ['owner', 'manager'];
 
 /**
  * Shared authorization service — centralizes member/manager role checks
@@ -37,7 +36,7 @@ export class AuthorizationService {
    */
   async requireManager(businessId: string, userId: string): Promise<BusinessMember> {
     const member = await this.requireMember(businessId, userId);
-    if (!MANAGER_ROLES.includes(member.role)) {
+    if (!isManagerRole(member.role)) {
       throw new ForbiddenException('Manager role required');
     }
     return member;

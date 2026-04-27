@@ -19,6 +19,7 @@
       "@sbrb/shared-types": ["libs/shared/types/src/index.ts"],
       "@sbrb/shared-constants": ["libs/shared/constants/src/index.ts"],
       "@sbrb/shared-utils": ["libs/shared/utils/src/index.ts"],
+      "@sbrb/shared-utils/*": ["libs/shared/utils/src/*"],
       "@sbrb/ui": ["libs/ui/src/index.ts"],
       "@sbrb/i18n": ["libs/i18n/src/index.ts"],
       "@sbrb/shared-apollo-client": ["libs/shared/apollo-client/src/index.ts"],

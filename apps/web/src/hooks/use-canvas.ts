@@ -2,8 +2,9 @@ import { useEffect, useMemo, useRef, useCallback } from 'react';
 import { useQuery } from '@apollo/client';
 import debounce from 'lodash/debounce';
 import { detectCollision } from '@sbrb/shared-utils';
+import { API_ROUTES } from '@sbrb/shared-constants';
 import { useCanvasStore } from '../store/canvas.store';
-import { apiClient } from '../services/api-client';
+import { apiClient } from '../lib/api-client';
 import { useNotify } from '@sbrb/shared-apollo-client';
 import { WIDGETS_QUERY } from '../graphql/canvas.operations';
 import type { IWidgetPosition } from '@sbrb/shared-types';
@@ -58,7 +59,7 @@ export function useCanvas(tabId: string) {
     async (payload: IDebouncedPosition) => {
       const { widgetId, ...pos } = payload;
       try {
-        const { conflict } = await apiClient.patch(`/api/v1/widgets/${widgetId}/position`, pos);
+        const { conflict } = await apiClient.patch(API_ROUTES.WIDGET.POSITION(widgetId), pos);
         if (conflict) {
           // Server-side collision — revert to last valid
           const last = lastValidPositions.current.get(widgetId);

@@ -12,6 +12,8 @@ export interface IUserDto {
 export interface IJwtPayload {
   sub: string; // userId
   email: string;
+  /** Active business context (set on business switch). Optional — absent on initial login. */
+  businessId?: string;
   iat?: number;
   exp?: number;
 }

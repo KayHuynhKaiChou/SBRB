@@ -1,6 +1,11 @@
 import { useQuery } from '@apollo/client';
 import { useAppMutation, useListCache } from '@sbrb/shared-apollo-client';
-import type { IApiResponse } from '@sbrb/shared-types';
+import type {
+  IApiResponse,
+  ICreateDepartmentInput,
+  IDepartmentDto,
+  IUpdateDepartmentInput,
+} from '@sbrb/shared-types';
 import {
   DEPARTMENTS_QUERY,
   CREATE_DEPARTMENT_MUTATION,
@@ -8,25 +13,8 @@ import {
   DELETE_DEPARTMENT_MUTATION,
 } from '../graphql/department.operations';
 
-export interface IDepartmentDto {
-  id: string;
-  name: string;
-  parentId: string | null;
-  businessId: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ICreateDepartmentInput {
-  businessId: string;
-  name: string;
-  parentId?: string | null;
-}
-
-export interface IUpdateDepartmentInput {
-  name?: string;
-  parentId?: string | null;
-}
+// Re-export for back-compat with existing consumers in this app.
+export type { ICreateDepartmentInput, IDepartmentDto, IUpdateDepartmentInput };
 
 interface IDepartmentsQueryResult {
   departments: IDepartmentDto[];

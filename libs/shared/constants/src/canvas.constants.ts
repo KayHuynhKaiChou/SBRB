@@ -19,3 +19,7 @@ export const DEFAULT_ZOOM = 100;
 
 /** Position debounce delay (ms) — SRS 4.1.5 data flow */
 export const POSITION_UPDATE_DEBOUNCE_MS = 300;
+
+/** Department org-chart node dimensions */
+export const DEPT_NODE_W = 240;
+export const DEPT_NODE_H = 110;

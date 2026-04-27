@@ -4,19 +4,15 @@ import {
   UPDATE_WIDGET_DATA_LINK_MUTATION,
   REMOVE_WIDGET_DATA_LINK_MUTATION,
 } from '../graphql/widget-config.operations';
-import type { IChartConfig } from '@sbrb/shared-types';
+import type { IChartConfig, IUpdateDataLinkInput } from '@sbrb/shared-types';
+
+// Re-export for back-compat with existing consumers in this app.
+export type { IUpdateDataLinkInput };
 
 // WidgetChartData and AvailableSeries are computed from the data link in a
 // separate resolver, so they do NOT auto-update via Apollo's entity
 // normalization when the Widget is patched. Refetch them explicitly.
 const DATA_LINK_DEPENDENT_QUERIES = ['WidgetChartData', 'AvailableSeries'];
-
-/** Input shape matching GraphQL UpdateDataLinkDto */
-export interface IUpdateDataLinkInput {
-  dataSheetId: string;
-  selectedSeries: string[];
-  selectedPeriods: string[] | null;
-}
 
 export function useWidgetConfig() {
   const [updateConfigMutation, { loading: updatingConfig }] = useAppMutation(

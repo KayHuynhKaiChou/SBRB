@@ -2,9 +2,36 @@
  * DataSheet types — SRS 4.7 / 4.8
  */
 
-export type PeriodType = 'monthly' | 'quarterly' | 'yearly' | 'weekly' | 'custom';
+export type TPeriodType = 'monthly' | 'quarterly' | 'yearly' | 'weekly' | 'custom';
+/** @deprecated Use `TPeriodType`. */
+export type PeriodType = TPeriodType;
 
-export type ImportStatus = 'processing' | 'ready' | 'error';
+export type TImportStatus = 'processing' | 'ready' | 'error';
+/** @deprecated Use `TImportStatus`. */
+export type ImportStatus = TImportStatus;
+
+/** DataSheet list query enums — kept as runtime enums for GraphQL @Field schema compatibility. */
+export enum EDataSheetStatusFilter {
+  active = 'active',
+  inactive = 'inactive',
+}
+
+export enum EDataSheetTemplateType {
+  simple = 'simple',
+  department = 'department',
+  pnl = 'pnl',
+}
+
+export enum EDataSheetSortField {
+  widgetCount = 'widgetCount',
+  importedAt = 'importedAt',
+  createdAt = 'createdAt',
+}
+
+export enum ESortOrder {
+  ASC = 'ASC',
+  DESC = 'DESC',
+}
 
 /** A single row in a DataSheet (one series = one metric over time) */
 export interface IDataSeriesDto {
@@ -19,7 +46,7 @@ export interface IDataSheetDto {
   id: string;
   businessId: string;
   name: string;
-  periodType: PeriodType;
+  periodType: TPeriodType;
   /** Column headers (period labels) in order */
   periods: string[];
   seriesCount: number;
@@ -33,7 +60,7 @@ export interface IImportBatchDto {
   datasheetId: string;
   businessId: string;
   fileName: string;
-  status: ImportStatus;
+  status: TImportStatus;
   errorMessage?: string;
   rowsImported?: number;
   createdAt: string;

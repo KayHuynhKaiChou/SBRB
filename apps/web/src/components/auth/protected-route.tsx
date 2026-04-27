@@ -2,19 +2,17 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { Spin } from 'antd';
 import { useAuthStore } from '../../store/auth.store';
-import { useAuthInit } from '../../hooks/use-auth-init';
+import { useAuth } from '../../hooks/use-auth';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
-/** Waits for Zustand hydration + silent token refresh before redirecting to login */
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const hasHydrated = useAuthStore((s) => s._hasHydrated);
-  const accessToken = useAuthStore((s) => s.accessToken);
-  const { loading } = useAuthInit();
+  const { status } = useAuth();
 
-  if (!hasHydrated || loading) {
+  if (!hasHydrated || status === 'loading') {
     return (
       <div className="flex items-center justify-center h-screen">
         <Spin size="large" />
@@ -22,7 +20,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  if (!accessToken) {
+  if (status === 'guest') {
     return <Navigate to="/auth/login" replace />;
   }
 
