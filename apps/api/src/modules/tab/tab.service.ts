@@ -96,18 +96,19 @@ export class TabService {
       });
     }
 
-    if (dto.name !== undefined) tab.name = dto.name;
-    if (dto.iconColor !== undefined) tab.color = dto.iconColor;
-    if (dto.iconName !== undefined) tab.icon = dto.iconName;
-    if (dto.isPinned !== undefined) tab.isPinned = dto.isPinned;
-    if (dto.isProtected !== undefined) {
-      if (dto.isProtected && member.role !== 'owner') {
-        throw new ForbiddenException({
-          message: { vi: 'Chỉ Chủ Doanh nghiệp mới được đặt Tab dạng bảo vệ', en: 'Only the business owner can set a tab as protected' },
-        });
-      }
-      tab.isProtected = dto.isProtected;
+    // Setting `isProtected = true` requires owner privilege.
+    if (dto.isProtected && member.role !== 'owner') {
+      throw new ForbiddenException({
+        message: { vi: 'Chỉ Chủ Doanh nghiệp mới được đặt Tab dạng bảo vệ', en: 'Only the business owner can set a tab as protected' },
+      });
     }
+
+    // Remap field-name mismatches; bulk-merge the rest. Global ValidationPipe
+    // (`exposeUnsetFields: false`) guarantees dto only has keys the client sent.
+    const { iconColor, iconName, ...rest } = dto;
+    Object.assign(tab, rest);
+    if (iconColor !== undefined) tab.color = iconColor;
+    if (iconName !== undefined) tab.icon = iconName;
 
     const saved = await this.tabRepo.save(tab);
     return this.mapTab(saved);

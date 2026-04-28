@@ -25,6 +25,13 @@ export class MemberService {
     return this.memberRepo.find({ where, relations: ['user'] });
   }
 
+  async findByUserAndBusiness(
+    userId: string,
+    businessId: string,
+  ): Promise<BusinessMember | null> {
+    return this.memberRepo.findOne({ where: { userId, businessId } });
+  }
+
   async changeMemberRole(
     businessId: string,
     adminId: string,

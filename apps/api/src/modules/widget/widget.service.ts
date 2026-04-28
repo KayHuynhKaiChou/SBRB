@@ -143,10 +143,9 @@ export class WidgetService {
   async update(id: string, userId: string, dto: UpdateWidgetDto): Promise<WidgetType> {
     const { widget, businessId } = await this.widgetAuth.assertManagerByWidgetId(id, userId);
 
-    if (dto.name !== undefined) widget.name = dto.name;
-    if (dto.metricName !== undefined) widget.metricName = dto.metricName ?? null;
-    if (dto.unit !== undefined) widget.unit = dto.unit ?? null;
-    if (dto.isRestricted !== undefined) widget.isRestricted = dto.isRestricted;
+    // Global ValidationPipe (`exposeUnsetFields: false`) ensures dto only carries
+    // keys the client actually sent. DTO field names match entity columns.
+    Object.assign(widget, dto);
 
     const saved = await this.widgetRepo.save(widget);
     return this.mapWidget(saved, businessId);

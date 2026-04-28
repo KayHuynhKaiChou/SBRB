@@ -27,6 +27,15 @@ export class MemberResolver {
     return this.memberService.members(businessId, filter);
   }
 
+  @Query(() => MemberType, { name: 'myMembership', nullable: true })
+  async myMembership(
+    @Args('businessId', { type: () => ID }) businessId: string,
+    @CurrentUser() user: IJwtPayload,
+  ): Promise<MemberType | null> {
+    const m = await this.memberService.findByUserAndBusiness(user.sub, businessId);
+    return m as MemberType | null;
+  }
+
   @Query(() => [InvitationType], { name: 'pendingInvitations' })
   async pendingInvitations(
     @Args('businessId', { type: () => ID }) businessId: string,

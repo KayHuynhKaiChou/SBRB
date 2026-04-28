@@ -5,6 +5,7 @@ const mockMemberService = () => ({
   changeMemberRole: jest.fn(),
   removeMember: jest.fn(),
   assignWidgets: jest.fn(),
+  findByUserAndBusiness: jest.fn(),
 });
 
 const mockInvitationService = () => ({
@@ -98,5 +99,37 @@ describe('MemberResolver', () => {
     const result = await resolver.assignWidgets(BID, 'target-1', dto as any, USER as any);
     expect(ms.assignWidgets).toHaveBeenCalledWith(BID, USER.sub, 'target-1', ['w1']);
     expect(result).toEqual({ id: 'm1', assignedWidgetIds: ['w1'] });
+  });
+
+  it('myMembership() returns current user membership when found', async () => {
+    const { resolver, ms } = makeResolver();
+    ms.findByUserAndBusiness.mockResolvedValue({
+      id: 'm1',
+      userId: 'user-1',
+      businessId: BID,
+      role: 'manager',
+      status: 'active',
+    });
+
+    const result = await resolver.myMembership(BID, USER as any);
+
+    expect(ms.findByUserAndBusiness).toHaveBeenCalledWith('user-1', BID);
+    expect(result).toEqual({
+      id: 'm1',
+      userId: 'user-1',
+      businessId: BID,
+      role: 'manager',
+      status: 'active',
+    });
+  });
+
+  it('myMembership() returns null when user is not a member', async () => {
+    const { resolver, ms } = makeResolver();
+    ms.findByUserAndBusiness.mockResolvedValue(null);
+
+    const result = await resolver.myMembership(BID, USER as any);
+
+    expect(ms.findByUserAndBusiness).toHaveBeenCalledWith('user-1', BID);
+    expect(result).toBeNull();
   });
 });
