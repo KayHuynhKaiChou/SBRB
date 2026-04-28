@@ -13,7 +13,6 @@ import {
   BRAND_COLOR,
   CURRENCIES,
   INDUSTRIES,
-  TIMEZONES,
 } from '@sbrb/shared-constants';
 
 const { Option } = Select;
@@ -22,7 +21,6 @@ const { Title, Text, Paragraph } = Typography;
 interface CreateBusinessValues {
   name: string;
   industry: string;
-  timezone: string;
   currency: string;
 }
 
@@ -74,19 +72,6 @@ function CreateBusinessForm({ onBack }: { onBack: () => void }) {
           <Select placeholder="Chọn ngành nghề">
             {INDUSTRIES.map((ind) => (
               <Option key={ind} value={ind}>{ind}</Option>
-            ))}
-          </Select>
-        </Form.Item>
-
-        <Form.Item
-          name="timezone"
-          label="Múi giờ"
-          initialValue="Asia/Ho_Chi_Minh"
-          rules={[{ required: true, message: 'Vui lòng chọn múi giờ' }]}
-        >
-          <Select>
-            {TIMEZONES.map((tz) => (
-              <Option key={tz.value} value={tz.value}>{tz.label}</Option>
             ))}
           </Select>
         </Form.Item>
