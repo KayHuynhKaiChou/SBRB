@@ -24,3 +24,11 @@ export const isManagerRole = (
   role: TBusinessRole | null | undefined,
 ): role is EBusinessRole.OWNER | EBusinessRole.MANAGER =>
   role === EBusinessRole.OWNER || role === EBusinessRole.MANAGER;
+
+/** Ant Design Tag color mapped per role — used by RoleTag/ProfileForm. */
+export const ROLE_TAG_COLOR: Record<TBusinessRole, string> = {
+  [EBusinessRole.OWNER]: 'red',
+  [EBusinessRole.MANAGER]: 'blue',
+  [EBusinessRole.STAFF]: 'default',
+  [EBusinessRole.VIEWER]: 'gold',
+};

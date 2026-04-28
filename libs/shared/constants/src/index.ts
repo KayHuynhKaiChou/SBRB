@@ -2,6 +2,7 @@ export * from './auth.constants';
 export * from './business.constants';
 export * from './canvas.constants';
 export * from './chart.constants';
+export * from './regex.constant';
 export * from './role.constants';
 export * from './routes.constants';
 export * from './theme.constants';

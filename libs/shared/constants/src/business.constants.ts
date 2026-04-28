@@ -12,13 +12,6 @@ export const INDUSTRIES = [
 ] as const;
 export type TIndustry = (typeof INDUSTRIES)[number];
 
-export const TIMEZONES = [
-  { value: 'Asia/Ho_Chi_Minh', label: 'Hà Nội / TP.HCM (UTC+7)' },
-  { value: 'Asia/Bangkok', label: 'Bangkok (UTC+7)' },
-  { value: 'Asia/Singapore', label: 'Singapore (UTC+8)' },
-  { value: 'UTC', label: 'UTC' },
-] as const;
-
 export const CURRENCIES = [
   { value: 'VND', label: 'VND — Đồng Việt Nam' },
   { value: 'USD', label: 'USD — Đô la Mỹ' },
