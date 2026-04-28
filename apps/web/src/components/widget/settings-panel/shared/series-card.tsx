@@ -44,7 +44,7 @@ export function SeriesCard({
   const handleAxisToggle = () => {
     if (!onSeriesConfigChange || isPie) return;
     const nextAxis = yAxis === 'left' ? 'right' : 'left';
-    onSeriesConfigChange({ ...seriesConfig, yAxis: nextAxis });
+    onSeriesConfigChange({ ...seriesConfig, type: chartType, yAxis: nextAxis });
   };
 
   return (
