@@ -7,12 +7,18 @@ import { BusinessService } from './business.service';
 import { BusinessType } from './dto/business.type';
 import { CreateBusinessDto } from './dto/create-business.dto';
 import { UpdateBusinessDto } from './dto/update-business.dto';
+import { AvatarUploadUrlType } from '../user/dto/avatar-upload.type';
+import { GetAvatarUploadUrlDto } from '../user/dto/get-avatar-upload-url.dto';
+import { AvatarStorageService } from '../user/services/avatar-storage.service';
 
 /** GraphQL resolver for Business — SRS 4.2 */
 @Resolver(() => BusinessType)
 @UseGuards(JwtAuthGuard)
 export class BusinessResolver {
-  constructor(private readonly businessService: BusinessService) {}
+  constructor(
+    private readonly businessService: BusinessService,
+    private readonly imageStorage: AvatarStorageService,
+  ) {}
 
   @Query(() => BusinessType, { name: 'business' })
   async getBusiness(
@@ -54,6 +60,16 @@ export class BusinessResolver {
   ): Promise<boolean> {
     await this.businessService.delete(id, user.sub, confirmName);
     return true;
+  }
+
+  @Mutation(() => AvatarUploadUrlType)
+  async getLogoUploadUrl(
+    @Args('businessId', { type: () => ID }) businessId: string,
+    @Args('input') input: GetAvatarUploadUrlDto,
+    @CurrentUser() user: IJwtPayload,
+  ): Promise<AvatarUploadUrlType> {
+    await this.businessService.findById(businessId, user.sub);
+    return this.imageStorage.createUploadUrl('logo', businessId, input.filename);
   }
 
   @Mutation(() => Boolean)

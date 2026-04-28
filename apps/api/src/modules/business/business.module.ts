@@ -17,6 +17,7 @@ import { User } from '../auth/entities/user.entity';
 import { MailModule } from '../mail/mail.module';
 import { MinioModule } from '../minio/minio.module';
 import { AuditModule } from '../audit/audit.module';
+import { UserModule } from '../user/user.module';
 
 /**
  * Business module — SRS 4.2
@@ -29,6 +30,7 @@ import { AuditModule } from '../audit/audit.module';
     MailModule,
     MinioModule,
     AuditModule,
+    UserModule,
   ],
   providers: [
     BusinessCrudService,
