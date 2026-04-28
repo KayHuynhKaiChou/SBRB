@@ -15,6 +15,13 @@ export const ME_QUERY = gql`
       email
       fullName
       avatarUrl
+      phone
+      language
+      bio
+      department {
+        id
+        name
+      }
       emailVerified
       createdAt
     }

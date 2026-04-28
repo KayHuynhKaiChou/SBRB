@@ -66,6 +66,7 @@ export function Sidebar() {
   const isDashboard = location.pathname.startsWith('/dashboard');
   const isDataSheets = location.pathname === '/data-sheets';
   const isDepartments = location.pathname === '/departments';
+  const isProfile = location.pathname.startsWith('/profile');
 
   return (
     <Sider
@@ -139,8 +140,14 @@ export function Sidebar() {
             </Badge>
           </div>
         </Tooltip>
-        <Tooltip title={user?.name ?? user?.email ?? 'Profile'} placement="right">
-          <div className="w-11 h-11 rounded-[10px] flex items-center justify-center cursor-pointer mx-2 my-0.5">
+        <Tooltip title={user?.fullName ?? user?.email ?? 'Profile'} placement="right">
+          <div
+            onClick={() => navigate('/profile')}
+            style={{
+              borderLeft: isProfile ? '3px solid var(--sbrb-accent-coral)' : '3px solid transparent',
+            }}
+            className="w-11 h-11 rounded-[10px] flex items-center justify-center cursor-pointer mx-2 my-0.5 transition-[border-color] duration-150"
+          >
             <Avatar
               size={28}
               src={user?.avatarUrl}

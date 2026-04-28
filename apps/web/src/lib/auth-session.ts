@@ -108,8 +108,12 @@ export function createAuthSession({ apolloClient }: IAuthSessionDeps): IAuthSess
     const user: IUserDto = {
       id: m?.id ?? '',
       email: m?.email ?? '',
-      name: m?.fullName ?? '',
+      fullName: m?.fullName ?? '',
       avatarUrl: m?.avatarUrl,
+      phone: m?.phone ?? undefined,
+      language: (m?.language ?? 'vi') as 'vi' | 'en',
+      bio: m?.bio ?? undefined,
+      department: m?.department ?? null,
       isEmailVerified: !!m?.emailVerified,
       createdAt: m?.createdAt ?? '',
     };

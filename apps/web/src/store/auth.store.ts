@@ -8,6 +8,7 @@ interface IAuthStore {
   currentBusinessId: string | null;
   _hasHydrated: boolean;
   setAuth: (user: IUserDto, token: string) => void;
+  setUser: (user: IUserDto) => void;
   clearAuth: () => void;
   setCurrentBusiness: (id: string | null) => void;
 }
@@ -20,6 +21,7 @@ export const useAuthStore = create<IAuthStore>()(
       currentBusinessId: null,
       _hasHydrated: false,
       setAuth: (user, token) => set({ user, accessToken: token }),
+      setUser: (user) => set({ user }),
       clearAuth: () => set({ user: null, accessToken: null, currentBusinessId: null }),
       setCurrentBusiness: (id) => set({ currentBusinessId: id }),
     }),

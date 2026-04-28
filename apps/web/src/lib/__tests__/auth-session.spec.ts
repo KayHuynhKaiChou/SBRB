@@ -264,7 +264,7 @@ describe('authSession.fetchUserContext', () => {
 
     expect(mockApolloClient.query).toHaveBeenCalledTimes(2);
     expect(result.user.email).toBe('a@b');
-    expect(result.user.name).toBe('Alice');
+    expect(result.user.fullName).toBe('Alice');
     expect(result.businesses).toHaveLength(1);
   });
 });

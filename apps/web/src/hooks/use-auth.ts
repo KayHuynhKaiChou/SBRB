@@ -92,7 +92,7 @@ export function useAuth() {
 
     // Set placeholder so authLink injects token for fetchUserContext queries
     useAuthStore.getState().setAuth(
-      { id: '', email: '', name: '', isEmailVerified: false, createdAt: '' },
+      { id: '', email: '', fullName: '', language: 'vi', isEmailVerified: false, createdAt: '' },
       newToken,
     );
 
