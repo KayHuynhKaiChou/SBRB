@@ -1,4 +1,5 @@
 import { Field, ID, ObjectType } from '@nestjs/graphql';
+import { DepartmentType } from '../../department/dto/department.type';
 
 /** GraphQL UserType — mirrors User entity fields exposed via API */
 @ObjectType('User')
@@ -26,6 +27,12 @@ export class UserType {
 
   @Field(() => Date)
   createdAt: Date;
+
+  @Field(() => String, { nullable: true })
+  bio?: string | null;
+
+  @Field(() => DepartmentType, { nullable: true })
+  department?: DepartmentType | null;
 
   @Field(() => Date, { nullable: true })
   lastLoginAt?: Date | null;

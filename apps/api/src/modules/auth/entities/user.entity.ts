@@ -31,6 +31,12 @@ export class User {
   @Column({ type: 'varchar', length: 30, nullable: true })
   phone: string | null;
 
+  @Column({ type: 'text', nullable: true })
+  bio: string | null;
+
+  @Column({ name: 'department_id', type: 'uuid', nullable: true })
+  departmentId: string | null;
+
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 

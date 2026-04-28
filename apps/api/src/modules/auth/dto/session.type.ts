@@ -17,4 +17,8 @@ export class SessionType {
 
   @Field(() => Date)
   createdAt: Date;
+
+  /** True if this session matches the JWT used to make the current request. */
+  @Field(() => Boolean)
+  isCurrent: boolean;
 }
