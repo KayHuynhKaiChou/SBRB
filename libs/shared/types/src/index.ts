@@ -5,5 +5,6 @@ export * from './business.types';
 export * from './canvas.types';
 export * from './datasheet.types';
 export * from './department.types';
+export * from './profile.types';
 export * from './user.types';
 export * from './widget.types';

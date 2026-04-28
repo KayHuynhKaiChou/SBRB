@@ -3,8 +3,13 @@
 export interface IUserDto {
   id: string;
   email: string;
-  name: string;
+  fullName: string;
   avatarUrl?: string;
+  phone?: string;
+  language: 'vi' | 'en';
+  bio?: string;
+  /** Department object resolved server-side. Read-only from profile — change via department page. */
+  department?: { id: string; name: string } | null;
   isEmailVerified: boolean;
   createdAt: string;
 }
@@ -14,6 +19,8 @@ export interface IJwtPayload {
   email: string;
   /** Active business context (set on business switch). Optional — absent on initial login. */
   businessId?: string;
+  /** Session record id — used to mark current session in mySessions list. Optional for back-compat. */
+  sessionId?: string;
   iat?: number;
   exp?: number;
 }
