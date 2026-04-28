@@ -2,7 +2,7 @@
 
 ## Project Timeline & Phases
 
-**Current Date:** 2026-03-28 | **Phase 1 Status:** ✅ COMPLETE | **Phase 2 Status:** Phase 2A-2E ✅ COMPLETE, Phase 3 Next
+**Current Date:** 2026-04-27 | **Phase 1 Status:** ✅ COMPLETE | **Phase 2 Status:** Phase 2A-2F ✅ COMPLETE, Phase 3 Next
 
 ---
 
@@ -33,9 +33,9 @@
 
 ---
 
-## Phase 2: MVP Authentication, Business, Canvas, Data
+## Phase 2: MVP Authentication, Business, Canvas, Data, Profile
 
-**Status:** Phase 2A-2E ✅ COMPLETE (2026-03-28)
+**Status:** Phase 2A-2F ✅ COMPLETE (2026-04-27)
 
 **Priority:** P0 (must-have for demo)
 
@@ -161,11 +161,32 @@
 - ✅ Error handling: Invalid format → error message
 - ✅ 15+ tests passing
 
+### Phase 2F: User Profile ✅ COMPLETE (2026-04-27)
+
+**Features:**
+- ✅ `/profile` route with 4 section cards (Personal, Membership, Business owner-only, Security)
+- ✅ Avatar upload via Supabase Storage bucket `avatar` with signed URLs
+- ✅ Change password modal with old password verification
+- ✅ Active sessions table with logout-current-session action
+- ✅ Common ProfileForm component (avatar, fullName, phone, language, bio, departmentId)
+- ✅ Profile GraphQL operations (10 ops: getProfile, updateProfile, changePassword, getSessions, logoutSession, etc.)
+- ✅ Backend: myMembership query, getAvatarUploadUrl mutation
+- ✅ Backend: users table (bio, departmentId fields), JWT sessionId, SessionType.isCurrent
+- ✅ i18n profile namespace (vi + en)
+
+**Verification:**
+- ✅ Navigate to /profile → 4 cards render correctly
+- ✅ Upload avatar → signed URL generated, image persists
+- ✅ Change password → old password validated, hash updated
+- ✅ View sessions → current session marked, logout works
+- ✅ Edit profile form → updates persisted to DB
+- ✅ ProfileForm reusable for member detail pages
+
 ---
 
 ## Phase 3: Chart Display & Data Selector
 
-**Status:** PENDING | **Estimated Duration:** 6 weeks | **Start:** ~2026-05-19
+**Status:** PENDING | **Estimated Duration:** 6 weeks | **Start:** ~2026-06-03
 
 **Features:**
 - Click widget → Settings + Chart modal opens
@@ -270,8 +291,9 @@
 | Phase 2C Tabs | 2026-03-28 | ✅ COMPLETE | Tab CRUD, colors, icons, pinning |
 | Phase 2D Canvas | 2026-03-28 | ✅ COMPLETE | Drag/resize, snap grid, collision, 20+ tests |
 | Phase 2E Data Import | 2026-03-28 | ✅ COMPLETE | Excel import, BullMQ, 15+ tests |
-| Phase 2 Complete | 2026-03-28 | ✅ DONE | Full widget flow working, 237 tests total |
-| Phase 3 Export | 2026-07-15 | NEXT | PNG/PDF download, chart display |
+| Phase 2F Profile | 2026-04-27 | ✅ COMPLETE | /profile route, avatar upload, sessions, ProfileForm |
+| Phase 2 Complete | 2026-04-27 | ✅ DONE | Full user profile + widget flow, 250+ tests total |
+| Phase 3 Export | 2026-07-29 | NEXT | PNG/PDF download, chart display |
 | Phase 4 Complete | 2026-08-26 | PENDING | Audit logs, notifications |
 | Phase 5 Desktop | 2026-10-28 | PENDING | Electron .exe release |
 
@@ -293,18 +315,19 @@
 
 ---
 
-## Test Coverage Summary (Phase 2A-2E Complete)
+## Test Coverage Summary (Phase 2A-2F Complete)
 
-**Total Tests Passing:** 237 | **Test Suites:** 32 | **Failures:** 0
+**Total Tests Passing:** 250+ | **Test Suites:** 33 | **Failures:** 0
 
 - Auth module: 80+ tests ✅
 - Business module: 78+ tests ✅
 - Tab module: 15+ tests ✅
 - Widget module: 20+ tests ✅
 - DataSheet module: 15+ tests ✅
+- Profile module: 13+ tests ✅
 - Other: 29+ tests ✅
-- Overall: 237 tests passing, 0 failures
+- Overall: 250+ tests passing, 0 failures
 
 ---
 
-**Document Version:** 2.4 | **Last Updated:** 2026-03-28 | **Product Manager:** Tech Lead
+**Document Version:** 2.5 | **Last Updated:** 2026-04-27 | **Product Manager:** Tech Lead

@@ -4,9 +4,9 @@
 
 **Name:** SBRB — Small Business Report Board
 
-**Version:** 2.4 (Phase 2E Complete)
+**Version:** 2.5 (Phase 2F Complete)
 
-**Status:** Phase 1 ✅ Complete, Phase 2A (Auth) ✅ Complete, Phase 2B (Business) ✅ Complete, Phase 2C (Tabs) ✅ Complete, Phase 2D (Canvas) ✅ Complete, Phase 2E (Data Import) ✅ Complete
+**Status:** Phase 1 ✅ Complete, Phase 2A (Auth) ✅ Complete, Phase 2B (Business) ✅ Complete, Phase 2C (Tabs) ✅ Complete, Phase 2D (Canvas) ✅ Complete, Phase 2E (Data Import) ✅ Complete, Phase 2F (Profile) ✅ Complete
 
 **Description:** Free-form canvas dashboard builder for SMEs. Enables businesses to create pixel-based dashboards with draggable widgets showing data visualizations (charts, tables, KPIs). No grid constraints—widgets placed at absolute coordinates (x, y) with collision detection.
 
@@ -79,6 +79,23 @@
 - 95% test coverage on shared utils, 80% on modules
 - User adoption: 50+ active SME tenants in Year 1
 
+## Phase 2F: User Profile
+
+**Status:** ✅ COMPLETE (2026-04-27)
+
+**Features Delivered:**
+- `/profile` route with 4 section cards: Personal Info, Membership, Business (owner-only), Security
+- Common `<ProfileForm/>` component in `@sbrb/ui` (avatar, fullName, phone, language, bio, departmentId) — designed for member detail reuse
+- Avatar upload via Supabase Storage bucket `avatar` with signed URLs
+- Change password modal with validation
+- Active sessions table with logout-current-session option
+- Backend additions: `bio` + `departmentId` fields on users table, `myMembership` resolver, `getAvatarUploadUrl` mutation
+- JWT now includes optional `sessionId` field; SessionType has `isCurrent` boolean
+- Profile operations module: 10 GraphQL operations (getProfile, updateProfile, changePassword, getSessions, logoutSession, etc.)
+- i18n namespace `profile` (vi + en)
+
+---
+
 ## Phase Breakdown & Progress
 
 | Phase | Scope | Status | Milestone |
@@ -89,6 +106,7 @@
 | 2C | Tab CRUD, reorder, duplicate | ✅ COMPLETE (2026-03-28) | Tab colors, icons, pinning |
 | 2D | Canvas, widget drag+drop, collision detection | ✅ COMPLETE (2026-03-28) | 3200×4800px, snap grid, collision |
 | 2E | Data import (Excel/CSV), BullMQ processing | ✅ COMPLETE (2026-03-28) | DataSheet + DataSeries + DataValues |
+| 2F | User Profile (avatar, info, security, sessions) | ✅ COMPLETE (2026-04-27) | /profile route, ProfileForm, avatar upload, change password |
 | 3 | Export (PNG/PDF), analytics, datasheet editor | → PENDING | Target: 2026-07-15 |
 | 4 | Notifications, Audit log dashboard, email | → PENDING | Target: 2026-08-26 |
 | 5 | Electron desktop, offline sync, SQLite | → PENDING | Target: 2026-10-28 |
@@ -124,6 +142,17 @@
 
 ## Implementation Progress Summary
 
+**Phase 2F Status (Completed 2026-04-27):**
+
+✅ **Profile Module**
+- User profile page `/profile` with personal, membership, business, and security sections
+- Avatar upload with signed URL generation (Supabase Storage)
+- Change password with old password verification
+- Active sessions list with current session highlight and logout capability
+- Common ProfileForm component for form reuse across modules
+- Membership info display (role, joined date, department, business name)
+- Business owner info card (inline editable for owner only)
+
 **Phase 2A-2B Status (Completed 2026-03-22):**
 
 ✅ **Auth Module (80+ tests)**
@@ -153,6 +182,12 @@
 
 **Current Phase (3):** Chart display & export (pending)
 
+**Phase 2F Changes Summary:**
+- `IUserDto` renamed: `name` → `fullName` (synced with backend UserType)
+- `UpdateProfileDto` extended: now includes phone, bio, departmentId
+- JWT payload: optional `sessionId` field added
+- users table migration: `AddProfileFields` adds bio (string) + department_id (uuid) columns
+
 ---
 
-**Document Version:** 2.4 | **Last Updated:** 2026-03-28 | **Author:** Documentation Team
+**Document Version:** 2.5 | **Last Updated:** 2026-04-27 | **Author:** Documentation Team

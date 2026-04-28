@@ -1,28 +1,29 @@
 # SBRB Codebase Summary
 
-**Generated:** 2026-03-28 | **Repomix Output:** `./repomix-output.xml` | **Phase Status:** Phase 1-2E ✅ Complete
+**Generated:** 2026-04-27 | **Repomix Output:** `./repomix-output.xml` | **Phase Status:** Phase 1-2F ✅ Complete
 
 ---
 
 ## Codebase Overview
 
-SBRB is a NX monorepo containing a modern full-stack dashboard builder. All Phase 2 (MVP) phases complete: Auth, Business, Tabs, Canvas & DnD, Data Import/Excel.
+SBRB is a NX monorepo containing a modern full-stack dashboard builder. All Phase 2 (MVP) phases complete: Auth, Business, Tabs, Canvas & DnD, Data Import/Excel, User Profile.
 
-### Implementation Status (Authoritative: 2026-03-28)
+### Implementation Status (Authoritative: 2026-04-27)
 - **Phase 1 (Scaffold):** ✅ COMPLETE
 - **Phase 2A (Auth):** ✅ COMPLETE — 80+ tests passing, JWT+OAuth+email verify fully implemented
 - **Phase 2B (Business):** ✅ COMPLETE — 78+ tests passing, multi-tenant with roles + invites fully implemented
 - **Phase 2C (Tabs):** ✅ COMPLETE — Tab CRUD, reorder, duplicate, colors, icons, pinning implemented
 - **Phase 2D (Canvas & DnD):** ✅ COMPLETE — Canvas 3200×4800px, widget drag/resize, snap grid, collision detection
 - **Phase 2E (Data Import):** ✅ COMPLETE — DataSheet CRUD, Excel import via BullMQ, data series management
+- **Phase 2F (Profile):** ✅ COMPLETE — /profile route, avatar upload, change password, sessions, ProfileForm component
 
 ### Repository Statistics
-- **Total Files:** 431+ (including config, tests)
-- **Source Files:** 259 TS/TSX files (apps/ + libs/ code)
+- **Total Files:** 440+ (including config, tests)
+- **Source Files:** 268 TS/TSX files (apps/ + libs/ code)
 - **Core Monorepo:** 4 apps (web, api, worker, desktop) + 5 lib packages
-- **Test Count:** 237 tests, 32 test suites, all passing, 0 failures
-- **Implemented Modules:** 9 (auth, user, business, tab, widget, datasheet, audit, mail, minio)
-- **Lines of Code:** ~17,654 total
+- **Test Count:** 250+ tests, 33 test suites, all passing, 0 failures
+- **Implemented Modules:** 10 (auth, user, business, tab, widget, datasheet, profile, audit, mail, minio)
+- **Lines of Code:** ~18,500 total
 
 ---
 
@@ -68,13 +69,14 @@ apps/web/
 - Chart.js 4.4+ (bar, line, area, doughnut)
 - react-i18next 13.x (i18n)
 
-**Key Features (Phase 2E Complete):**
+**Key Features (Phase 2F Complete):**
 - ✅ Canvas-based dashboard (3200×4800px, snap grid, zoom)
 - ✅ Widget drag-and-drop with collision detection
 - ✅ Chart configuration modal (Settings + Chart panels)
 - ✅ Data selector for picking series from DataSheets
 - ✅ Excel file upload & import
 - ✅ User authentication (Email + OAuth)
+- ✅ User profile page (/profile with avatar, personal info, membership, security)
 - ✅ Multi-language support (vi, en)
 - ✅ 4 chart types (Line, Bar, Area, Doughnut)
 
@@ -103,6 +105,7 @@ apps/api/
 │       ├── auth/               # ✅ Authentication (JWT + OAuth)
 │       ├── business/           # ✅ Business CRUD, multi-tenancy
 │       ├── user/               # ✅ User management
+│       ├── profile/            # ✅ User profile, avatar upload, sessions
 │       ├── tab/                # ✅ Tab CRUD, reorder
 │       ├── widget/             # ✅ Widget CRUD, position, config
 │       ├── datasheet/          # ✅ Data import (Excel), storage
@@ -329,16 +332,18 @@ libs/ui/
 │   ├── toast.tsx            # Success/error/warning notifications
 │   ├── IconButton.tsx       # ✅ Ghost-variant icon buttons (NEW)
 │   ├── ModalActions.tsx     # ✅ DRY footer (save/cancel actions) (NEW)
-│   └── FormModal.tsx        # ✅ Ant Modal + Form wrapper (NEW)
+│   ├── FormModal.tsx        # ✅ Ant Modal + Form wrapper (NEW)
+│   └── ProfileForm.tsx      # ✅ Reusable profile form (avatar, fullName, phone, language, bio, departmentId) (NEW)
 ├── hooks/
 │   └── use-toast.ts         # Toast notifications hook
 └── index.ts                 # Barrel export
 ```
 
-**New UI Patterns (Phase 2C-2E):**
+**New UI Patterns (Phase 2C-2F):**
 1. **IconButton:** Ghost variant (Ant Button type="text", shape="circle"), brand colors, 3 sizes (32/40/48px)
 2. **ModalActions:** Array of {icon, tooltip, onClick, disabled} footer; save first, close last
 3. **FormModal:** Generic Ant Modal + Form wrapper with ModalActions footer, closable={false}
+4. **ProfileForm:** Reusable form component for user profile (no useState, uses Form context), handles avatar upload inline with Supabase signed URLs, designed for reuse in member detail pages
 
 **Design System:**
 - Colors: Imported from `@sbrb/shared/constants`
@@ -374,7 +379,7 @@ libs/i18n/
 
 **Supported Languages:** Vietnamese (vi, default), English (en)
 
-**Namespaces:** auth, canvas, widget, datasheet, notification, common
+**Namespaces:** auth, canvas, widget, datasheet, profile, notification, common
 
 **Usage:**
 ```typescript
@@ -546,6 +551,31 @@ function MyComponent() {
 
 ---
 
+### ✅ Profile Module (`apps/api/modules/profile/`) — IMPLEMENTED
+
+**Status:** ✅ COMPLETE (Phase 2F, 2026-04-27)
+
+**Key Files:**
+- `profile.service.ts` — Profile CRUD, password change, avatar URL generation
+- `profile.resolver.ts` — GraphQL resolvers: getProfile, updateProfile, changePassword, getSessions, logoutSession
+- `avatar-storage.service.ts` — Supabase Storage integration (signed URLs, bucket `avatar`)
+- `profile.operations.ts` — GraphQL operations (10 ops for web client)
+- `__tests__/` — Unit tests for all services
+
+**Responsibilities:**
+- User profile retrieval & update (fullName, phone, language, bio, departmentId)
+- Avatar upload via Supabase Storage bucket `avatar` with signed URLs
+- Change password with old password verification
+- Session management (list active sessions, logout current session)
+- Membership info retrieval (myMembership resolver)
+
+**Key Services:**
+- `AvatarStorageService` — Handles Supabase Storage signed URL generation for avatar upload/download
+- Validates avatar file size + type before upload
+- Cleans up old avatar on update
+
+---
+
 ### ✅ Mail Module (`apps/api/modules/mail/`) — IMPLEMENTED
 
 **Status:** ✅ COMPLETE
@@ -678,11 +708,25 @@ MINIO_ENDPOINT=localhost
 - `apps/worker/processors/import-excel.processor.ts` — BullMQ worker (ExcelJS)
 - Tests: 15+ passing
 
+### Phase 2F (User Profile) — ✅ COMPLETE (2026-04-27)
+
+**Status:** ✅ All features implemented, /profile route, avatar upload, change password, sessions.
+
+**Implemented Files:**
+- `apps/web/src/pages/Profile.tsx` — Profile page with 4 section cards
+- `libs/ui/components/ProfileForm.tsx` — Reusable profile form (avatar, fullName, phone, language, bio, departmentId)
+- `apps/api/modules/profile/` — Profile CRUD, avatar URLs, sessions, password change
+- `apps/api/modules/profile/avatar-storage.service.ts` — Supabase Storage signed URLs
+- `apps/web/src/graphql/profile.operations.ts` — 10 GraphQL operations
+- Migration: `AddProfileFields` (users table: bio + departmentId)
+- i18n namespace: `profile` (vi + en)
+- Tests: 13+ passing
+
 ---
 
 ## Testing Strategy
 
-### Current Test Coverage (Phase 2A-2E Complete)
+### Current Test Coverage (Phase 2A-2F Complete)
 
 | Module | Framework | Tests | Status |
 |--------|-----------|-------|--------|
@@ -691,8 +735,9 @@ MINIO_ENDPOINT=localhost
 | Tab | Jest + db | 15+ | ✅ All passing |
 | Widget | Jest + db | 20+ | ✅ All passing |
 | DataSheet | Jest + db | 15+ | ✅ All passing |
+| Profile | Jest + db | 13+ | ✅ All passing |
 | Other | Jest | 29+ | ✅ All passing |
-| **TOTAL** | Jest | **237** | **✅ 32 suites, 0 failures** |
+| **TOTAL** | Jest | **250+** | **✅ 33 suites, 0 failures** |
 
 ### Target Coverage by Phase
 
