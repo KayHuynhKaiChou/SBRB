@@ -21,10 +21,12 @@ describe('Business entity', () => {
       .map((c) => c.propertyName);
     expect(cols).toEqual(
       expect.arrayContaining([
-        'ownerId', 'name', 'industry', 'timezone', 'currency',
-        'primaryColor', 'weekStart', 'canvasWidth', 'canvasHeight', 'snapGrid',
+        'ownerId', 'name', 'industry', 'currency',
+        'weekStart', 'canvasWidth', 'canvasHeight', 'snapGrid',
       ]),
     );
+    expect(cols).not.toContain('primaryColor');
+    expect(cols).not.toContain('timezone');
   });
 
   it('has FK relation to owner User', () => {
@@ -40,10 +42,10 @@ describe('Business entity', () => {
     );
     expect((industryCol?.options as { default?: unknown })?.default).toBe('Other');
 
-    const colorCol = storage.columns.find(
-      (c) => c.target === Business && c.propertyName === 'primaryColor',
+    const weekStartCol = storage.columns.find(
+      (c) => c.target === Business && c.propertyName === 'weekStart',
     );
-    expect((colorCol?.options as { default?: unknown })?.default).toBe('#D72A44');
+    expect((weekStartCol?.options as { default?: unknown })?.default).toBe(1);
   });
 
   it('instantiates', () => {

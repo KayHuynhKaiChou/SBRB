@@ -37,9 +37,7 @@ export class BusinessCrudService {
     const business = this.businessRepo.create({
       name: dto.name,
       industry: dto.industry ?? 'Other',
-      timezone: dto.timezone ?? 'Asia/Ho_Chi_Minh',
       currency: dto.currency ?? 'VND',
-      primaryColor: dto.primary_color ?? '#D72A44',
       ownerId: userId,
     });
     const saved = await this.businessRepo.save(business);
@@ -107,14 +105,9 @@ export class BusinessCrudService {
     const business = await this.businessRepo.findOne({ where: { id } });
     if (!business) throw new NotFoundException('Business not found');
 
-    if (dto.name !== undefined) business.name = dto.name;
-    if (dto.industry !== undefined) business.industry = dto.industry;
-    if (dto.timezone !== undefined) business.timezone = dto.timezone;
-    if (dto.currency !== undefined) business.currency = dto.currency;
-    if (dto.primary_color !== undefined) business.primaryColor = dto.primary_color;
-    if (dto.canvas_width !== undefined) business.canvasWidth = dto.canvas_width;
-    if (dto.canvas_height !== undefined) business.canvasHeight = dto.canvas_height;
-    if (dto.snap_grid !== undefined) business.snapGrid = dto.snap_grid ? 20 : 0;
+    // ValidationPipe strips unknown keys + `exposeUnsetFields: false` keeps only
+    // fields the client actually sent. Direct merge — DTO is already clean.
+    Object.assign(business, dto);
 
     const updated = await this.businessRepo.save(business);
 

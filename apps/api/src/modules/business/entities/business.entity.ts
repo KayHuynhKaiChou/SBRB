@@ -27,17 +27,11 @@ export class Business {
   @Column({ type: 'varchar', length: 50, default: 'Other' })
   industry: string;
 
-  @Column({ type: 'varchar', length: 50, default: 'Asia/Ho_Chi_Minh' })
-  timezone: string;
-
   @Column({ type: 'varchar', length: 10, default: 'VND' })
   currency: string;
 
   @Column({ name: 'logo_url', type: 'text', nullable: true })
   logoUrl: string | null;
-
-  @Column({ name: 'primary_color', type: 'varchar', length: 7, default: '#D72A44' })
-  primaryColor: string;
 
   @Column({ name: 'week_start', type: 'smallint', default: 1 })
   weekStart: number;

@@ -1,6 +1,5 @@
 import { Field, InputType } from '@nestjs/graphql';
 import {
-  IsHexColor,
   IsOptional,
   IsString,
   MinLength,
@@ -19,18 +18,8 @@ export class CreateBusinessDto {
   @IsString()
   industry?: string;
 
-  @Field(() => String, { nullable: true, defaultValue: 'Asia/Ho_Chi_Minh' })
-  @IsOptional()
-  @IsString()
-  timezone?: string;
-
   @Field(() => String, { nullable: true, defaultValue: 'VND' })
   @IsOptional()
   @IsString()
   currency?: string;
-
-  @Field(() => String, { nullable: true })
-  @IsOptional()
-  @IsHexColor()
-  primary_color?: string;
 }

@@ -13,16 +13,13 @@ export class BusinessType {
   industry: string;
 
   @Field(() => String)
-  timezone: string;
-
-  @Field(() => String)
   currency: string;
 
   @Field(() => String, { nullable: true })
   logoUrl?: string | null;
 
-  @Field(() => String)
-  primaryColor: string;
+  @Field(() => Int)
+  weekStart: number;
 
   @Field(() => Int)
   canvasWidth: number;
