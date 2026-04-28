@@ -63,8 +63,10 @@
   "dependencies": {
     "@dagrejs/dagre": "^3.0.0",
     "@nestjs/schedule": "^6.1.1",
+    "@supabase/supabase-js": "^2.104.1",
     "@uidotdev/usehooks": "^2.4.1",
     "@xyflow/react": "^12.10.2",
+    "antd-img-crop": "^4.30.0",
     "graphql-subscriptions": "^3.0.0",
     "ioredis": "^5.10.1",
     "lodash": "^4.18.1",
