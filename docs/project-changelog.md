@@ -4,6 +4,13 @@ All notable changes to the SBRB project are documented here. Format based on [Ke
 
 ---
 
+## [2026-05-30] — Fix: API boot crash (admin GraphQL schema)
+
+### Fixed
+- API failed to start — GraphQL schema build threw `UndefinedTypeError` for `AdminBusinessRowType.inactiveReason`. Root cause: nullable `@Field` decorators on union-typed (`string | null`) properties emit `Object` reflection metadata, so NestJS GraphQL cannot infer the type. Added explicit `@Field(() => String, { nullable: true })` to 8 fields across 4 admin DTOs (`admin-business-row`, `admin-audit-row`, `admin-user-detail`, `admin-user-row`). Type-check passed but the error only surfaced at runtime schema generation. Admin specs 26/26 green; API now boots and maps `/graphql`.
+
+---
+
 ## [2026-04-29] — Platform Admin Role v1 (Phases 1-6)
 
 **Plan:** `plans/260428-2028-admin-role/` | **SRS:** `docs/admin-srs.md`
