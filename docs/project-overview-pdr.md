@@ -94,6 +94,26 @@
 - Profile operations module: 10 GraphQL operations (getProfile, updateProfile, changePassword, getSessions, logoutSession, etc.)
 - i18n namespace `profile` (vi + en)
 
+## Phase 2G: Platform Admin Role (v1)
+
+**Status:** ✅ COMPLETE (2026-04-29)
+
+**Features Delivered:**
+- Single platform admin role (seeded manually via SQL) separate from 4 business roles
+- Backend admin module: AdminPlatformResolver (adminMetrics, adminAuditLog), AdminBusinessResolver (adminBusinesses, inactivateBusiness, reactivateBusiness), AdminUserResolver (adminUsers, adminUserDetail, disableUser, enableUser)
+- 4 admin services: AdminMetricsService, AdminAuditService, AdminBusinessService, AdminUserService
+- PlatformAdminGuard (checks JWT platformRole === 'admin') protecting all admin resolvers
+- User platform_role field (varchar nullable), isDisabled + disabledAt for user suspension
+- Business status field ('active'/'inactive'), inactivatedAt, inactivatedBy, inactiveReason for business blocking
+- AuditLog businessId now nullable (platform-level actions)
+- RefreshTokenService.revokeAllForUser() for token revocation on user disable
+- Frontend admin routes: `/admin`, `/admin/businesses`, `/admin/users`, `/admin/audit`
+- AdminRoute guard (platformRole === 'admin' required), BusinessGuard (redirects admins, shows BusinessInactivePage for inactive)
+- BusinessInactivePage component displaying inactive reason + logout/switch actions
+- Admin dashboard with 6 metric StatCards, businesses/users tables with modals
+- i18n namespace `admin` (vi + en)
+- See detailed SRS: docs/admin-srs.md
+
 ---
 
 ## Phase Breakdown & Progress
@@ -107,6 +127,7 @@
 | 2D | Canvas, widget drag+drop, collision detection | ✅ COMPLETE (2026-03-28) | 3200×4800px, snap grid, collision |
 | 2E | Data import (Excel/CSV), BullMQ processing | ✅ COMPLETE (2026-03-28) | DataSheet + DataSeries + DataValues |
 | 2F | User Profile (avatar, info, security, sessions) | ✅ COMPLETE (2026-04-27) | /profile route, ProfileForm, avatar upload, change password |
+| 2G | Platform Admin Role (v1) | ✅ COMPLETE (2026-04-29) | Admin dashboard, business inactivation, user disable, audit log |
 | 3 | Export (PNG/PDF), analytics, datasheet editor | → PENDING | Target: 2026-07-15 |
 | 4 | Notifications, Audit log dashboard, email | → PENDING | Target: 2026-08-26 |
 | 5 | Electron desktop, offline sync, SQLite | → PENDING | Target: 2026-10-28 |
@@ -190,4 +211,4 @@
 
 ---
 
-**Document Version:** 2.5 | **Last Updated:** 2026-04-27 | **Author:** Documentation Team
+**Document Version:** 2.6 | **Last Updated:** 2026-04-29 | **Author:** Documentation Team

@@ -11,6 +11,7 @@ Free-form canvas dashboard builder for SMEs. Place charts anywhere on a pixel ca
 - **Phase 2D (Canvas & Widget DnD):** ✅ COMPLETE — Canvas 3200×4800px, drag/resize, snap grid, collision detection
 - **Phase 2E (Data Import/Excel):** ✅ COMPLETE — Excel import via BullMQ worker, data series management
 - **Phase 2F (Profile):** ✅ COMPLETE — /profile route, avatar upload, change password, sessions, ProfileForm component
+- **Phase 2G (Platform Admin Role v1):** ✅ COMPLETE — Admin dashboard, business inactivation, user disable, audit log
 - **Test Coverage:** 250+ tests passing, 33 test suites, 0 failures
 
 ## Stack

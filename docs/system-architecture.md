@@ -205,6 +205,70 @@ subscription OnImportProgress($fileId: ID!) {
 }
 ```
 
+### GraphQL Queries & Mutations (✨ NEW: Admin Module)
+
+**Admin Platform Queries:**
+```graphql
+query AdminMetrics {
+  adminMetrics {
+    totalBusinesses: Int
+    activeBusinesses: Int
+    inactiveBusinesses: Int
+    totalUsers: Int
+    newBusinesses30d: Int
+    newUsers30d: Int
+  }
+}
+
+query AdminAuditLog($offset: Int, $limit: Int) {
+  adminAuditLog(offset: $offset, limit: $limit) {
+    items { id, userId, businessId, action, metadata, createdAt }
+    total: Int
+  }
+}
+
+query AdminBusinesses($offset: Int, $limit: Int, $sortBy: String) {
+  adminBusinesses(offset: $offset, limit: $limit, sortBy: $sortBy) {
+    items { id, name, ownerEmail, memberCount, status, createdAt, inactivatedAt, inactiveReason }
+    total: Int
+  }
+}
+
+query AdminUsers($offset: Int, $limit: Int, $sortBy: String) {
+  adminUsers(offset: $offset, limit: $limit, sortBy: $sortBy) {
+    items { id, email, fullName, isDisabled, createdAt, disabledAt }
+    total: Int
+  }
+}
+
+query AdminUserDetail($userId: ID!) {
+  adminUserDetail(userId: $userId) {
+    id, email, fullName, isDisabled, businesses { id, name, role, status }
+  }
+}
+```
+
+**Admin Platform Mutations:**
+```graphql
+mutation InactivateBusiness($businessId: ID!, $reason: String!) {
+  inactivateBusiness(businessId: $businessId, reason: $reason) { id, status, inactivatedAt }
+}
+
+mutation ReactivateBusiness($businessId: ID!) {
+  reactivateBusiness(businessId: $businessId) { id, status, inactivatedAt }
+}
+
+mutation DisableUser($userId: ID!) {
+  disableUser(userId: $userId) { id, isDisabled, disabledAt }
+}
+
+mutation EnableUser($userId: ID!) {
+  enableUser(userId: $userId) { id, isDisabled }
+}
+```
+
+**Authorization:** All admin queries/mutations guarded by `@UseGuards(JwtAuthGuard, PlatformAdminGuard)`
+
 ### REST Endpoints (Base: /api/v1)
 
 ```
@@ -222,20 +286,27 @@ User {
   id: UUID
   email: string
   passwordHash: string
-  businessRoles: UserRole[]  // Multi-tenant: user may belong to multiple businesses
+  platformRole: 'admin' | null          // ✨ NEW: Platform-level admin role (v1)
+  isDisabled: boolean                   // ✨ NEW: Global account disable flag
+  disabledAt: Date | null               // ✨ NEW: When user was disabled
+  businessRoles: UserRole[]             // Multi-tenant: user may belong to multiple businesses
 }
 
 Business {
   id: UUID
   name: string
   ownerId: UUID
+  status: 'active' | 'inactive'         // ✨ NEW: Business active/inactive flag
+  inactivatedAt: Date | null            // ✨ NEW: When business was inactivated
+  inactivatedBy: UUID | null            // ✨ NEW: Admin user who inactivated (FK users.id)
+  inactiveReason: string | null         // ✨ NEW: Reason for inactivation
   createdAt: Date
 }
 
 UserRole {
   userId: UUID
   businessId: UUID
-  role: "owner" | "manager" | "staff" | "viewer"  // 4 permission levels
+  role: "owner" | "manager" | "staff" | "viewer"  // 4 permission levels (business-scoped)
 }
 
 Tab {
@@ -271,6 +342,15 @@ DataSeries {
   name: string       // "Revenue Q1", "Units Sold"
   dataValues: JSON   // JSONB: { "2026-01": 1000, "2026-02": 1200 }
 }
+
+AuditLog {
+  id: UUID
+  userId: UUID       // FK users.id
+  businessId: UUID | null  // ✨ UPDATED: Now nullable (platform-level actions have no business context)
+  action: string     // 'create_business', 'inactivate_business', 'disable_user', etc.
+  metadata: JSON     // Additional context (target business/user, reason, etc.)
+  createdAt: Date
+}
 ```
 
 ## Security Model
@@ -280,10 +360,15 @@ DataSeries {
 - JWT: 15-minute access token (memory-only)
 - Refresh token: 30-day HttpOnly cookie (secure, sameSite=Strict)
 - Google OAuth: Social login via Passport
+- ✨ NEW: Disabled user check during login (isDisabled flag blocks authentication)
 
 **Authorization:**
-- Role-based access control (RBAC) with 4 roles
+- Role-based access control (RBAC) with 4 business roles (Owner, Manager, Staff, Viewer)
+- ✨ NEW: Platform-level `admin` role stored in JWT payload (`IJwtPayload.platformRole`)
+- ✨ NEW: `PlatformAdminGuard` authorizes all admin-scoped resolvers (requires `platformRole === 'admin'`)
 - Row-level security (RLS) in PostgreSQL by business_id
+- ✨ NEW: Business inactivation gates member access via FE `BusinessGuard` component (renders inactive page)
+- ✨ NEW: Token revocation on user disable via `RefreshTokenService.revokeAllForUser(userId)`
 - Guard on each mutation/query resolver
 
 **Data Protection:**
@@ -339,17 +424,18 @@ DataSeries {
 
 ---
 
-## Module Implementation Status (2026-03-28)
+## Module Implementation Status (2026-04-29)
 
 | Module | Status | Key Files | Tests |
 |--------|--------|-----------|-------|
-| auth | ✅ IMPLEMENTED | auth.service.ts, jwt.strategy.ts, google.strategy.ts | 80+ ✅ |
+| auth | ✅ IMPLEMENTED | auth.service.ts, jwt.strategy.ts, google.strategy.ts, refresh-token.service.ts | 80+ ✅ |
 | user | ✅ IMPLEMENTED | user.service.ts, user.resolver.ts | Incl. in auth |
 | business | ✅ IMPLEMENTED | business.service.ts, business-crud.service.ts, member.service.ts | 78+ ✅ |
+| admin | ✅ IMPLEMENTED | admin.module.ts (AdminPlatformResolver, AdminBusinessResolver, AdminUserResolver + 4 services) | Incl. in tests |
 | tab | ✅ IMPLEMENTED | tab.service.ts, tab.resolver.ts (CRUD, reorder, colors) | 15+ ✅ |
 | widget | ✅ IMPLEMENTED | widget.service.ts, widget.resolver.ts (position, collision) | 20+ ✅ |
 | datasheet | ✅ IMPLEMENTED | datasheet.service.ts, import-excel.processor.ts | 15+ ✅ |
-| audit | ✅ IMPLEMENTED | audit.service.ts (mutation tracking) | Incl. in business |
+| audit | ✅ IMPLEMENTED | audit.service.ts (mutation tracking), businessId now nullable | Incl. in business |
 | mail | ✅ IMPLEMENTED | mail.service.ts (Gmail SMTP + Handlebars) | Incl. in auth |
 | notification | 🔲 SCAFFOLDED | notification.module.ts (services/resolvers commented out) | — |
 | minio | ✅ IMPLEMENTED | minio.service.ts (S3-compatible storage) | — |
@@ -393,4 +479,38 @@ DataSeries {
 
 ---
 
-**Document Version:** 2.4 | **Last Updated:** 2026-03-28 | **Architecture Owner:** Tech Lead
+---
+
+## Admin Module Architecture (✨ NEW: v1)
+
+**Location:** `apps/api/src/modules/admin/`
+
+**Core Components:**
+- `admin.module.ts` — Module definition, imports dependencies
+- `admin-platform.resolver.ts` — GraphQL queries: adminMetrics, adminAuditLog
+- `admin-business.resolver.ts` — Queries: adminBusinesses; Mutations: inactivateBusiness, reactivateBusiness
+- `admin-user.resolver.ts` — Queries: adminUsers, adminUserDetail; Mutations: disableUser, enableUser
+- `admin-metrics.service.ts` — Dashboard metric calculations
+- `admin-audit.service.ts` — Audit log retrieval + filtering
+- `admin-business.service.ts` — Business management (inactivate/reactivate)
+- `admin-user.service.ts` — User management (disable/enable)
+
+**Access Control:**
+- All resolvers protected by `@UseGuards(JwtAuthGuard, PlatformAdminGuard)`
+- `PlatformAdminGuard` (at `common/guards/platform-admin.guard.ts`) checks `request.user.platformRole === 'admin'`
+
+**Pagination Pattern:**
+- New DTO: `PageInput` with offset (default 0) and limit (default 20, max 100)
+- Responses include items array + total count for pagination
+- GraphQL sorts by: EAdminBusinessSortBy, EAdminUserSortBy, EAdminAuditAction
+
+**Frontend Integration:**
+- Admin dashboard: `/admin` route
+- Business management table: `/admin/businesses` with InactivateBusinessModal + BusinessStatusTag
+- User management table: `/admin/users` with UserDetailDrawer
+- Audit log page: `/admin/audit`
+- Layout: AdminLayout + AdminSidebar (shown when platformRole === 'admin')
+
+---
+
+**Document Version:** 2.5 | **Last Updated:** 2026-04-29 | **Architecture Owner:** Tech Lead

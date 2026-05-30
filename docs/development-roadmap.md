@@ -184,6 +184,41 @@
 
 ---
 
+## Platform Admin Role (v1) ✅ COMPLETE (2026-04-29)
+
+**Status:** ✅ COMPLETE — All 6 phases (Phase 1-6) delivered. Plan: `plans/260428-2028-admin-role/`. SRS: `docs/admin-srs.md`.
+
+**Delivered Features:**
+- ✅ `PlatformAdminGuard` — JWT-level authorization check for all admin resolvers (no FE trust)
+- ✅ Admin business management: list all businesses, inactivate with reason + confirm-name modal, reactivate
+- ✅ Admin user management: list all users, disable/enable (with session revocation), read-only user detail drawer
+- ✅ Business inactive gate: `<BusinessGuard>` renders `<BusinessInactivePage>` for inactive business members
+- ✅ Admin dashboard: 6 platform stat cards (total/active/inactive biz, total/new users, new biz)
+- ✅ Admin audit log: paginated table with actor email join and action/date filters
+- ✅ DB migrations (3): AddUserPlatformRole, AddBusinessStatus, AddUserDisabled
+- ✅ i18n namespace `admin` (en + vi) — zero hardcoded strings in admin pages
+- ✅ 30+ source files added/modified; 7 test suites (32 tests) passing
+
+**Acceptance Criteria Verified:**
+- AC-1: Admin login → redirect /admin (platformRole in JWT payload)
+- AC-2: `adminBusinesses` query → 403 for non-admin
+- AC-3: Inactivate business → modal + mutation + status change
+- AC-4: Inactive business member → BusinessInactivePage rendered
+- AC-5: Multi-biz user — active biz accessible, inactive biz → closed page
+- AC-6: Admin disable self → 400 "Cannot disable yourself"
+- AC-7: Disabled user login → 401 "Account disabled"
+- AC-8: `promoteUserToAdmin` not in schema (out of scope v1)
+- AC-9: Migrations idempotent — all existing biz status='active', users platform_role=null, is_disabled=false
+
+**Out of scope (deferred v2):**
+- Multi-admin UI (promote/demote)
+- Email notification on inactivate
+- WebSocket realtime kick on inactivation
+- BusinessActiveGuard on BE business mutations
+- System settings UI
+
+---
+
 ## Phase 3: Chart Display & Data Selector
 
 **Status:** PENDING | **Estimated Duration:** 6 weeks | **Start:** ~2026-06-03

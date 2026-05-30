@@ -439,3 +439,21 @@ describe('hasCollision', () => {
 ---
 
 **Last Updated:** 2026-03-28 | **Save this file for quick reference!**
+
+---
+
+## Seed First Admin
+
+After running migrations on dev/prod DB, promote the first platform admin via SQL (run once, operator action):
+
+```sql
+-- Promote first admin (run once after migrations)
+UPDATE users SET platform_role = 'admin' WHERE email = 'admin@gmail.com';
+```
+
+Verify:
+```sql
+SELECT id, email, platform_role FROM users WHERE platform_role IS NOT NULL;
+```
+
+Only one admin is supported in v1. To swap admin: run an equivalent `UPDATE` for the new email, then `SET platform_role = NULL` for the old one.

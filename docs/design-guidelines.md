@@ -386,6 +386,7 @@ Standard wrapper for all form modals. Ensures consistency across the app.
 - `widget` — Widget config, chart types, data series, colors
 - `datasheet` — Import, sheets, series, upload, export
 - `member` — Users, roles, invitations, permissions
+- `admin` — Admin dashboard, business management, user management, audit log (✨ NEW)
 
 **Usage Pattern:**
 ```typescript
@@ -448,6 +449,54 @@ export const WidgetModal: FC = () => {
 - Custom components in `libs/ui/`: IconButton, ModalActions, FormModal
 - Used in both web (React 18) and future desktop (Electron) apps
 
+## Admin UI Patterns (✨ NEW - Phase 2G)
+
+### AdminRoute Guard Pattern
+
+**Component:** `apps/web/src/components/auth/admin-route.tsx`
+
+- Requires: `user.platformRole === 'admin'`
+- Unauthorized: Redirect to `/dashboard` (logged-in user) or `/auth/login` (guest)
+- Authorized: Render admin dashboard pages
+
+**Usage:**
+```tsx
+<Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+<Route path="/admin/businesses" element={<AdminRoute><AdminBusinesses /></AdminRoute>} />
+```
+
+### BusinessGuard Pattern (Inactive Check)
+
+**Component:** `apps/web/src/components/auth/business-guard.tsx`
+
+- For business-scoped routes (`/dashboard`, `/data-sheets`, `/profile`, etc.)
+- Checks: `business.status === 'inactive'` → renders `<BusinessInactivePage>`
+- Admins bypass: Redirect to `/admin` instead
+- No business context: Redirect to `/onboarding`
+
+**Display on Inactive:**
+```tsx
+<BusinessInactivePage
+  businessName={business.name}
+  inactiveReason={business.inactiveReason}
+  inactivatedAt={business.inactivatedAt}
+  onLogout={() => logout()}
+  onSwitchBusiness={() => showSwitcher()}
+/>
+```
+
+### BusinessStatusTag Component
+
+**Usage in Admin Businesses Table:**
+- Status `'active'` → Green badge
+- Status `'inactive'` → Red badge with "Đang đóng" text
+
+### Admin Dashboard Layout
+
+- Sidebar dispatcher: Shows `AdminSidebar` when `platformRole === 'admin'`, else `BusinessSidebar`
+- Menu items: Dashboard (metrics), Businesses, Users, Audit Log
+- No business-scoped navigation for admins
+
 ---
 
-**Document Version:** 2.3 | **Last Updated:** 2026-03-28 | **Design Lead:** UI/UX Team
+**Document Version:** 2.4 | **Last Updated:** 2026-04-29 | **Design Lead:** UI/UX Team

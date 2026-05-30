@@ -24,12 +24,12 @@ Bổ sung **Platform Admin** — role cấp hệ thống tách biệt khỏi 4 b
 ## 3. Phạm vi
 
 ### In scope (v1)
-- Single platform role: `admin`.
-- Admin features: list/inactivate/reactivate businesses (metadata only), list/disable/enable/promote users, view audit log, dashboard metrics.
-- Admin tự tạo admin khác qua UI (`promoteUserToAdmin`).
+- Single platform role: `admin`. **Chỉ duy nhất 1 admin** trong hệ thống — seed manual qua SQL.
+- Admin features: list/inactivate/reactivate businesses (metadata only), list/disable/enable users, view audit log, dashboard metrics.
 - Block-per-business khi inactive (user multi-biz chỉ bị chặn ở biz inactive).
 
 ### Out of scope (v1, defer cho v2)
+- **Multi-admin** — promote/demote user thành admin qua UI. v1 chỉ 1 admin seed cứng.
 - Multi-tier platform roles (`support`, `billing`...).
 - Hard-archive / scheduled-delete business.
 - Impersonate-as-owner.
@@ -56,9 +56,6 @@ Bổ sung **Platform Admin** — role cấp hệ thống tách biệt khỏi 4 b
 ### US-6 — User multi-biz vẫn dùng được biz active
 **As a** user là member của biz A (inactive) + biz B (active), **I want** login vào B bình thường, chỉ bị chặn khi switch sang A, **so that** không mất truy cập biz hợp lệ.
 
-### US-7 — Admin tạo admin khác
-**As an** admin, **I want** promote user thường thành admin (hoặc demote admin về user), **so that** delegate quyền quản trị.
-
 ### US-8 — Admin disable user
 **As an** admin, **I want** disable account user (suspend toàn cục), **so that** chặn user vi phạm khỏi mọi business.
 
@@ -66,7 +63,7 @@ Bổ sung **Platform Admin** — role cấp hệ thống tách biệt khỏi 4 b
 **As an** admin, **I want** xem timeline action toàn hệ thống (login, create biz, inactivate biz, promote admin...), **so that** trace incident.
 
 ### US-10 — Admin xem metrics
-**As an** admin, **I want** dashboard {total biz, total user, active session, growth chart}, **so that** nắm overview platform.
+**As an** admin, **I want** dashboard {total biz, active biz, inactive biz, total user, new biz 30d, new user 30d}, **so that** nắm overview platform.
 
 ## 5. Yêu cầu chức năng
 
@@ -125,15 +122,18 @@ Sau login success, FE đọc `user.platformRole`:
 Auth service kiểm tra `user.isDisabled` trong `validateLogin()`:
 - `true` → return 401 `{ message: 'Account disabled' }`.
 
-#### 5.7 Inactive business gate (FE)
-Component `<ProtectedRoute>` thêm logic:
+#### 5.7 Inactive business gate + Admin route isolation (FE)
+Component `<ProtectedRoute>` (wrap routes business-scoped: `/dashboard`, `/data-sheets`, `/departments`, `/profile`...):
 1. Render children chỉ khi:
    - User đã login.
-   - `user.platformRole === 'admin'` → bypass business check, render thẳng.
-   - Else: `currentBusinessId` exists.
-   - Else: redirect `/onboarding`.
-2. Trong layout business (Dashboard, Datasheet, Department...): query `business(currentBusinessId)`.
+   - `user.platformRole === 'admin'` → **redirect về `/admin`** (admin KHÔNG vào được business routes, kể cả `/profile`).
+   - Else: `currentBusinessId` exists. Nếu null → redirect `/onboarding`.
+2. Trong layout business: query `business(currentBusinessId)`.
    - Nếu `status === 'inactive'` → render `<BusinessInactivePage>` thay children.
+
+Component `<AdminRoute>` (wrap routes `/admin/*`):
+- `user.platformRole === 'admin'` → render children.
+- Else → redirect `/dashboard` hoặc `/auth/login`.
 
 #### 5.8 BusinessInactivePage (FE component mới)
 File: `apps/web/src/pages/business-inactive-page.tsx`
@@ -181,11 +181,34 @@ type AdminUserListResult {
   total: Int!
 }
 
+type AdminUserBusinessMembership {
+  businessId: ID!
+  businessName: String!
+  role: String!  # owner | manager | staff | viewer
+  joinedAt: DateTime!
+}
+
+type AdminUserDetail {
+  id: ID!
+  email: String!
+  fullName: String!
+  phone: String
+  avatarUrl: String
+  language: String!
+  bio: String
+  emailVerified: Boolean!
+  isDisabled: Boolean!
+  platformRole: String  # 'admin' | null
+  createdAt: DateTime!
+  lastLoginAt: DateTime
+  memberships: [AdminUserBusinessMembership!]!
+}
+
 type AdminMetrics {
   totalBusinesses: Int!
   activeBusinesses: Int!
+  inactiveBusinesses: Int!
   totalUsers: Int!
-  activeUsersLast24h: Int!
   newBusinessesLast30d: Int!
   newUsersLast30d: Int!
 }
@@ -193,6 +216,7 @@ type AdminMetrics {
 extend type Query {
   adminBusinesses(filter: AdminBusinessFilter, page: PageInput): AdminBusinessListResult!
   adminUsers(filter: AdminUserFilter, page: PageInput): AdminUserListResult!
+  adminUserDetail(id: ID!): AdminUserDetail!
   adminMetrics: AdminMetrics!
   adminAuditLog(filter: AuditLogFilter, page: PageInput): AuditLogListResult!
 }
@@ -205,15 +229,13 @@ extend type Mutation {
   reactivateBusiness(id: ID!): AdminBusinessRow!
   disableUser(id: ID!): AdminUserRow!
   enableUser(id: ID!): AdminUserRow!
-  promoteUserToAdmin(id: ID!): AdminUserRow!
-  demoteAdmin(id: ID!): AdminUserRow!
 }
 ```
 
 #### 5.11 Authorization
 - Mọi resolver admin: `@UseGuards(JwtAuthGuard, PlatformAdminGuard)`.
 - `PlatformAdminGuard` check `request.user.platformRole === 'admin'`. Else 403.
-- `demoteAdmin`: chặn self-demote nếu user là admin cuối cùng (count admins >= 2). Trả 400 `{ message: 'Cannot demote last admin' }`.
+- Admin KHÔNG thể `disableUser` chính mình (chống self-lockout). Trả 400 `{ message: 'Cannot disable yourself' }`.
 
 ### FR-4 FE — admin pages
 
@@ -223,14 +245,19 @@ extend type Mutation {
 /admin/businesses      → AdminBusinessesPage  (table)
 /admin/users           → AdminUsersPage       (table)
 /admin/audit           → AdminAuditLogPage    (table)
-/admin/profile         → ProfilePage          (reuse, hide BusinessInfoCard)
 ```
 Tất cả wrap trong `<AdminRoute>` (check `user.platformRole === 'admin'` else redirect `/auth/login`).
+
+**Admin KHÔNG có profile page CHO CHÍNH MÌNH** — không có gì để edit (không thuộc business, không có department, role cố định). Sidebar bottom chỉ avatar + email + Logout.
+
+**Admin truy cập `/profile`** → `<ProtectedRoute>` redirect về `/admin` (admin không vào được route business-scoped, kể cả profile).
+
+**Admin VẪN xem được detail profile của user thường** (read-only) — qua AdminUsersPage click row → drawer (xem 5.15). KHÔNG mở route `/profile/:userId` — chỉ drawer trong page admin.
 
 #### 5.13 AdminSidebar (FE component mới)
 File: `apps/web/src/components/layout/admin-sidebar.tsx`
 - Pattern giống `Sidebar` hiện có.
-- Items: Dashboard / Businesses / Users / Audit / (bottom: Profile).
+- Items: Dashboard / Businesses / Users / Audit. Bottom: avatar + initial của admin (tooltip = email) + nút **Logout**. KHÔNG có link tới profile page.
 - `Sidebar` (orchestrator) dispatch theo `user.platformRole`:
   ```tsx
   return user?.platformRole === 'admin' ? <AdminSidebar /> : <BusinessSidebar />;
@@ -248,9 +275,14 @@ File: `apps/web/src/components/layout/admin-sidebar.tsx`
 
 #### 5.15 AdminUsersPage
 - Table cột: Email | Full Name | Platform Role (tag) | Disabled | Businesses | Last Login | Actions.
-- Filter: search email, filter platformRole / isDisabled.
-- Actions: Disable/Enable, Promote/Demote.
-- Đảm bảo UI disable nút Demote nếu là admin cuối (BE cũng guard).
+- Filter: search email, filter isDisabled.
+- Actions: Disable/Enable. (KHÔNG có Promote/Demote — v1 chỉ 1 admin)
+- Disable nút Disable nếu là chính admin đang login (chống self-lockout).
+- Click row → mở `<UserDetailDrawer>` hiển thị **read-only**:
+  - Personal: email, fullName, phone, language, bio, avatar, createdAt, lastLoginAt, isDisabled.
+  - Memberships: list businesses user đang thuộc + role mỗi biz.
+  - KHÔNG cho edit field nào — admin chỉ view + dùng button Disable/Enable từ drawer.
+- Query mới `adminUserDetail(id: ID!): AdminUserDetail` (lazy load khi mở drawer).
 
 #### 5.16 AdminAuditLogPage
 - Reuse module audit hiện có nếu đã có; nếu chưa có audit table thì spec ở v1 tạm rỗng (placeholder), audit chính thức làm sau.
@@ -305,7 +337,7 @@ Thêm namespace mới `admin.json` (en + vi) trong `libs/i18n/src/locales/`:
 | Vào dashboard biz inactive | (skip — admin xem qua /admin/businesses) | ❌ (closed page) | ❌ | ❌ |
 | Inactivate biz | ✅ | ❌ | ❌ | ❌ |
 | Reactivate biz | ✅ | ❌ | ❌ | ❌ |
-| Promote user thành admin | ✅ | ❌ | ❌ | ❌ |
+| Disable user | ✅ (trừ chính mình) | ❌ | ❌ | ❌ |
 | Edit business profile (name, logo...) | ❌ | ✅ | ❌ | ❌ |
 
 ## 8. Database migration plan
@@ -318,11 +350,11 @@ Thêm namespace mới `admin.json` (en + vi) trong `libs/i18n/src/locales/`:
 ### Rollback
 Mỗi migration có `down()` drop column. An toàn rollback nếu cần.
 
-### Seed admin đầu tiên (manual, ghi vào `docs/QUICK-START.md`)
+### Seed admin (manual, ghi vào `docs/QUICK-START.md`)
 ```sql
 UPDATE users SET platform_role = 'admin' WHERE email = '<your-email>';
 ```
-Sau đó admin đầu dùng UI promote user khác.
+Hệ thống chỉ có duy nhất 1 admin trong v1. Nếu cần đổi admin → SQL update tương tự.
 
 ## 9. Acceptance criteria
 
@@ -333,9 +365,9 @@ Sau đó admin đầu dùng UI promote user khác.
 | AC-3 | Admin click Inactivate → modal hiện → submit reason → mutation success → row trong table chuyển status `Inactive`. | E2E |
 | AC-4 | User là member của biz `inactive` truy cập `/dashboard` → render `<BusinessInactivePage>` (không phải dashboard). | E2E |
 | AC-5 | User multi-biz (1 biz inactive, 1 biz active) login → vào active biz bình thường. Switch sang inactive biz → closed page. | E2E |
-| AC-6 | Admin promote user → user đó login lại → vào `/admin`. | E2E |
-| AC-7 | Admin demote bản thân khi là admin cuối cùng → mutation trả 400 "Cannot demote last admin". | API test |
-| AC-8 | Disabled user login → 401 "Account disabled". | API test |
+| AC-6 | Admin disable chính mình → mutation trả 400 "Cannot disable yourself". | API test |
+| AC-7 | Disabled user login → 401 "Account disabled". | API test |
+| AC-8 | Mutation `promoteUserToAdmin` không tồn tại trong schema (out of scope v1). | Schema introspection |
 | AC-9 | Migrations chạy trên DB có sẵn data → tất cả biz có `status='active'`, tất cả user có `platform_role=null`, `is_disabled=false`. | Migration test |
 | AC-10 | Audit log có entry cho mỗi mutation admin (inactivate, promote, disable...). | Integration test |
 
@@ -344,16 +376,25 @@ Sau đó admin đầu dùng UI promote user khác.
 | Risk | Impact | Mitigation |
 |---|---|---|
 | Admin lỡ tay inactivate biz lớn | Cao (data inaccessible) | Modal confirm + bắt nhập tên biz để xác nhận (giống delete pattern). Reactivate easy. |
-| Admin cuối cùng bị demote / disable | Cao (lock-out platform) | Guard ở BE: chặn demote/disable admin nếu là admin cuối. |
+| Admin self-disable | Cao (lock-out) | Guard BE chặn admin disable chính mình. UI disable nút Disable trên row của chính admin. |
 | FE quên check status → user vẫn dùng được biz inactive | Trung | Centralized `<BusinessGuard>` ở layout, không scatter check ở từng page. Test E2E AC-4. |
-| Privilege escalation qua manipulate JWT | Cao | `PlatformAdminGuard` đọc `platformRole` từ JWT payload (server-signed). KHÔNG trust FE state. JWT phải re-sign sau promote/demote (xem 11). |
-| User được promote nhưng JWT cũ vẫn `platformRole=null` | Trung | Sau `promoteUserToAdmin`/`demoteAdmin`, force user đó re-login (revoke refresh tokens). Hoặc decision: chấp nhận có lag tối đa = JWT expiry (30m). |
+| Privilege escalation qua manipulate JWT | Cao | `PlatformAdminGuard` đọc `platformRole` từ JWT payload (server-signed). KHÔNG trust FE state. |
+| User bị disable nhưng JWT cũ vẫn valid | Trung | Sau `disableUser`, revoke tất cả refresh tokens + sessions của user đó. Access token JWT có lag tối đa = JWT expiry (30m). |
 | Audit log table chưa có | Thấp | Check codebase trước impl; nếu chưa có, spec audit ở phase riêng. |
+
+### Threat model — Inactive business v1 limitation
+
+Inactive business gating is FE-only in v1 (`BusinessGuard` renders closed page). A member with browser devtools can still call business-scoped GraphQL mutations (e.g., `createWidget`, `updateDataSheet`) directly, since the BE doesn't check `business.status` in those resolvers.
+
+**Mitigation v2:** Add a `BusinessActiveGuard` BE-side that loads the business and rejects mutations if `status = 'inactive'`. Apply to all mutations under business-scoped resolvers.
+
+**v1 acceptable because:** users without devtools knowledge are blocked correctly; inactivation is rare and reversible; no permanent data loss possible (`status` is just a flag that can be reset by admin). The guard fires on next route navigation for regular browser sessions.
 
 ## 11. JWT & session impact
 
-- JWT payload thêm `platformRole`. Re-sign tokens cần thiết khi promote/demote → revoke refresh tokens của user đó qua `RefreshTokenService.revokeAllForUser(userId)`.
-- Khi `disableUser` → revoke tất cả refresh tokens + active sessions của user đó.
+- JWT payload thêm `platformRole` (set 1 lần lúc login dựa vào DB).
+- Khi `disableUser` → revoke tất cả refresh tokens + active sessions của user đó qua `RefreshTokenService.revokeAllForUser(userId)`.
+- Access token JWT của user bị disable có lag tối đa = JWT expiry (30m) — chấp nhận được vì sau đó refresh sẽ fail.
 
 ## 12. Test strategy
 

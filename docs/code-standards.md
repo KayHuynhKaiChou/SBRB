@@ -187,6 +187,87 @@ Enforce with `nx.json`:
 }
 ```
 
+## Guard Patterns (NEW - Phase 2G: Admin)
+
+### AdminRoute Guard
+
+Located: `apps/web/src/components/auth/admin-route.tsx`
+
+```typescript
+// ✓ GOOD: Protect admin routes
+<AdminRoute>
+  <AdminDashboard />
+</AdminRoute>
+
+// Authorization logic:
+// - If user.platformRole === 'admin' → render children
+// - Else if logged in → redirect /dashboard
+// - Else (guest) → redirect /auth/login
+```
+
+**Usage Pattern:**
+```typescript
+// Wrap admin pages/routes
+<Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+<Route path="/admin/businesses" element={<AdminRoute><AdminBusinesses /></AdminRoute>} />
+<Route path="/admin/users" element={<AdminRoute><AdminUsers /></AdminRoute>} />
+<Route path="/admin/audit" element={<AdminRoute><AdminAuditLog /></AdminRoute>} />
+```
+
+**Rules:**
+- Admin users CANNOT access business routes (`/dashboard`, `/profile`, etc.)
+- Regular users CANNOT access admin routes (`/admin/*`)
+- Guests redirect to `/auth/login`
+
+### BusinessGuard Pattern
+
+Located: `apps/web/src/components/auth/business-guard.tsx`
+
+```typescript
+// ✓ GOOD: Protect business routes when business is inactive
+<BusinessGuard>
+  <Dashboard />
+</BusinessGuard>
+
+// Authorization logic (for business-scoped routes):
+// - If user.platformRole === 'admin' → redirect /admin (admins don't access business routes)
+// - Else if currentBusinessId === null → redirect /onboarding
+// - Else if business.status === 'inactive' → render <BusinessInactivePage /> (not children)
+// - Else (business active) → render children
+```
+
+**Usage Pattern:**
+```typescript
+// Wrap business routes
+<Route path="/dashboard" element={<BusinessGuard><Dashboard /></BusinessGuard>} />
+<Route path="/data-sheets" element={<BusinessGuard><DataSheets /></BusinessGuard>} />
+<Route path="/departments" element={<BusinessGuard><Departments /></BusinessGuard>} />
+
+// Note: /profile is also business-scoped in practice (uses currentBusinessId context)
+```
+
+**Rules:**
+- Inactive businesses render `<BusinessInactivePage>` (shows reason, logout/switch buttons)
+- Active businesses proceed normally
+- Admins automatically bypassed (redirect instead)
+- No currentBusinessId → redirect `/onboarding`
+
+### BusinessInactivePage Component
+
+Located: `apps/web/src/pages/business-inactive-page.tsx`
+
+**Display:**
+- Business name
+- Inactivation reason
+- Inactivated timestamp
+- "Liên hệ admin" banner
+
+**Actions:**
+- **Switch Business** button (if user is member of other active businesses) → business-switcher modal
+- **Logout** button → clear session, redirect `/auth/login`
+
+---
+
 ## React Best Practices
 
 ### Component Structure
@@ -371,171 +452,14 @@ try {
 
 ## UI Component Patterns (NEW - Phase 2C+)
 
-### IconButton (Ghost Variant)
+Reusable UI building blocks — **IconButton** (ghost variant), **ModalActions** (DRY footer), and **FormModal** (generic wrapper) — are documented in their own companion reference:
 
-```typescript
-// libs/ui/components/IconButton.tsx
-import { Button } from 'antd';
+➡️ See **[code-standards-ui-components.md](./code-standards-ui-components.md)** for full implementations, usage examples, and rules.
 
-interface IconButtonProps {
-  icon: React.ReactNode;
-  tooltip?: string;
-  onClick?: () => void;
-  disabled?: boolean;
-  size?: 32 | 40 | 48;  // pixels
-}
-
-export const IconButton: FC<IconButtonProps> = ({
-  icon,
-  tooltip,
-  onClick,
-  disabled,
-  size = 40,
-}) => (
-  <Button
-    type="text"
-    shape="circle"
-    icon={icon}
-    title={tooltip}
-    onClick={onClick}
-    disabled={disabled}
-    style={{
-      width: size,
-      height: size,
-      backgroundColor: '#F5E8EA',  // BRAND_LIGHT
-      color: '#D72A44',             // BRAND
-    }}
-  />
-);
-
-// ✓ GOOD: All icon-only buttons use IconButton
-<IconButton icon={<EditOutlined />} tooltip="Edit widget" onClick={handleEdit} />
-
-// ✗ BAD: Avoid raw buttons for icons
-<Button icon={<EditOutlined />} />
-```
-
-**Rules:**
-- All icon-only buttons MUST use IconButton
-- Ghost variant: type="text", shape="circle"
-- Background: BRAND_LIGHT (#F5E8EA) on hover
-- Icon color: BRAND (#D72A44)
-- Sizes: 32px (small), 40px (default), 48px (large)
-
-### ModalActions (DRY Footer)
-
-```typescript
-// libs/ui/components/ModalActions.tsx
-interface ModalActionItem {
-  icon?: React.ReactNode;
-  tooltip?: string;
-  onClick: () => void;
-  disabled?: boolean;
-  variant?: 'primary' | 'default';
-}
-
-interface ModalActionsProps {
-  actions: ModalActionItem[];  // save/confirm first, close/cancel last
-}
-
-export const ModalActions: FC<ModalActionsProps> = ({ actions }) => (
-  <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-    {actions.map((action, i) => (
-      <IconButton
-        key={i}
-        icon={action.icon}
-        tooltip={action.tooltip}
-        onClick={action.onClick}
-        disabled={action.disabled}
-      />
-    ))}
-  </div>
-);
-
-// ✓ GOOD: DRY footer using ModalActions
-const actions: ModalActionItem[] = [
-  { icon: <SaveOutlined />, tooltip: 'Save', onClick: handleSave },
-  { icon: <CloseOutlined />, tooltip: 'Close', onClick: handleClose },
-];
-<ModalActions actions={actions} />
-
-// ✗ BAD: Duplicate action buttons in every modal
-<footer>
-  <button onClick={handleSave}>Save</button>
-  <button onClick={handleClose}>Close</button>
-</footer>
-```
-
-**Rules:**
-- Primary action (save/confirm) appears first
-- Cancel/close action appears last
-- Use IconButton internally for consistency
-- Array of actions passed as props (no JSX in modal)
-
-### FormModal (Generic Wrapper)
-
-```typescript
-// libs/ui/components/FormModal.tsx
-interface FormModalProps {
-  title: string;
-  visible: boolean;
-  onClose: () => void;
-  onSubmit: (data: any) => void;
-  children: React.ReactNode;  // Form inputs
-}
-
-export const FormModal: FC<FormModalProps> = ({
-  title,
-  visible,
-  onClose,
-  onSubmit,
-  children,
-}) => (
-  <Modal
-    title={title}
-    open={visible}
-    onCancel={onClose}
-    closable={false}  // ← Required: no X button, use ModalActions
-    footer={
-      <ModalActions actions={[
-        { icon: <SaveOutlined />, tooltip: 'Save', onClick: onSubmit },
-        { icon: <CloseOutlined />, tooltip: 'Close', onClick: onClose },
-      ]} />
-    }
-  >
-    {children}
-  </Modal>
-);
-
-// ✓ GOOD: Reusable form modal
-<FormModal
-  title="Edit Widget"
-  visible={isOpen}
-  onClose={() => setIsOpen(false)}
-  onSubmit={handleSave}
->
-  <Form layout="vertical">
-    <Form.Item label="Widget Name">
-      <Input />
-    </Form.Item>
-  </Form>
-</FormModal>
-
-// ✗ BAD: Hardcoded modal with button footer
-<Modal title="Edit Widget" visible={isOpen}>
-  <Form>...</Form>
-  <footer>
-    <Button onClick={handleSave}>Save</Button>
-    <Button onClick={onClose}>Cancel</Button>
-  </footer>
-</Modal>
-```
-
-**Rules:**
-- closable={false} (no X button in top-right)
-- Use ModalActions for footer
-- Generic wrapper for all modals
-- No hardcoded button logic per modal
+**Quick rules:**
+- All icon-only buttons MUST use `IconButton` (ghost: `type="text"`, `shape="circle"`).
+- Modals use `FormModal` (`closable={false}`) with `ModalActions` footer — save/confirm first, close/cancel last.
+- No hardcoded button logic per modal; pass actions as an array.
 
 ## i18n: No Hardcoded Text (MANDATORY - Phase 2C+)
 
@@ -568,6 +492,7 @@ export const WidgetCard: FC = () => {
 - `widget` — Widget configuration, chart settings
 - `datasheet` — Data import, series management
 - `member` — Business members, invitations
+- `admin` — Admin dashboard, business management, user management, audit log (✨ NEW)
 
 **Locale Files:**
 ```
@@ -707,10 +632,26 @@ From Phase 2B (Business module), the following service-splitting pattern is now 
 3. **Feature Services** (e.g., `business-ownership.service.ts`, `member.service.ts`) — Domain-specific logic
 4. **Helper Services** (e.g., `invitation.service.ts`) — Supporting operations
 
+**Admin Module Example (Phase 2G):**
+```
+admin/
+├── admin.module.ts                    # Module definition
+├── admin-platform.resolver.ts         # adminMetrics, adminAuditLog queries
+├── admin-business.resolver.ts         # adminBusinesses, inactivate/reactivate
+├── admin-user.resolver.ts             # adminUsers, adminUserDetail, disable/enable
+├── services/
+│   ├── admin-metrics.service.ts       # Dashboard metrics calculation
+│   ├── admin-audit.service.ts         # Audit log retrieval + filtering
+│   ├── admin-business.service.ts      # Business inactivate/reactivate logic
+│   └── admin-user.service.ts          # User disable/enable logic
+└── guards/
+    └── platform-admin.guard.ts        # Authorization (platformRole === 'admin')
+```
+
 **Benefit:** Keeps all files under 200 LOC, improves testability, follows single responsibility principle.
 
 **Required for Phase 2C+:** All new modules must follow this pattern.
 
 ---
 
-**Document Version:** 2.4 | **Last Updated:** 2026-03-28 | **Maintainer:** Dev Team
+**Document Version:** 2.5 | **Last Updated:** 2026-04-29 | **Maintainer:** Dev Team

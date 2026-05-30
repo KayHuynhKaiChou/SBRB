@@ -1,12 +1,12 @@
 # SBRB Codebase Summary
 
-**Generated:** 2026-04-27 | **Repomix Output:** `./repomix-output.xml` | **Phase Status:** Phase 1-2F ✅ Complete
+**Generated:** 2026-04-29 | **Repomix Output:** `./repomix-output.xml` | **Phase Status:** Phase 1-2F ✅ Complete + Platform Admin Role ✅ Complete
 
 ---
 
 ## Codebase Overview
 
-SBRB is a NX monorepo containing a modern full-stack dashboard builder. All Phase 2 (MVP) phases complete: Auth, Business, Tabs, Canvas & DnD, Data Import/Excel, User Profile.
+SBRB is a NX monorepo containing a modern full-stack dashboard builder. All Phase 2 (MVP) phases complete: Auth, Business, Tabs, Canvas & DnD, Data Import/Excel, User Profile. Platform Admin Role (v1) also complete.
 
 ### Implementation Status (Authoritative: 2026-04-27)
 - **Phase 1 (Scaffold):** ✅ COMPLETE
@@ -101,7 +101,7 @@ apps/api/
 │   │   ├── constants/          # Queue, status constants
 │   │   ├── guards/             # Auth, role, business guards
 │   │   └── decorators/         # @CurrentUser(), @Roles()
-│   └── modules/                # Feature modules (9 implemented)
+│   └── modules/                # Feature modules (10 implemented)
 │       ├── auth/               # ✅ Authentication (JWT + OAuth)
 │       ├── business/           # ✅ Business CRUD, multi-tenancy
 │       ├── user/               # ✅ User management
@@ -111,6 +111,7 @@ apps/api/
 │       ├── datasheet/          # ✅ Data import (Excel), storage
 │       ├── notification/       # 🔲 Scaffolded (Phase 4)
 │       ├── audit/              # ✅ Audit logging
+│       ├── admin/              # ✅ Platform Admin: business mgmt, user mgmt, metrics, audit log (guarded by PlatformAdminGuard)
 │       └── mail/               # ✅ Email service (Gmail)
 ├── jest.config.ts              # Jest test configuration
 └── package.json                # Dependencies
@@ -132,8 +133,8 @@ apps/api/
 - **REST:** POST /files/import, PATCH /widgets/:id/position, GET /files/export/:id, POST /auth/google/callback
 
 **Database (TypeORM + PostgreSQL):**
-- User (id, email, passwordHash, businessRoles)
-- Business (id, name, ownerId)
+- User (id, email, passwordHash, businessRoles, platform_role, is_disabled, disabled_at)
+- Business (id, name, ownerId, status, inactivated_at, inactivated_by, inactive_reason)
 - UserRole (userId, businessId, role) — junction table, 4 roles (owner/manager/staff/viewer)
 - Tab (id, businessId, name, order, widgets)
 - Widget (id, tabId, x, y, w, h, chartConfig JSON)
@@ -145,6 +146,53 @@ apps/api/
 **Module Boundaries:**
 - Depends on: `libs/shared/*`, @nestjs/*, TypeORM, Passport
 - Cannot depend on: `apps/web`, `apps/worker` (React code)
+
+---
+
+## Platform Admin Role (v1) ✅ Complete
+
+See full spec: [docs/admin-srs.md](./admin-srs.md) | Plan: `plans/260428-2028-admin-role/`
+
+### Backend (`apps/api/src/modules/admin/`)
+
+Single platform role `admin` (stored as `users.platform_role = 'admin'`). Manual seed via SQL: `UPDATE users SET platform_role='admin' WHERE email='...'`. No UI-based promote/demote in v1.
+
+**Guards:**
+- `PlatformAdminGuard` (`apps/api/src/common/guards/platform-admin.guard.ts`) — checks JWT payload `platformRole === 'admin'`, throws 403 otherwise. Applied to all admin resolvers.
+
+**Resolvers:**
+- `AdminBusinessResolver` — `adminBusinesses`, `inactivateBusiness`, `reactivateBusiness`
+- `AdminUserResolver` — `adminUsers`, `adminUserDetail`, `disableUser`, `enableUser`
+- `AdminPlatformResolver` — `adminMetrics`, `adminAuditLog`
+
+**Services:**
+- `AdminBusinessService` — list/inactivate/reactivate with audit logging
+- `AdminUserService` — list/disable/enable/getUserDetail with session revocation
+- `AdminMetricsService` — 6 aggregate counters in parallel via Promise.all
+- `AdminAuditService` — paginated audit log with actor email join
+
+**Migrations (in order):**
+1. `1777500000000-AddUserPlatformRole` — `platform_role` varchar(20) nullable
+2. `1777500001000-AddBusinessStatus` — `status` default 'active', `inactivated_at/by/reason`
+3. `1777500002000-AddUserDisabled` — `is_disabled` default false, `disabled_at`
+
+### Frontend (`apps/web/src/`)
+
+**Routes (`/admin/*`):** All wrapped in `<AdminRoute>` (checks `user.platformRole === 'admin'`).
+- `/admin` → `AdminDashboardPage` (6 stat cards)
+- `/admin/businesses` → `AdminBusinessesPage` (table, inactivate modal)
+- `/admin/users` → `AdminUsersPage` (table, user detail drawer)
+- `/admin/audit` → `AdminAuditLogPage` (paginated audit log)
+
+**Components:**
+- `apps/web/src/components/layout/admin-sidebar.tsx` — icon sidebar dispatched by Sidebar orchestrator when `user.platformRole === 'admin'`
+- `apps/web/src/components/layout/admin-layout.tsx` — AdminSidebar + content area
+- `apps/web/src/components/auth/admin-route.tsx` — route guard for /admin/* 
+- `apps/web/src/components/auth/business-guard.tsx` — checks business status; renders `<BusinessInactivePage>` when `status === 'inactive'`
+- `apps/web/src/pages/admin/components/` — AdminBusinessesTable, AdminUsersTable, UserDetailDrawer, InactivateBusinessModal, BusinessStatusTag
+- `apps/web/src/pages/business-inactive/` — BusinessInactivePage, InactiveBanner, InactiveActions
+
+**i18n:** Namespace `admin` (en + vi) in `libs/i18n/src/locales/{en,vi}/admin.json`. All admin page text uses `t('admin:...')`. See `docs/admin-srs.md §FR-6`.
 
 ---
 
@@ -395,214 +443,11 @@ function MyComponent() {
 
 ## Core Modules Breakdown
 
-### ✅ Authentication Module (`apps/api/modules/auth/`) — IMPLEMENTED
+The per-module backend inventory (key files, responsibilities, entities, guards) for Auth, User, Business, Tab, Widget, DataSheet, Audit, Profile, Mail, Notification, and MinIO has moved to its own companion reference:
 
-**Status:** ✅ COMPLETE — 80+ tests passing.
+➡️ See **[codebase-modules.md](./codebase-modules.md)** for the full module breakdown.
 
-**Key Files:**
-- `auth.service.ts` — Main auth orchestration
-- `auth-login.service.ts` — Login logic (email/password + Google OAuth)
-- `auth-register.service.ts` — Signup + email verification
-- `auth-password.service.ts` — Password reset flow
-- `jwt.strategy.ts` — JWT validation
-- `google.strategy.ts` — Google OAuth strategy
-- `redis-rate-limit.service.ts` — Rate limiting on auth endpoints
-- `auth.controller.ts` — REST endpoints
-- `auth.resolver.ts` — GraphQL resolvers
-
-**Responsibilities:**
-- JWT token generation (15m access, 30d refresh)
-- Passport strategies (local, Google OAuth, JWT)
-- Email verification (Gmail SMTP + Handlebars templates)
-- Password reset (email-based)
-- HttpOnly refresh token cookie with secure flags
-- Redis-backed rate limiting (prevent brute force)
-
-**Exports:**
-- `JwtAuthGuard` — Validate JWT on all protected routes
-- `GqlJwtAuthGuard` — GraphQL-specific JWT guard
-- `CurrentUserDecorator` — Inject user payload
-
-**Security:**
-- ✅ Bcrypt password hashing (10+ rounds)
-- ✅ JWT secret in env var (min 32 chars production)
-- ✅ Refresh token: HttpOnly, Secure, SameSite=Strict cookie
-- ✅ CORS whitelist via ALLOWED_ORIGINS env var
-- ✅ Rate limiting: 100 req/min per IP on auth endpoints
-
----
-
-### ✅ User Module (`apps/api/modules/user/`) — IMPLEMENTED
-
-**Status:** ✅ COMPLETE
-
-**Key Files:**
-- `user.service.ts` — User CRUD
-- `user.resolver.ts` — GraphQL user queries
-- `user.controller.ts` — REST endpoints
-
----
-
-### ✅ Business Module (`apps/api/modules/business/`) — IMPLEMENTED
-
-**Status:** ✅ COMPLETE — 78+ tests passing.
-
-**Key Files:**
-- `business.service.ts` — Main business orchestration
-- `business-crud.service.ts` — Business create/read/update/delete
-- `business-ownership.service.ts` — Ownership & access control
-- `member.service.ts` — Member management (add/remove/role update)
-- `invitation.service.ts` — Invitation creation & acceptance
-- `business.controller.ts` — REST endpoints
-- `business.resolver.ts` — GraphQL business resolvers
-- `member.resolver.ts` — GraphQL member queries/mutations
-
-**Responsibilities:**
-- ✅ Create business (Owner only)
-- ✅ Invite users via email code (Owner/Manager)
-- ✅ Manage business members (add/remove, role assignment)
-- ✅ Role-based access control (Owner, Manager, Staff, Viewer)
-- ✅ Row-level security (RLS) — filter data by businessId
-
-**Entities Implemented:**
-- `Business` — id, name, ownerId, createdAt, updatedAt
-- `UserRole` — userId, businessId, role (junction table)
-- `Invite` — code, email, businessId, expiresAt, usedAt
-
-**Guards:**
-- `BusinessAccessGuard` — Verify user belongs to business
-- `RoleGuard` — Check user role (owner, manager, staff, viewer)
-
----
-
-### ✅ Tab Module (`apps/api/modules/tab/`) — IMPLEMENTED
-
-**Status:** ✅ COMPLETE
-
-**Key Files:**
-- `tab.service.ts` — CRUD operations
-- `tab.resolver.ts` — GraphQL resolvers
-- `tab.controller.ts` — REST endpoints
-
-**Responsibilities:**
-- ✅ Create Tab within Business
-- ✅ Rename/update Tab
-- ✅ Delete Tab (cascade delete widgets)
-- ✅ Reorder tabs (drag handles)
-- ✅ Duplicate Tab with widgets
-- ✅ Tab colors, icons, pinning
-
-**Entities:** Tab (id, businessId, name, order, color, icon, pinned, createdAt)
-
----
-
-### ✅ Widget Module (`apps/api/modules/widget/`) — IMPLEMENTED
-
-**Status:** ✅ COMPLETE
-
-**Key Files:**
-- `widget.service.ts` — CRUD operations
-- `widget.resolver.ts` — GraphQL resolvers
-- `widget.controller.ts` — REST endpoints
-- `widget-validator.service.ts` — Position + collision validation
-
-**Responsibilities:**
-- ✅ CRUD widgets (create, read, update, delete)
-- ✅ Validate position (bounds, collision, snap grid)
-- ✅ Update position (PATCH /widgets/:id/position, debounced)
-- ✅ Validate chart config
-- ✅ Widget chart preview, resize constraints
-
-**Entities:** Widget (id, tabId, x, y, w, h, chartConfig JSON, createdAt)
-
----
-
-### ✅ DataSheet Module (`apps/api/modules/datasheet/`) — IMPLEMENTED
-
-**Status:** ✅ COMPLETE
-
-**Key Files:**
-- `datasheet.service.ts` — DataSheet CRUD
-- `datasheet.resolver.ts` — GraphQL resolvers
-- `import-excel.processor.ts` — BullMQ worker (ExcelJS parsing)
-
-**Responsibilities:**
-- ✅ Handle Excel file upload (Multer → MinIO S3)
-- ✅ Enqueue BullMQ import job
-- ✅ Store DataSheet + DataSeries + DataValues (JSONB)
-- ✅ Data Selector — Query series by datasheet
-- ✅ Reimport existing datasheet
-
-**Entities:** DataSheet (id, businessId, fileName, uploadedAt), DataSeries (id, dataSheetId, name, dataValues JSON)
-
----
-
-### ✅ Audit Module (`apps/api/modules/audit/`) — IMPLEMENTED
-
-**Status:** ✅ COMPLETE
-
-**Key Files:**
-- `audit.service.ts` — Audit log creation & querying
-- `audit.module.ts` — Module registration
-
-**Responsibilities:**
-- Track all business mutations (create/update/delete)
-- Immutable audit log with businessId, userId, action, entity, oldValue, newValue, timestamp
-
----
-
-### ✅ Profile Module (`apps/api/modules/profile/`) — IMPLEMENTED
-
-**Status:** ✅ COMPLETE (Phase 2F, 2026-04-27)
-
-**Key Files:**
-- `profile.service.ts` — Profile CRUD, password change, avatar URL generation
-- `profile.resolver.ts` — GraphQL resolvers: getProfile, updateProfile, changePassword, getSessions, logoutSession
-- `avatar-storage.service.ts` — Supabase Storage integration (signed URLs, bucket `avatar`)
-- `profile.operations.ts` — GraphQL operations (10 ops for web client)
-- `__tests__/` — Unit tests for all services
-
-**Responsibilities:**
-- User profile retrieval & update (fullName, phone, language, bio, departmentId)
-- Avatar upload via Supabase Storage bucket `avatar` with signed URLs
-- Change password with old password verification
-- Session management (list active sessions, logout current session)
-- Membership info retrieval (myMembership resolver)
-
-**Key Services:**
-- `AvatarStorageService` — Handles Supabase Storage signed URL generation for avatar upload/download
-- Validates avatar file size + type before upload
-- Cleans up old avatar on update
-
----
-
-### ✅ Mail Module (`apps/api/modules/mail/`) — IMPLEMENTED
-
-**Status:** ✅ COMPLETE
-
-**Key Files:**
-- `mail.service.ts` — Email sending via Gmail SMTP
-- `mail.module.ts` — Module registration
-
-**Responsibilities:**
-- Send emails (verification, password reset, invitations)
-- Handlebars template rendering
-- Gmail SMTP integration
-
----
-
-### 🔲 Notification Module (`apps/api/modules/notification/`) — SCAFFOLDED
-
-**Status:** 🔲 Scaffolded (services/resolvers commented out, ready for Phase 4)
-
----
-
-### 🔲 MinIO Module (`apps/api/modules/minio/`) — STUB
-
-**Status:** 🔲 Stub implementation (returns mock URLs; real minio pkg not installed yet)
-
-**Responsibilities (Phase 2E+):**
-- S3-compatible file storage (local dev via MinIO, prod via AWS S3)
+The **Platform Admin module** is documented above in [Platform Admin Role (v1)](#platform-admin-role-v1--complete).
 
 ---
 

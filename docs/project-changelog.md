@@ -4,6 +4,58 @@ All notable changes to the SBRB project are documented here. Format based on [Ke
 
 ---
 
+## [2026-04-29] — Platform Admin Role v1 (Phases 1-6)
+
+**Plan:** `plans/260428-2028-admin-role/` | **SRS:** `docs/admin-srs.md`
+
+### Added
+- `PlatformAdminGuard` — JWT-level check for `platformRole === 'admin'`, applies to all admin GraphQL resolvers
+- `apps/api/src/modules/admin/` — new module with 4 services + 3 resolvers: AdminBusinessService, AdminUserService, AdminMetricsService, AdminAuditService, AdminBusinessResolver, AdminUserResolver, AdminPlatformResolver
+- `apps/api/src/modules/auth/refresh-token.service.ts` — extracted `revokeAllForUser` for cross-module use (called on user disable)
+- 3 TypeORM migrations: `AddUserPlatformRole`, `AddBusinessStatus`, `AddUserDisabled`
+- `apps/web/src/pages/admin/` — 4 admin pages + 5 sub-components (AdminBusinessesTable, AdminUsersTable, UserDetailDrawer, InactivateBusinessModal, BusinessStatusTag)
+- `apps/web/src/pages/business-inactive/` — BusinessInactivePage, InactiveBanner, InactiveActions
+- `apps/web/src/components/auth/admin-route.tsx` — route guard for /admin/* paths
+- `apps/web/src/components/auth/business-guard.tsx` — renders BusinessInactivePage when business.status === 'inactive'
+- `apps/web/src/components/layout/admin-sidebar.tsx` + `admin-layout.tsx` — admin navigation and layout
+- `apps/web/src/graphql/admin.operations.ts`, `business.operations.ts` — new GraphQL operations
+- `apps/web/src/hooks/use-admin-businesses.ts`, `use-admin-users.ts`, `use-admin-metrics.ts`, `use-admin-audit.ts` — data hooks
+- i18n namespace `admin` (en + vi): `libs/i18n/src/locales/{en,vi}/admin.json` + copied to `apps/web/public/locales/`
+- 7 test suites (32 unit tests): PlatformAdminGuard, AdminBusinessService, AdminUserService, RefreshTokenService, AdminMetricsService, AdminAuditService, AdminPlatformResolver
+
+### Changed
+- `apps/api/src/modules/auth/entities/user.entity.ts` — added `platformRole`, `isDisabled`, `disabledAt` columns
+- `apps/api/src/modules/business/entities/business.entity.ts` — added `status`, `inactivatedAt`, `inactivatedBy`, `inactiveReason` columns
+- `apps/api/src/modules/auth/auth-login.service.ts` — blocks login when `user.isDisabled === true`; adds `platformRole` to JWT payload
+- `apps/api/src/modules/auth/dto/user.type.ts` — added `platformRole` to UserType
+- `apps/web/src/app/app.tsx` — added /admin/* routes wrapped in AdminRoute
+- `apps/web/src/components/layout/sidebar.tsx` — dispatches AdminSidebar vs BusinessSidebar based on `user.platformRole`
+- `apps/web/src/components/layout/business-switcher.tsx` — "Closed" badge for inactive businesses (i18n)
+- `apps/web/src/hooks/use-auth.ts` — login redirect: platformRole='admin' → /admin
+- `apps/web/src/components/auth/protected-route.tsx` — admin users redirected to /admin (cannot enter business routes)
+- `libs/i18n/src/index.ts` — added `'admin'` to `I18N_NAMESPACES`
+- `apps/web/src/i18n/index.ts` — added `'profile'` and `'admin'` to ns array
+- `libs/shared/constants/src/routes.constants.ts` — added ADMIN, ADMIN_BUSINESSES, ADMIN_USERS, ADMIN_AUDIT routes
+- `libs/shared/constants/src/role.constants.ts` — added EPlatformRole enum
+- `libs/shared/constants/src/business.constants.ts` — added EBusinessStatus, BUSINESS_STATUS_TAG_COLOR
+- `libs/shared/types/src/user.types.ts` — added platformRole to IUserDto
+
+### Migrations Required
+```
+npx nx run api:migration:run
+```
+Migrations (in order):
+1. `1777500000000-AddUserPlatformRole` — `platform_role` varchar(20) nullable, indexed
+2. `1777500001000-AddBusinessStatus` — `status` default 'active', `inactivated_*` columns
+3. `1777500002000-AddUserDisabled` — `is_disabled` boolean default false, `disabled_at` nullable
+
+Seed admin account manually after migration:
+```sql
+UPDATE users SET platform_role = 'admin' WHERE email = '<your-email>';
+```
+
+---
+
 ## [2026-04-27] — Phase 2F: User Profile
 
 ### Added
