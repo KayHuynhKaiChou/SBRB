@@ -24,6 +24,7 @@ import {
   MY_BUSINESS_ROLE_QUERY,
   UPDATE_DEPARTMENT_POSITIONS_MUTATION,
 } from '../../graphql/department.operations';
+import { MY_BUSINESSES_QUERY } from '../../graphql/auth.operations';
 import { useDepartmentTree, type IDepartmentNode } from '../../hooks/use-department-tree';
 import { useAuthStore } from '../../store/auth.store';
 import { computeLayout, DEPT_NODE_H, DEPT_NODE_W, type IOrgChartNodeData } from './org-chart-layout';
@@ -124,6 +125,11 @@ export default function DepartmentPage() {
   );
   const isOwner = roleData?.myBusinessRole === 'owner';
 
+  const { data: bizData } = useQuery<{
+    myBusinesses: Array<{ id: string; name: string; status: string }>;
+  }>(MY_BUSINESSES_QUERY, { fetchPolicy: 'cache-and-network' });
+  const businessName = bizData?.myBusinesses.find((b) => b.id === currentBusinessId)?.name;
+
   const [updatePositions] = useMutation<{
     updateDepartmentPositions: Array<{ id: string; positionX: number; positionY: number }>;
   }>(UPDATE_DEPARTMENT_POSITIONS_MUTATION);
@@ -176,7 +182,9 @@ export default function DepartmentPage() {
         <div className="flex flex-col h-screen">
           <div className="flex justify-between items-center p-4 border-b bg-white">
             <Title level={4} className="!m-0">
-              {t('department:page_title')}
+              {businessName
+                ? `${businessName} — ${t('department:page_title')}`
+                : t('department:page_title')}
             </Title>
             <IconButton
               icon={<PlusOutlined />}
@@ -219,6 +227,7 @@ export default function DepartmentPage() {
           open={selectedId !== null && selectedFlat !== null}
           department={selectedFlat?.node ?? null}
           hasChildren={selectedFlat?.hasChildren ?? false}
+          isOwner={isOwner}
           onClose={handleCloseDept}
           onRequestAddMember={handleRequestAddMember}
           onRequestAddSubDept={handleAddSubDept}

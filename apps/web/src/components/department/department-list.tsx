@@ -1,9 +1,12 @@
 import React, { useMemo } from 'react';
-import { Table, Space, Popconfirm, Empty, Tooltip } from 'antd';
-import { EditOutlined, DeleteOutlined, WarningOutlined } from '@ant-design/icons';
+import { Table, Space, Popconfirm, Empty, Tooltip, Typography } from 'antd';
+import type { TableColumnsType } from 'antd';
+import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { IconButton } from '@sbrb/ui';
 import { useTranslation } from 'react-i18next';
 import type { IDepartmentDto } from '../../hooks/use-departments';
+
+const { Text } = Typography;
 
 interface IDepartmentListProps {
   departments: IDepartmentDto[];
@@ -52,15 +55,19 @@ export function DepartmentList({ departments, loading, onEdit, onDelete }: IDepa
     return map;
   }, [departments]);
 
-  const columns = [
+  const columns: TableColumnsType<IDepartmentRow> = [
     {
       title: t('department:name_label'),
       dataIndex: 'name',
       key: 'name',
+      width: 220,
+      ellipsis: { showTitle: false },
       render: (name: string, record: IDepartmentRow) => (
-        <span style={{ paddingLeft: record.depth * 24 }}>
-          {record.depth > 0 && <span className="text-gray-400 mr-1">—</span>}
-          {name}
+        <span style={{ paddingLeft: record.depth * 24 }} className="flex items-center min-w-0">
+          {record.depth > 0 && <span className="text-gray-400 mr-1 shrink-0">—</span>}
+          <Text ellipsis={{ tooltip: name }} className="flex-1 min-w-0">
+            {name}
+          </Text>
         </span>
       ),
     },
@@ -69,13 +76,21 @@ export function DepartmentList({ departments, loading, onEdit, onDelete }: IDepa
       dataIndex: 'parentId',
       key: 'parentId',
       width: 200,
-      render: (parentId: string | null) =>
-        parentId ? parentMap.get(parentId) ?? '—' : '—',
+      ellipsis: { showTitle: false },
+      render: (parentId: string | null) => {
+        const parentName = parentId ? (parentMap.get(parentId) ?? '—') : '—';
+        return (
+          <Text ellipsis={{ tooltip: parentName ?? undefined }} className="block">
+            {parentName}
+          </Text>
+        );
+      },
     },
     {
       title: t('common:actions'),
       key: 'actions',
       width: 100,
+      fixed: 'right' as const,
       render: (_: unknown, record: IDepartmentRow) => {
         const isParent = hasChildren(record.id, departments);
         return (
@@ -118,12 +133,13 @@ export function DepartmentList({ departments, loading, onEdit, onDelete }: IDepa
   ];
 
   return (
-    <Table
+    <Table<IDepartmentRow>
       dataSource={rows}
       columns={columns}
       rowKey="id"
       loading={loading}
-      pagination={false}
+      pagination={{ pageSize: 10, size: 'small' }}
+      scroll={{ x: 520 }}
       locale={{
         emptyText: (
           <Empty

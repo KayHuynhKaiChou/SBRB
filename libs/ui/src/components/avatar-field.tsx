@@ -24,6 +24,8 @@ interface IAvatarFieldProps {
   shape?: 'circle' | 'square';
   /** Pixel size (width = height since aspect=1). Default 96. */
   size?: number;
+  /** When true, render a plain read-only image (no upload/crop, no click). Default false. */
+  disabled?: boolean;
 }
 
 /**
@@ -42,6 +44,7 @@ export function AvatarField({
   successMsg,
   shape = 'circle',
   size = 96,
+  disabled = false,
 }: IAvatarFieldProps) {
   const beforeUpload = async (file: File) => {
     if (!ALLOWED_TYPES.includes(file.type)) {
@@ -66,6 +69,32 @@ export function AvatarField({
   const isCircle = shape === 'circle';
   const radiusClass = isCircle ? 'rounded-full' : 'rounded-lg';
 
+  const imageDisplay = isCircle ? (
+    <Avatar size={size} src={value ?? undefined}>
+      {initial}
+    </Avatar>
+  ) : (
+    <div
+      className={`${radiusClass} overflow-hidden bg-gray-100 flex items-center justify-center text-gray-400`}
+      style={{ width: size, height: size }}
+    >
+      {value ? (
+        <img src={value} alt="" className="w-full h-full object-cover" />
+      ) : (
+        <CameraOutlined className="text-2xl" />
+      )}
+    </div>
+  );
+
+  // Read-only: a plain image with no upload/crop affordance.
+  if (disabled) {
+    return (
+      <div style={{ width: size, height: size }}>
+        {imageDisplay}
+      </div>
+    );
+  }
+
   return (
     <ImgCrop rotationSlider showReset cropShape={isCircle ? 'round' : 'rect'} aspect={1}>
       <Upload
@@ -74,22 +103,7 @@ export function AvatarField({
         beforeUpload={beforeUpload}
       >
         <div className="relative cursor-pointer group" style={{ width: size, height: size }}>
-          {isCircle ? (
-            <Avatar size={size} src={value ?? undefined}>
-              {initial}
-            </Avatar>
-          ) : (
-            <div
-              className={`${radiusClass} overflow-hidden bg-gray-100 flex items-center justify-center text-gray-400`}
-              style={{ width: size, height: size }}
-            >
-              {value ? (
-                <img src={value} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <CameraOutlined className="text-2xl" />
-              )}
-            </div>
-          )}
+          {imageDisplay}
           <div
             className={`absolute inset-0 ${radiusClass} bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity`}
           >

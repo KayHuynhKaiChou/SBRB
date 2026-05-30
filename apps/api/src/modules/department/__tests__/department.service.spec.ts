@@ -194,6 +194,35 @@ describe('DepartmentService', () => {
       expect(tree[0].children).toHaveLength(1);
       expect(tree[0].children![0].memberCount).toBe(2);
       expect(tree[0].children![0].manager?.userId).toBe('u2');
+      // directReportCount = own non-manager members + managers of direct children.
+      // root: 0 own non-mgr + 1 child(c) with a manager = 1; child c: 1 own non-mgr (u3) + 0 children = 1.
+      expect(tree[0].directReportCount).toBe(1);
+      expect(tree[0].children![0].directReportCount).toBe(1);
+    });
+
+    it('computes directReportCount = own non-manager members + direct child managers', async () => {
+      const { service, deptRepo, memberRepo, bizMemberRepo } = makeService();
+      allowMember(bizMemberRepo);
+
+      // root: manager + 1 staff; two children each with a manager.
+      const root = { id: 'r', businessId: BIZ_ID, parentId: null, name: 'BOD', isRoot: true };
+      const a = { id: 'a', businessId: BIZ_ID, parentId: 'r', name: 'A', isRoot: false };
+      const b = { id: 'b', businessId: BIZ_ID, parentId: 'r', name: 'B', isRoot: false };
+      deptRepo.find.mockResolvedValue([root, a, b]);
+
+      memberRepo.find.mockResolvedValue([
+        { id: 'mr', departmentId: 'r', userId: 'u1', isManager: true, user: { id: 'u1' } },
+        { id: 'mr2', departmentId: 'r', userId: 'u2', isManager: false, user: { id: 'u2' } },
+        { id: 'ma', departmentId: 'a', userId: 'u3', isManager: true, user: { id: 'u3' } },
+        { id: 'mb', departmentId: 'b', userId: 'u4', isManager: true, user: { id: 'u4' } },
+      ]);
+
+      const tree = await service.findTree(BIZ_ID, USER_ID);
+      const rootNode = tree[0];
+      // root: 1 own non-mgr (u2) + 2 child managers (a, b) = 3.
+      expect(rootNode.directReportCount).toBe(3);
+      // leaf children: own manager only, no children, no non-mgr members → 0.
+      expect(rootNode.children!.every((c) => c.directReportCount === 0)).toBe(true);
     });
 
     it('returns empty array when no departments', async () => {

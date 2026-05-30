@@ -5,6 +5,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { created, ok } from '../../common/utils/api-response.util';
 import { IJwtPayload } from '../auth/jwt.strategy';
+import { UserType } from '../auth/dto/user.type';
 import { DepartmentMemberService } from './department-member.service';
 import { DepartmentService } from './department.service';
 import { CreateDepartmentDto } from './dto/create-department.dto';
@@ -13,9 +14,12 @@ import { DepartmentPositionInput, DepartmentType } from './dto/department.type';
 import {
   DepartmentListResponse,
   DepartmentMemberResponse,
+  DepartmentMemberListResponse,
   DepartmentResponse,
+  MemberInfoResponse,
 } from './dto/department-response.type';
 import { UpdateDepartmentDto } from './dto/update-department.dto';
+import { UpdateMemberInfoDto } from './dto/update-member-info.dto';
 
 @Resolver(() => DepartmentType)
 @UseGuards(JwtAuthGuard)
@@ -49,6 +53,17 @@ export class DepartmentResolver {
     @CurrentUser() user: IJwtPayload,
   ): Promise<DepartmentMemberType[]> {
     return this.memberService.findMembers(departmentId, user.sub) as unknown as Promise<
+      DepartmentMemberType[]
+    >;
+  }
+
+  /** Members of this department + all sub-departments, each tagged with its real department + isDirect. */
+  @Query(() => [DepartmentMemberType], { name: 'departmentSubtreeMembers' })
+  getDepartmentSubtreeMembers(
+    @Args('departmentId', { type: () => ID }) departmentId: string,
+    @CurrentUser() user: IJwtPayload,
+  ): Promise<DepartmentMemberType[]> {
+    return this.memberService.findSubtreeMembers(departmentId, user.sub) as unknown as Promise<
       DepartmentMemberType[]
     >;
   }
@@ -93,6 +108,21 @@ export class DepartmentResolver {
       actor.sub,
     )) as unknown as DepartmentMemberType;
     return created(member, { vi: 'Đã thêm thành viên', en: 'Member added' });
+  }
+
+  /** Add or TRANSFER multiple users into a department (one department per employee). */
+  @Mutation(() => DepartmentMemberListResponse)
+  async addDepartmentMembers(
+    @Args('departmentId', { type: () => ID }) departmentId: string,
+    @Args('userIds', { type: () => [ID] }) userIds: string[],
+    @CurrentUser() actor: IJwtPayload,
+  ): Promise<IApiResponse<DepartmentMemberType[]>> {
+    const members = (await this.memberService.addMembers(
+      departmentId,
+      userIds,
+      actor.sub,
+    )) as unknown as DepartmentMemberType[];
+    return ok(members, { vi: 'Đã thêm/chuyển thành viên', en: 'Members added' });
   }
 
   @Mutation(() => DepartmentMemberResponse)
@@ -140,5 +170,21 @@ export class DepartmentResolver {
       actor.sub,
     )) as unknown as DepartmentMemberType;
     return ok(member, { vi: 'Đã đặt Trưởng phòng', en: 'Manager assigned' });
+  }
+
+  @Mutation(() => MemberInfoResponse)
+  async updateMemberInfo(
+    @Args('businessId', { type: () => ID }) businessId: string,
+    @Args('userId', { type: () => ID }) userId: string,
+    @Args('input') input: UpdateMemberInfoDto,
+    @CurrentUser() actor: IJwtPayload,
+  ): Promise<IApiResponse<UserType>> {
+    const updatedUser = (await this.memberService.updateMemberInfo(
+      businessId,
+      userId,
+      input,
+      actor.sub,
+    )) as unknown as UserType;
+    return ok(updatedUser, { vi: 'Đã cập nhật thông tin thành viên', en: 'Member info updated' });
   }
 }

@@ -22,6 +22,14 @@ export class DepartmentMemberType {
   @Field(() => String, { nullable: true })
   businessRole?: string | null;
 
+  /** Name of the department this member actually belongs to. Populated by the subtree-members query. */
+  @Field(() => String, { nullable: true })
+  departmentName?: string | null;
+
+  /** True when this member belongs directly to the queried department (not inherited from a sub-department). */
+  @Field(() => Boolean, { nullable: true })
+  isDirect?: boolean;
+
   @Field(() => Date)
   joinedAt: Date;
 }

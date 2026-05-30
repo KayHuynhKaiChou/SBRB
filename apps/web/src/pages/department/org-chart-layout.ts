@@ -13,6 +13,7 @@ export interface IOrgChartNodeData extends Record<string, unknown> {
   name: string;
   isRoot: boolean;
   memberCount: number;
+  directReportCount: number;
   manager: IDepartmentNode['manager'];
   onClick: () => void;
 }
@@ -154,6 +155,7 @@ export function computeLayout(
         name: dept.name,
         isRoot: dept.isRoot,
         memberCount: dept.memberCount ?? 0,
+        directReportCount: dept.directReportCount ?? dept.memberCount ?? 0,
         manager: dept.manager,
         onClick: () => opts.onClick(dept.id),
       },

@@ -59,8 +59,10 @@
   "col_email": "Email",
   "col_phone": "SĐT",
   "col_joined": "Ngày vào",
+  "col_department": "Phòng ban",
   "col_role": "Chức vụ",
   "col_actions": "Thao tác",
+  "inherited_member_readonly": "Thành viên thuộc phòng con — quản lý tại phòng ban của họ",
   "cancel": "Huỷ",
   "submit": "Xác nhận",
   "close": "Đóng",
@@ -78,5 +80,10 @@
   "business_role_staff": "Nhân viên",
   "business_role_viewer": "Khách",
   "business_role_member": "Thành viên",
-  "business_role_unknown": "—"
+  "business_role_unknown": "—",
+  "member_detail": "Chi tiết thành viên",
+  "view_detail": "Xem chi tiết",
+  "member_info_updated": "Đã cập nhật thông tin thành viên",
+  "owner_only_change_manager": "Chỉ Chủ Doanh nghiệp mới được đổi Trưởng phòng",
+  "root_manager_admin_only": "Trưởng Ban giám đốc chỉ thay đổi qua chuyển quyền sở hữu bởi Quản trị viên"
 }

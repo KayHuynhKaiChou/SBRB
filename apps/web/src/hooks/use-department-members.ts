@@ -7,6 +7,7 @@ export type IDepartmentMember = IDepartmentMemberRef;
 
 const EMPTY: IDepartmentMember[] = [];
 
+/** Direct members of a single department (no roll-up). Used by add-member / change-manager flows. */
 export function useDepartmentMembers() {
   const [load, { data, loading, error, called, refetch }] = useLazyQuery<{
     departmentMembers: IDepartmentMember[];

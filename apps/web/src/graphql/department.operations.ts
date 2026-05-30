@@ -10,6 +10,7 @@ const DEPARTMENT_FIELDS = gql`
     positionX
     positionY
     memberCount
+    directReportCount
     createdAt
     updatedAt
   }
@@ -88,6 +89,17 @@ export const DEPARTMENT_MEMBERS_QUERY = gql`
   ${DEPARTMENT_MEMBER_FIELDS}
 `;
 
+export const DEPARTMENT_SUBTREE_MEMBERS_QUERY = gql`
+  query DepartmentSubtreeMembers($departmentId: ID!) {
+    departmentSubtreeMembers(departmentId: $departmentId) {
+      ...DepartmentMemberFields
+      departmentName
+      isDirect
+    }
+  }
+  ${DEPARTMENT_MEMBER_FIELDS}
+`;
+
 export const CREATE_DEPARTMENT_MUTATION = gql`
   mutation CreateDepartment($input: CreateDepartmentDto!) {
     createDepartment(input: $input) {
@@ -123,6 +135,17 @@ export const DELETE_DEPARTMENT_MUTATION = gql`
 export const ADD_DEPARTMENT_MEMBER_MUTATION = gql`
   mutation AddDepartmentMember($departmentId: ID!, $userId: ID!) {
     addDepartmentMember(departmentId: $departmentId, userId: $userId) {
+      code
+      message { vi en }
+      data { ...DepartmentMemberFields }
+    }
+  }
+  ${DEPARTMENT_MEMBER_FIELDS}
+`;
+
+export const ADD_DEPARTMENT_MEMBERS_MUTATION = gql`
+  mutation AddDepartmentMembers($departmentId: ID!, $userIds: [ID!]!) {
+    addDepartmentMembers(departmentId: $departmentId, userIds: $userIds) {
       code
       message { vi en }
       data { ...DepartmentMemberFields }
@@ -174,4 +197,14 @@ export const SET_DEPARTMENT_MANAGER_MUTATION = gql`
     }
   }
   ${DEPARTMENT_MEMBER_FIELDS}
+`;
+
+export const UPDATE_MEMBER_INFO_MUTATION = gql`
+  mutation UpdateMemberInfo($businessId: ID!, $userId: ID!, $input: UpdateMemberInfoDto!) {
+    updateMemberInfo(businessId: $businessId, userId: $userId, input: $input) {
+      code
+      message { vi en }
+      data { id fullName phone }
+    }
+  }
 `;

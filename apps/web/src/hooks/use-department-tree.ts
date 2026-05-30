@@ -27,6 +27,7 @@ export interface IDepartmentNode {
   positionX: number | null;
   positionY: number | null;
   memberCount: number;
+  directReportCount: number | null;
   manager: IDepartmentMemberRef | null;
   children?: IDepartmentNode[];
   createdAt: string;

@@ -17,6 +17,117 @@ input AddSeriesDto {
   name: String!
 }
 
+input AdminAuditFilterInput {
+  action: String
+  actorEmail: String
+  dateFrom: DateTime
+  dateTo: DateTime
+}
+
+type AdminAuditListResultType {
+  rows: [AdminAuditRowType!]!
+  total: Int!
+}
+
+type AdminAuditRowType {
+  action: String!
+  actorEmail: String!
+  actorId: ID!
+  businessId: ID
+  createdAt: DateTime!
+  id: ID!
+  meta: String!
+  targetId: ID
+  targetName: String
+  targetType: String
+}
+
+input AdminBusinessFilterInput {
+  search: String
+  sortBy: String
+  sortOrder: String
+  status: String
+}
+
+type AdminBusinessListResultType {
+  rows: [AdminBusinessRowType!]!
+  total: Int!
+}
+
+type AdminBusinessMemberType {
+  email: String!
+  fullName: String!
+  role: String!
+  userId: ID!
+}
+
+type AdminBusinessRowType {
+  createdAt: DateTime!
+  id: ID!
+  inactivatedAt: DateTime
+  inactiveReason: String
+  industry: String!
+  memberCount: Int!
+  name: String!
+  ownerEmail: String!
+  status: String!
+}
+
+type AdminMetricsType {
+  activeBusinesses: Int!
+  inactiveBusinesses: Int!
+  newBusinessesLast30d: Int!
+  newUsersLast30d: Int!
+  totalBusinesses: Int!
+  totalUsers: Int!
+}
+
+type AdminUserBusinessMembershipType {
+  businessId: ID!
+  businessName: String!
+  joinedAt: DateTime!
+  role: String!
+}
+
+type AdminUserDetailType {
+  avatarUrl: String
+  bio: String
+  createdAt: DateTime!
+  email: String!
+  emailVerified: Boolean!
+  fullName: String!
+  id: ID!
+  isDisabled: Boolean!
+  language: String!
+  lastLoginAt: DateTime
+  memberships: [AdminUserBusinessMembershipType!]!
+  phone: String
+  platformRole: String
+}
+
+input AdminUserFilterInput {
+  isDisabled: Boolean
+  search: String
+  sortBy: String
+  sortOrder: String
+}
+
+type AdminUserListResultType {
+  rows: [AdminUserRowType!]!
+  total: Int!
+}
+
+type AdminUserRowType {
+  businessCount: Int!
+  createdAt: DateTime!
+  email: String!
+  fullName: String!
+  id: ID!
+  isDisabled: Boolean!
+  lastLoginAt: DateTime
+  platformRole: String
+}
+
 type ApiError {
   details: String
   stack: String
@@ -51,11 +162,14 @@ type BusinessType {
   createdAt: DateTime!
   currency: String!
   id: ID!
+  inactivatedAt: DateTime
+  inactiveReason: String
   industry: String!
   logoUrl: String
   name: String!
   ownerId: String!
   snapGrid: Int!
+  status: String!
   updatedAt: DateTime!
   weekStart: Int!
 }
@@ -182,11 +296,20 @@ type DepartmentListResponse {
 type DepartmentMember {
   businessRole: String
   departmentId: ID!
+  departmentName: String
   id: ID!
+  isDirect: Boolean
   isManager: Boolean!
   joinedAt: DateTime!
   user: User!
   userId: ID!
+}
+
+type DepartmentMemberListResponse {
+  code: Int!
+  data: [DepartmentMember!]
+  error: ApiError
+  message: LocalizedMessage!
 }
 
 type DepartmentMemberResponse {
@@ -213,6 +336,7 @@ type DepartmentType {
   businessId: String!
   children: [DepartmentType!]
   createdAt: DateTime!
+  directReportCount: Int
   id: ID!
   isRoot: Boolean!
   manager: DepartmentMember
@@ -286,6 +410,13 @@ input LoginDto {
   password: String!
 }
 
+type MemberInfoResponse {
+  code: Int!
+  data: User
+  error: ApiError
+  message: LocalizedMessage!
+}
+
 type MemberType {
   assignedWidgetIds: [String!]!
   businessId: String!
@@ -300,9 +431,13 @@ type MemberType {
 type Mutation {
   acceptInvitation(token: String!): MemberType!
   addDepartmentMember(departmentId: ID!, userId: ID!): DepartmentMemberResponse!
+  addDepartmentMembers(departmentId: ID!, userIds: [ID!]!): DepartmentMemberListResponse!
   addDepartmentToDatasheet(input: AddDepartmentToDatasheetDto!): DataSheetType!
   addPeriod(input: AddPeriodDto!): DataSheetType!
   addSeries(input: AddSeriesDto!): DataSeriesType!
+
+  """Transfer business ownership to an existing member. Admin only."""
+  adminChangeBusinessOwner(businessId: ID!, newOwnerUserId: ID!): AdminBusinessRowType!
   assignWidgets(businessId: ID!, input: AssignWidgetsDto!, targetUserId: ID!): MemberType!
   cancelInvitation(businessId: ID!, invitationId: ID!): Boolean!
   changeMemberRole(businessId: ID!, input: UpdateMemberRoleDto!, targetUserId: ID!): MemberType!
@@ -323,14 +458,26 @@ type Mutation {
   deleteSession(id: ID!): Boolean!
   deleteTab(id: ID!): TabResponse!
   deleteWidget(id: ID!): WidgetResponse!
+
+  """Disable a user account. Admin cannot disable themselves. SRS §5.11."""
+  disableUser(id: ID!): AdminUserRowType!
+
+  """Re-enable a previously disabled user account. Admin only."""
+  enableUser(id: ID!): AdminUserRowType!
   forgotPassword(email: String!): Boolean!
   getAvatarUploadUrl(input: GetAvatarUploadUrlDto!): AvatarUploadUrl!
   getLogoUploadUrl(businessId: ID!, input: GetAvatarUploadUrlDto!): AvatarUploadUrl!
+
+  """Set a business to inactive. Requires reason string. Admin only."""
+  inactivateBusiness(id: ID!, reason: String!): AdminBusinessRowType!
   insertPeriod(input: InsertPeriodDto!): DataSheetType!
   insertSeries(input: InsertSeriesDto!): DataSheetType!
   inviteMember(businessId: ID!, input: InviteMemberDto!): InvitationType!
   login(input: LoginDto!): AuthResult!
   logout: Boolean!
+
+  """Restore an inactive business to active status. Admin only."""
+  reactivateBusiness(id: ID!): AdminBusinessRowType!
   refreshToken: AuthResult!
   register(input: RegisterDto!): AuthResult!
   removeDepartmentMember(departmentId: ID!, userId: ID!): DepartmentMemberResponse!
@@ -347,6 +494,7 @@ type Mutation {
   updateDepartment(id: ID!, input: UpdateDepartmentDto!): DepartmentResponse!
   updateDepartmentPositions(businessId: ID!, positions: [DepartmentPositionInput!]!): DepartmentListResponse!
   updateMe(input: UpdateProfileDto!): User!
+  updateMemberInfo(businessId: ID!, input: UpdateMemberInfoDto!, userId: ID!): MemberInfoResponse!
   updateSeriesValue(input: UpdateSeriesValueDto!): DataSeriesType!
   updateTab(id: ID!, input: UpdateTabInput!): TabResponse!
   updateWidget(id: ID!, input: UpdateWidgetInput!): WidgetResponse!
@@ -356,13 +504,36 @@ type Mutation {
   verifyEmail(token: String!): Boolean!
 }
 
+input PageInput {
+  limit: Int = 20
+  offset: Int = 0
+}
+
 type Query {
+  """Paginated audit log of all admin mutations. Admin only."""
+  adminAuditLog(filter: AdminAuditFilterInput, page: PageInput): AdminAuditListResultType!
+
+  """List all members of a business with user info. Admin only."""
+  adminBusinessMembers(businessId: ID!): [AdminBusinessMemberType!]!
+
+  """Paginated list of all businesses across the platform. Admin only."""
+  adminBusinesses(filter: AdminBusinessFilterInput, page: PageInput): AdminBusinessListResultType!
+
+  """Platform-wide aggregate stats for admin dashboard. Admin only."""
+  adminMetrics: AdminMetricsType!
+
+  """Full read-only profile of any user. Admin only."""
+  adminUserDetail(id: ID!): AdminUserDetailType!
+
+  """Paginated list of all users across the platform. Admin only."""
+  adminUsers(filter: AdminUserFilterInput, page: PageInput): AdminUserListResultType!
   availableSeries(widgetId: ID!): [AvailableSeriesType!]!
   business(id: ID!): BusinessType!
   dataSeries(datasheetId: ID!, search: String): [DataSeriesType!]!
   dataSheet(id: ID!): DataSheetType!
   dataSheets(businessId: ID!, filter: ListDataSheetsInput): [DataSheetType!]!
   departmentMembers(departmentId: ID!): [DepartmentMember!]!
+  departmentSubtreeMembers(departmentId: ID!): [DepartmentMember!]!
   departmentTree(businessId: ID!): [DepartmentType!]!
   departments(businessId: ID!): [DepartmentType!]!
   me: User!
@@ -465,6 +636,11 @@ input UpdateDepartmentDto {
   parentId: ID
 }
 
+input UpdateMemberInfoDto {
+  fullName: String
+  phone: String
+}
+
 input UpdateMemberRoleDto {
   role: String!
 }
@@ -518,6 +694,7 @@ type User {
   language: String!
   lastLoginAt: DateTime
   phone: String
+  platformRole: String
 }
 
 type Widget {

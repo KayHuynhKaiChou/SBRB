@@ -60,6 +60,9 @@ vi.mock('antd', () => ({
     { PRESENTED_IMAGE_SIMPLE: null },
   ),
   Tooltip: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Typography: {
+    Text: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
+  },
 }));
 
 // Mock @sbrb/ui IconButton

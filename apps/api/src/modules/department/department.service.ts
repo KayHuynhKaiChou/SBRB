@@ -106,6 +106,15 @@ export class DepartmentService {
       }
     }
 
+    // Direct-report count shown on the org-chart card = the modal's MEMBERS count:
+    // this department's own non-manager members + the managers of its direct child departments.
+    for (const d of depts) {
+      const node = nodeMap.get(d.id)!;
+      const directNonManager = (node.memberCount ?? 0) - (node.manager ? 1 : 0);
+      const childManagers = (node.children ?? []).filter((c) => c.manager).length;
+      node.directReportCount = directNonManager + childManagers;
+    }
+
     return roots;
   }
 

@@ -20,7 +20,7 @@
   "departments": "Departments",
   "select_department": "Select department",
   "all_departments": "All departments",
-  "page_title": "Org Chart",
+  "page_title": "Organization Chart",
   "title": "Org Chart",
   "add_department": "Add department",
   "add_department_title": "Add new department",
@@ -59,8 +59,10 @@
   "col_email": "Email",
   "col_phone": "Phone",
   "col_joined": "Joined",
+  "col_department": "Department",
   "col_role": "Role",
   "col_actions": "Actions",
+  "inherited_member_readonly": "Member of a sub-department — manage them in their own department",
   "cancel": "Cancel",
   "submit": "Confirm",
   "close": "Close",
@@ -78,5 +80,10 @@
   "business_role_staff": "Staff",
   "business_role_viewer": "Viewer",
   "business_role_member": "Member",
-  "business_role_unknown": "—"
+  "business_role_unknown": "—",
+  "member_detail": "Member detail",
+  "view_detail": "View detail",
+  "member_info_updated": "Member info updated",
+  "owner_only_change_manager": "Only the business owner can change a manager",
+  "root_manager_admin_only": "The board head can only change via a platform-admin ownership transfer"
 }

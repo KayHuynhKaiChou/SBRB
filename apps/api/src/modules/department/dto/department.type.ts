@@ -25,8 +25,13 @@ export class DepartmentType {
   @Field(() => Float, { nullable: true })
   positionY?: number | null;
 
+  /** Direct members assigned to this department only. */
   @Field(() => Int, { nullable: true })
   memberCount?: number;
+
+  /** Org-chart card count = this dept's own non-manager members + managers of its direct child depts. */
+  @Field(() => Int, { nullable: true })
+  directReportCount?: number;
 
   @Field(() => DepartmentMemberType, { nullable: true })
   manager?: DepartmentMemberType | null;
