@@ -1,5 +1,5 @@
 import type { ApolloClient } from '@apollo/client';
-import { API_ROUTES, APP_ROUTES, REFRESH_REJECTED_CODE } from '@sbrb/shared-constants';
+import { API_ROUTES, APP_ROUTES, EBusinessStatus, REFRESH_REJECTED_CODE } from '@sbrb/shared-constants';
 import type { IUserDto, IBusinessDto } from '@sbrb/shared-types';
 import { useAuthStore } from '../store/auth.store';
 import { ME_QUERY, MY_BUSINESSES_QUERY } from '../graphql/auth.operations';
@@ -7,8 +7,8 @@ import { apolloClient as defaultApolloClient } from '../apollo/apollo-client';
 
 export const REFRESH_REJECTED = REFRESH_REJECTED_CODE;
 
-/** Minimal business shape returned by MY_BUSINESSES_QUERY (id + name only). */
-type IBusinessRef = Pick<IBusinessDto, 'id' | 'name'>;
+/** Minimal business shape returned by MY_BUSINESSES_QUERY (id + name + status). */
+type IBusinessRef = Pick<IBusinessDto, 'id' | 'name'> & { status?: string };
 
 interface IAuthSessionDeps {
   apolloClient: ApolloClient<unknown>;
@@ -116,6 +116,7 @@ export function createAuthSession({ apolloClient }: IAuthSessionDeps): IAuthSess
       department: m?.department ?? null,
       isEmailVerified: !!m?.emailVerified,
       createdAt: m?.createdAt ?? '',
+      platformRole: m?.platformRole ?? null,
     };
 
     const businesses: IBusinessRef[] = bizRes.data?.myBusinesses ?? [];
@@ -130,7 +131,8 @@ export function createAuthSession({ apolloClient }: IAuthSessionDeps): IAuthSess
       const match = businesses.find((b) => b.id === currentId);
       if (match) return match;
     }
-    return businesses[0] ?? null;
+    // Prefer first active business; fall back to any business (guard handles inactive state)
+    return businesses.find((b) => b.status === EBusinessStatus.ACTIVE) ?? businesses[0] ?? null;
   }
 
   async function doBootstrap(): Promise<void> {

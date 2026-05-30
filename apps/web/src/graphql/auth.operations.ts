@@ -24,6 +24,7 @@ export const ME_QUERY = gql`
       }
       emailVerified
       createdAt
+      platformRole
     }
   }
 `;
@@ -69,6 +70,7 @@ export const MY_BUSINESSES_QUERY = gql`
     myBusinesses {
       id
       name
+      status
     }
   }
 `;

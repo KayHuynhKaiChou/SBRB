@@ -41,4 +41,9 @@ export const APP_ROUTES = {
   ONBOARDING: '/onboarding',
   DATA_SHEETS: '/data-sheets',
   DEPARTMENTS: '/departments',
+  PROFILE: '/profile',
+  ADMIN: '/admin',
+  ADMIN_BUSINESSES: '/admin/businesses',
+  ADMIN_USERS: '/admin/users',
+  ADMIN_AUDIT: '/admin/audit',
 } as const;

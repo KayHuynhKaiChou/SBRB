@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useMutation } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
 import { useAppMutation } from '@sbrb/shared-apollo-client';
-import { APP_ROUTES } from '@sbrb/shared-constants';
+import { APP_ROUTES, EPlatformRole } from '@sbrb/shared-constants';
 import type { ILoginInput, IRegisterInput } from '@sbrb/shared-types';
 import { useAuthStore } from '../store/auth.store';
 import { authSession } from '../lib/auth-session';
@@ -101,6 +101,12 @@ export function useAuth() {
 
     // BUG-3: clear cache from any previous user, refetch active queries with new auth
     await apolloClient.resetStore();
+
+    // Platform admins bypass business context — go directly to admin area (SRS §5.14)
+    if (u.platformRole === EPlatformRole.ADMIN) {
+      navigate(APP_ROUTES.ADMIN);
+      return;
+    }
 
     const currentBusinessId = useAuthStore.getState().currentBusinessId;
     const targetBiz = authSession.resolveCurrentBusiness(businesses, currentBusinessId);

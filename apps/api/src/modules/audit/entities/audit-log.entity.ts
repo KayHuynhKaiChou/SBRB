@@ -16,12 +16,13 @@ export class AuditLog {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'business_id', type: 'uuid' })
-  businessId: string;
+  /** Nullable since Phase 5 — platform-scope events have no business context. */
+  @Column({ name: 'business_id', type: 'uuid', nullable: true })
+  businessId: string | null;
 
-  @ManyToOne(() => Business, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Business, { nullable: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'business_id' })
-  business: Business;
+  business: Business | null;
 
   @Column({ name: 'actor_id', type: 'uuid' })
   actorId: string;

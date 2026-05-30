@@ -4,7 +4,8 @@ import { Repository } from 'typeorm';
 import { AuditLog } from './entities/audit-log.entity';
 
 export interface IAuditLogParams {
-  businessId: string;
+  /** Nullable for platform-scope events (user.disable, user.enable). SRS §5.18 + Phase 5 migration. */
+  businessId: string | null;
   actorId: string;
   action: string;
   targetType: string;

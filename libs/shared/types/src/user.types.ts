@@ -1,4 +1,5 @@
 /** User & auth types */
+import type { TPlatformRole } from '@sbrb/shared-constants';
 
 export interface IUserDto {
   id: string;
@@ -12,6 +13,7 @@ export interface IUserDto {
   department?: { id: string; name: string } | null;
   isEmailVerified: boolean;
   createdAt: string;
+  platformRole?: TPlatformRole;
 }
 
 export interface IJwtPayload {
@@ -21,6 +23,8 @@ export interface IJwtPayload {
   businessId?: string;
   /** Session record id — used to mark current session in mySessions list. Optional for back-compat. */
   sessionId?: string;
+  /** Platform-level role. EPlatformRole.ADMIN for platform admins; null for regular users. */
+  platformRole?: TPlatformRole;
   iat?: number;
   exp?: number;
 }

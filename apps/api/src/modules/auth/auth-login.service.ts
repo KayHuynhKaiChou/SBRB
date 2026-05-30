@@ -24,6 +24,7 @@ import { RefreshToken } from './entities/refresh-token.entity';
 import { User } from './entities/user.entity';
 import { IGoogleProfile } from './google.strategy';
 import { RedisRateLimitService } from './redis-rate-limit.service';
+import { RefreshTokenService } from './refresh-token.service';
 
 const ATTEMPT_KEY = (email: string) => `auth:attempts:${email}`;
 const ATTEMPT_TTL_SECONDS = LOGIN_LOCKOUT_MINUTES * 60;
@@ -37,6 +38,7 @@ export class AuthLoginService {
     private readonly jwtService: JwtService,
     private readonly redis: RedisRateLimitService,
     private readonly config: ConfigService,
+    private readonly refreshTokenService: RefreshTokenService,
   ) {}
 
   async login(
@@ -47,6 +49,7 @@ export class AuthLoginService {
   ): Promise<IAuthTokens> {
     const user = await this.userRepo.findOne({ where: { email: dto.email } });
     if (!user) throw new UnauthorizedException('Invalid credentials');
+    if (user.isDisabled) throw new UnauthorizedException('Account disabled');
     if (!user.emailVerified) throw new ForbiddenException('Email not verified');
 
     const attempts = await this.redis.get(ATTEMPT_KEY(dto.email));
@@ -83,6 +86,7 @@ export class AuthLoginService {
       });
       await this.userRepo.save(user);
     }
+    if (user.isDisabled) throw new UnauthorizedException('Account disabled');
     await this.userRepo.update(user.id, { lastLoginAt: new Date() });
     return this.issueTokens(user, ip, userAgent, res);
   }
@@ -136,17 +140,25 @@ export class AuthLoginService {
       throw new UnauthorizedException('Refresh token reuse detected');
     }
 
+    // SRS §11: disabled users must not be able to refresh tokens indefinitely.
+    // Phase 4 will additionally revoke all refresh tokens on disable, but this per-refresh
+    // check provides immediate enforcement even if revoke hasn't run yet.
+    if (matched.user.isDisabled) {
+      await this.revokeFamily(matched.userId);
+      res.clearCookie(REFRESH_COOKIE_NAME);
+      throw new UnauthorizedException('Account disabled');
+    }
+
     return this.issueTokens(matched.user, ip, userAgent, res);
   }
 
   /**
    * Defense response to reuse detection: hard-delete ALL tokens for the user
    * (active + already-revoked). Forces full re-login on every device.
-   * Hard-delete (vs soft-revoke) keeps GC simple and removes audit ambiguity —
-   * a compromised user shouldn't leave a stale family in DB.
+   * Delegates to RefreshTokenService so AdminUserService can share the same logic.
    */
   private async revokeFamily(userId: string): Promise<void> {
-    await this.tokenRepo.delete({ userId });
+    await this.refreshTokenService.revokeAllForUser(userId);
   }
 
   /**
@@ -167,7 +179,11 @@ export class AuthLoginService {
   }
 
   async issueTokens(user: User, ip: string, userAgent: string, res: Response): Promise<IAuthTokens> {
-    const payload: IJwtPayload = { sub: user.id, email: user.email };
+    const payload: IJwtPayload = {
+      sub: user.id,
+      email: user.email,
+      platformRole: user.platformRole ?? null,
+    };
     const accessToken = this.jwtService.sign(payload);
 
     const rawRefresh = uuidv4();

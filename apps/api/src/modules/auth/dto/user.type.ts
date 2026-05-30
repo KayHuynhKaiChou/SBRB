@@ -36,4 +36,7 @@ export class UserType {
 
   @Field(() => Date, { nullable: true })
   lastLoginAt?: Date | null;
+
+  @Field(() => String, { nullable: true })
+  platformRole?: string | null;
 }

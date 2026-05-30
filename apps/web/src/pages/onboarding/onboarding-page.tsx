@@ -12,7 +12,7 @@ import {
 import {
   BRAND_COLOR,
   CURRENCIES,
-  INDUSTRIES,
+  INDUSTRY_OPTIONS,
 } from '@sbrb/shared-constants';
 
 const { Option } = Select;
@@ -69,11 +69,7 @@ function CreateBusinessForm({ onBack }: { onBack: () => void }) {
           label="Ngành nghề"
           rules={[{ required: true, message: 'Vui lòng chọn ngành nghề' }]}
         >
-          <Select placeholder="Chọn ngành nghề">
-            {INDUSTRIES.map((ind) => (
-              <Option key={ind} value={ind}>{ind}</Option>
-            ))}
-          </Select>
+          <Select placeholder="Chọn ngành nghề" options={[...INDUSTRY_OPTIONS]} />
         </Form.Item>
 
         <Form.Item

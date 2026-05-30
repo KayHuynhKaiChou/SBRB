@@ -2,8 +2,10 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import type { TPlatformRole } from '@sbrb/shared-constants';
 
 @Entity('users')
 export class User {
@@ -42,4 +44,14 @@ export class User {
 
   @Column({ name: 'last_login_at', type: 'timestamptz', nullable: true })
   lastLoginAt: Date | null;
+
+  @Index()
+  @Column({ name: 'platform_role', type: 'varchar', length: 20, nullable: true })
+  platformRole: TPlatformRole;
+
+  @Column({ name: 'is_disabled', type: 'boolean', default: false })
+  isDisabled: boolean;
+
+  @Column({ name: 'disabled_at', type: 'timestamptz', nullable: true })
+  disabledAt: Date | null;
 }

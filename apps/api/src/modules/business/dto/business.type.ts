@@ -33,6 +33,15 @@ export class BusinessType {
   @Field(() => String)
   ownerId: string;
 
+  @Field(() => String)
+  status: string;
+
+  @Field(() => Date, { nullable: true })
+  inactivatedAt?: Date | null;
+
+  @Field(() => String, { nullable: true })
+  inactiveReason?: string | null;
+
   @Field(() => Date)
   createdAt: Date;
 

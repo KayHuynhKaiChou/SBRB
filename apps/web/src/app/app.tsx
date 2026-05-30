@@ -2,6 +2,8 @@ import React, { Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Spin } from 'antd';
 import { ProtectedRoute } from '../components/auth/protected-route';
+import { AdminRoute } from '../components/auth/admin-route';
+import { BusinessGuard } from '../components/auth/business-guard';
 
 // Lazy-loaded pages
 const LoginPage = React.lazy(() => import('../pages/auth/login-page'));
@@ -16,6 +18,18 @@ const DataSheetDetailPage = React.lazy(() => import('../pages/datasheet/datashee
 const DepartmentPage = React.lazy(() => import('../pages/department/department-page'));
 const ProfilePage = React.lazy(() => import('../pages/profile/profile-page'));
 const NotFoundPage = React.lazy(() => import('../pages/not-found-page'));
+const AdminBusinessesPage = React.lazy(
+  () => import('../pages/admin/admin-businesses-page'),
+);
+const AdminUsersPage = React.lazy(
+  () => import('../pages/admin/admin-users-page'),
+);
+const AdminDashboardPage = React.lazy(
+  () => import('../pages/admin/admin-dashboard-page'),
+);
+const AdminAuditLogPage = React.lazy(
+  () => import('../pages/admin/admin-audit-log-page'),
+);
 
 const AppLoading = () => (
   <div className="flex items-center justify-center h-screen">
@@ -34,7 +48,7 @@ export default function App() {
         <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/auth/reset-password/:token" element={<ResetPasswordPage />} />
 
-        {/* Protected routes */}
+        {/* Onboarding — protected but outside business gate */}
         <Route
           path="/onboarding"
           element={
@@ -43,56 +57,54 @@ export default function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          }
-        />
 
+        {/* Business-scoped routes — ProtectedRoute → BusinessGuard → page */}
         <Route
-          path="/data-sheets"
           element={
             <ProtectedRoute>
-              <DataSheetListPage />
+              <BusinessGuard />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/data-sheets" element={<DataSheetListPage />} />
+          <Route path="/data-sheets/:id" element={<DataSheetDetailPage />} />
+          <Route path="/departments" element={<DepartmentPage />} />
+          <Route path="/departments/:deptId" element={<DepartmentPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+        </Route>
 
+        {/* Admin routes — platform-admin only */}
         <Route
-          path="/data-sheets/:id"
+          path="/admin"
           element={
-            <ProtectedRoute>
-              <DataSheetDetailPage />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/departments"
-          element={
-            <ProtectedRoute>
-              <DepartmentPage />
-            </ProtectedRoute>
+            <AdminRoute>
+              <AdminDashboardPage />
+            </AdminRoute>
           }
         />
         <Route
-          path="/departments/:deptId"
+          path="/admin/businesses"
           element={
-            <ProtectedRoute>
-              <DepartmentPage />
-            </ProtectedRoute>
+            <AdminRoute>
+              <AdminBusinessesPage />
+            </AdminRoute>
           }
         />
-
         <Route
-          path="/profile"
+          path="/admin/users"
           element={
-            <ProtectedRoute>
-              <ProfilePage />
-            </ProtectedRoute>
+            <AdminRoute>
+              <AdminUsersPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/audit"
+          element={
+            <AdminRoute>
+              <AdminAuditLogPage />
+            </AdminRoute>
           }
         />
 

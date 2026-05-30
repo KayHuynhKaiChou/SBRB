@@ -1,3 +1,11 @@
+/** Platform-level role — currently only 'admin'. */
+export enum EPlatformRole {
+  ADMIN = 'admin',
+}
+
+/** String-literal union of EPlatformRole values. Nullable — null = regular user. */
+export type TPlatformRole = `${EPlatformRole}` | null;
+
 /** Business member roles. Single source of truth for BE auth checks + FE permission UI. */
 
 /** Enum of all 4 business roles. Order = hierarchy (owner highest, viewer lowest). */

@@ -7,6 +7,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { EBusinessStatus, type TBusinessStatus } from '@sbrb/shared-constants';
 import { User } from '../../auth/entities/user.entity';
 
 @Entity('businesses')
@@ -44,6 +45,18 @@ export class Business {
 
   @Column({ name: 'snap_grid', type: 'smallint', default: 20 })
   snapGrid: number;
+
+  @Column({ type: 'varchar', length: 20, default: EBusinessStatus.ACTIVE })
+  status: TBusinessStatus;
+
+  @Column({ name: 'inactivated_at', type: 'timestamptz', nullable: true })
+  inactivatedAt: Date | null;
+
+  @Column({ name: 'inactivated_by', type: 'uuid', nullable: true })
+  inactivatedBy: string | null;
+
+  @Column({ name: 'inactive_reason', type: 'text', nullable: true })
+  inactiveReason: string | null;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;

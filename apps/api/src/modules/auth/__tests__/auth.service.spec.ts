@@ -81,12 +81,15 @@ function buildService(configOverrides: Record<string, unknown> = {}) {
     config as never,
   );
 
+  const refreshTokenService = { revokeAllForUser: jest.fn().mockResolvedValue(undefined) };
+
   const loginService = new AuthLoginService(
     userRepo as never,
     tokenRepo as never,
     jwtService,
     redisRateLimit,
     config as never,
+    refreshTokenService as never,
   );
 
   const passwordService = new AuthPasswordService(
@@ -99,7 +102,7 @@ function buildService(configOverrides: Record<string, unknown> = {}) {
 
   const authService = new AuthService(registerService, loginService, passwordService);
 
-  return { authService, userRepo, verifyRepo, resetRepo, tokenRepo, redis, mail };
+  return { authService, userRepo, verifyRepo, resetRepo, tokenRepo, redis, mail, refreshTokenService };
 }
 
 describe('AuthService', () => {
@@ -277,7 +280,7 @@ describe('AuthService', () => {
     });
 
     it('REUSE detection: revoked token presented → DELETE entire family + 401', async () => {
-      const { authService, tokenRepo } = buildService();
+      const { authService, tokenRepo, refreshTokenService } = buildService();
       tokenRepo.findOne.mockResolvedValue({
         ...activeRow(),
         revokedAt: new Date(Date.now() - 5000),
@@ -286,20 +289,20 @@ describe('AuthService', () => {
       await expect(authService.refresh(rawToken, '127.0.0.1', 'jest', res)).rejects.toThrow(
         /reuse/i,
       );
-      // Family hard-delete by userId
-      expect(tokenRepo.delete).toHaveBeenCalledWith({ userId: 'uid' });
+      // Family hard-delete delegated to RefreshTokenService
+      expect(refreshTokenService.revokeAllForUser).toHaveBeenCalledWith('uid');
       expect((res as unknown as { clearCookie: jest.Mock }).clearCookie).toHaveBeenCalled();
     });
 
     it('CONCURRENT race: CAS affected=0 → DELETE family + 401 (race lost)', async () => {
-      const { authService, tokenRepo } = buildService();
+      const { authService, tokenRepo, refreshTokenService } = buildService();
       tokenRepo.findOne.mockResolvedValue(activeRow());
       tokenRepo._setCasAffected(0); // simulate concurrent rotation already happened
       const res = mockRes();
       await expect(authService.refresh(rawToken, '127.0.0.1', 'jest', res)).rejects.toThrow(
         /reuse/i,
       );
-      expect(tokenRepo.delete).toHaveBeenCalledWith({ userId: 'uid' });
+      expect(refreshTokenService.revokeAllForUser).toHaveBeenCalledWith('uid');
       expect((res as unknown as { clearCookie: jest.Mock }).clearCookie).toHaveBeenCalled();
     });
   });

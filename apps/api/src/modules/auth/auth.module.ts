@@ -19,6 +19,7 @@ import { User } from './entities/user.entity';
 import { GoogleStrategy } from './google.strategy';
 import { JwtStrategy } from './jwt.strategy';
 import { REDIS_CLIENT, RedisRateLimitService } from './redis-rate-limit.service';
+import { RefreshTokenService } from './refresh-token.service';
 
 /**
  * Auth module — SRS 4.1
@@ -54,6 +55,7 @@ import { REDIS_CLIENT, RedisRateLimitService } from './redis-rate-limit.service'
       }),
     },
     RedisRateLimitService,
+    RefreshTokenService,
     AuthRegisterService,
     AuthLoginService,
     AuthPasswordService,
@@ -63,6 +65,6 @@ import { REDIS_CLIENT, RedisRateLimitService } from './redis-rate-limit.service'
     GoogleStrategy,
   ],
   controllers: [AuthController],
-  exports: [AuthService, JwtModule],
+  exports: [AuthService, JwtModule, RefreshTokenService],
 })
 export class AuthModule {}

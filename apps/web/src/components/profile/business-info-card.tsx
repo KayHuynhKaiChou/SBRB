@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useMutation } from '@apollo/client';
 import { AvatarField, IconButton } from '@sbrb/ui';
 import { useAppMutation } from '@sbrb/shared-apollo-client';
-import { INDUSTRIES, CURRENCIES } from '@sbrb/shared-constants';
+import { INDUSTRY_OPTIONS, CURRENCIES } from '@sbrb/shared-constants';
 import type {
   IBusinessDetail,
   IBusinessFormValues,
@@ -104,7 +104,7 @@ export function BusinessInfoCard({ business, joinedAt }: IBusinessInfoCardProps)
           >
             <Select
               placeholder={t('ph_industry')}
-              options={INDUSTRIES.map((i) => ({ value: i, label: i }))}
+              options={[...INDUSTRY_OPTIONS]}
             />
           </Form.Item>
 
@@ -113,7 +113,7 @@ export function BusinessInfoCard({ business, joinedAt }: IBusinessInfoCardProps)
             name="currency"
             rules={[{ required: true }]}
           >
-            <Select placeholder={t('ph_currency')} options={CURRENCIES} />
+            <Select placeholder={t('ph_currency')} options={[...CURRENCIES]} />
           </Form.Item>
 
           <Form.Item

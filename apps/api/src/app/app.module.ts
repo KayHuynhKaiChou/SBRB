@@ -19,6 +19,7 @@ import { AuditModule } from '../modules/audit/audit.module';
 import { DepartmentModule } from '../modules/department/department.module';
 import { MailModule } from '../modules/mail/mail.module';
 import { UserModule } from '../modules/user/user.module';
+import { AdminModule } from '../modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -71,6 +72,7 @@ import { UserModule } from '../modules/user/user.module';
     DatasheetModule,
     NotificationModule,
     AuditModule,
+    AdminModule,
   ],
   providers: [
     // Order matters: GraphQL filter handles GraphQL contexts, re-throws for REST.
