@@ -45,7 +45,7 @@ import { useToggleDataSheetStatus } from '../../hooks/use-datasheet-mutations';
 import { ImportDialog } from './import-dialog';
 import { ReimportDialog } from './reimport-dialog';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 
 export default function DataSheetListPage() {
   const { currentBusinessId } = useAuthStore();
@@ -126,6 +126,8 @@ export default function DataSheetListPage() {
       title: t('datasheet:col_name'),
       dataIndex: 'name',
       key: 'name',
+      width: 220,
+      ellipsis: { showTitle: false },
       render: (name: string, record: IDataSheetDto) => {
         if (renamingId === record.id) {
           return (
@@ -153,7 +155,11 @@ export default function DataSheetListPage() {
             </Space>
           );
         }
-        return name;
+        return (
+          <Text ellipsis={{ tooltip: name }} className="block">
+            {name}
+          </Text>
+        );
       },
     },
     {
@@ -242,19 +248,21 @@ export default function DataSheetListPage() {
       render: (uploader: IDataSheetDto['uploader']) => {
         if (!uploader) return <span className="text-gray-400">—</span>;
         const initial = (uploader.fullName || uploader.email || '?').charAt(0).toUpperCase();
+        const uploaderName = uploader.fullName || uploader.email;
         return (
-          <Space size={8}>
+          <div className="flex items-center gap-2 min-w-0">
             <Avatar
               size="small"
               src={uploader.avatarUrl ?? undefined}
               style={{ backgroundColor: '#D72A44', verticalAlign: 'middle' }}
+              className="shrink-0"
             >
               {initial}
             </Avatar>
-            <Tooltip title={uploader.email}>
-              <span className="text-sm">{uploader.fullName || uploader.email}</span>
-            </Tooltip>
-          </Space>
+            <Text ellipsis={{ tooltip: uploaderName }} className="flex-1 min-w-0 text-sm">
+              {uploaderName}
+            </Text>
+          </div>
         );
       },
     },
@@ -277,6 +285,7 @@ export default function DataSheetListPage() {
       title: t('datasheet:col_actions'),
       key: 'actions',
       width: 120,
+      fixed: 'right' as const,
       render: (_: unknown, record: IDataSheetDto) => (
         <Space size={4}>
           <IconButton
@@ -349,6 +358,7 @@ export default function DataSheetListPage() {
         rowKey="id"
         loading={loading && dataSheets.length === 0}
         onChange={handleTableChange}
+        scroll={{ x: 1060 }}
         onRow={(record) => ({
           onClick: (e) => {
             // Don't navigate when clicking action buttons

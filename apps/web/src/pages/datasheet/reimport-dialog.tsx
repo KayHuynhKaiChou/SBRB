@@ -3,7 +3,7 @@ import { Modal, Upload, Alert, Progress, Space, Typography } from 'antd';
 import { useNotify } from '@sbrb/shared-apollo-client';
 import { CloseOutlined, CheckOutlined, InboxOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { IconButton } from '@sbrb/ui';
+import { IconButton, MODAL_BODY_SCROLL } from '@sbrb/ui';
 import type { UploadFile } from 'antd';
 import { apiClient } from '../../lib/api-client';
 import { API_ROUTES } from '@sbrb/shared-constants';
@@ -88,6 +88,8 @@ export function ReimportDialog({
         </div>
       }
       width={480}
+      centered
+      classNames={{ body: MODAL_BODY_SCROLL }}
     >
       <Space direction="vertical" className="!w-full" size="middle">
         <Text type="secondary">

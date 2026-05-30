@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { Table, Empty, Popconfirm, Tooltip, Button } from 'antd';
+import { Table, Empty, Popconfirm, Tooltip, Button, Typography } from 'antd';
 import { DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { EditableCell } from './editable-cell';
@@ -7,6 +7,8 @@ import { ColumnHeaderMenu } from './column-header-menu';
 import { RowHeaderMenu } from './row-header-menu';
 import { DeptNameCell } from './dept-name-cell';
 import type { IDataSeriesRow } from '../../hooks/use-datasheet-detail';
+
+const { Text } = Typography;
 
 interface IDeptGroup {
   name: string;
@@ -149,10 +151,12 @@ export function DepartmentDataTable({
       key: 'seriesName',
       fixed: 'left' as const,
       width: 200,
-      ellipsis: true,
+      ellipsis: { showTitle: false },
       render: (name: string, _record: unknown, rowIdx: number) => (
-        <div className="flex items-center justify-between gap-1">
-          <span className="font-medium text-gray-800">{name}</span>
+        <div className="flex items-center justify-between gap-1 min-w-0">
+          <Text ellipsis={{ tooltip: name }} className="flex-1 min-w-0 font-medium text-gray-800">
+            {name}
+          </Text>
           {onInsertSeries && onDeleteSeriesByName && (
             <RowHeaderMenu
               seriesName={name}

@@ -3,3 +3,4 @@ export { IconButton } from './components/icon-button';
 export { FormModal } from './components/form-modal';
 export { ProfileForm } from './components/profile-form';
 export { AvatarField } from './components/avatar-field';
+export { MODAL_BODY_SCROLL, MODAL_BODY_MAX_HEIGHT } from './modal.constants';

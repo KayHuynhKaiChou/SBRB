@@ -19,7 +19,7 @@ import {
 } from '@ant-design/icons';
 import { useQuery } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
-import { IconButton } from '@sbrb/ui';
+import { IconButton, MODAL_BODY_SCROLL } from '@sbrb/ui';
 import { UNIT_PRESETS } from '@sbrb/shared-constants';
 import type { IAddWidgetResult } from '@sbrb/shared-types';
 import {
@@ -236,6 +236,8 @@ export function AddWidgetModal({
         </div>
       }
       width={500}
+      centered
+      classNames={{ body: MODAL_BODY_SCROLL }}
     >
       {selectedSheetId && (
         <Steps current={step} items={stepItems} className="!mb-6" size="small" />

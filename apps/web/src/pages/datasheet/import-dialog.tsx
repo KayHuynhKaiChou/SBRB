@@ -8,7 +8,7 @@ import {
   InboxOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { IconButton } from '@sbrb/ui';
+import { IconButton, MODAL_BODY_SCROLL } from '@sbrb/ui';
 import type { UploadFile } from 'antd';
 import { useNotify } from '@sbrb/shared-apollo-client';
 import { API_ROUTES } from '@sbrb/shared-constants';
@@ -346,6 +346,8 @@ export function ImportDialog({ open, businessId, onClose, onSuccess }: IImportDi
       closable={false}
       footer={renderFooter()}
       width={800}
+      centered
+      classNames={{ body: MODAL_BODY_SCROLL }}
     >
       <Steps current={step} items={stepItems} className="!mb-6" />
       {error && (

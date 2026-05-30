@@ -3,6 +3,8 @@ import { Table, Alert, Empty, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 
+const { Text } = Typography;
+
 const MAX_PREVIEW_ROWS = 50;
 
 interface IPreviewRow {
@@ -86,13 +88,21 @@ export function ImportPreviewTable({
       key: 'name',
       fixed: 'left',
       width: 180,
-      ellipsis: true,
+      ellipsis: { showTitle: false },
       render: (name: string, record: IDisplayRow) => {
         if (record.__isGroupHeader || record.__isCategoryHeader) {
           return <strong>{name}</strong>;
         }
         const indent = record.__level ? record.__level * 16 : 0;
-        return <span style={{ paddingLeft: indent }}>{name}</span>;
+        return (
+          <Text
+            ellipsis={{ tooltip: name }}
+            className="block"
+            style={{ paddingLeft: indent }}
+          >
+            {name}
+          </Text>
+        );
       },
     };
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal, Form, Typography } from 'antd';
 import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
 import { IconButton } from './icon-button';
+import { MODAL_BODY_SCROLL } from '../modal.constants';
 
 const { Text } = Typography;
 
@@ -39,7 +40,7 @@ export function FormModal<T>({
   initialValues,
   modalStyle,
   destroyOnClose,
-  centered,
+  centered = true,
 }: IFormModalProps<T>) {
   const [internalForm] = Form.useForm();
   const form = externalForm ?? internalForm;
@@ -71,6 +72,7 @@ export function FormModal<T>({
       centered={centered}
       footer={null}
       styles={{ body: { padding: 0 } }}
+      classNames={{ body: MODAL_BODY_SCROLL }}
     >
       <div className="px-5 py-3.5 border-b border-gray-100 flex items-center gap-3">
         <Text strong className="!text-[15px] !flex-1">

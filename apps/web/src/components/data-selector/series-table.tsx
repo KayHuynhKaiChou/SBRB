@@ -1,10 +1,12 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { Table, Input, Checkbox, Button, Space, Empty } from 'antd';
+import { Table, Input, Checkbox, Button, Space, Empty, Typography } from 'antd';
 import { SearchOutlined, SortAscendingOutlined } from '@ant-design/icons';
 import { useQuery } from '@apollo/client';
 import { DATA_SERIES_QUERY } from '../../graphql/datasheet.operations';
 import type { IDataSeriesDto } from '../../hooks/use-datasheet';
 import { useDebounce } from '@uidotdev/usehooks';
+
+const { Text } = Typography;
 
 interface ISeriesTableProps {
   datasheetId: string | null;
@@ -107,6 +109,12 @@ export function SeriesTable({
       title: 'Tên chuỗi',
       dataIndex: 'seriesName',
       key: 'seriesName',
+      ellipsis: { showTitle: false },
+      render: (name: string) => (
+        <Text ellipsis={{ tooltip: name }} className="block">
+          {name}
+        </Text>
+      ),
     },
   ];
 
