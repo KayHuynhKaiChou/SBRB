@@ -24,7 +24,7 @@ export class AdminBusinessRowType {
   @Field(() => Date, { nullable: true })
   inactivatedAt?: Date | null;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   inactiveReason?: string | null;
 
   @Field(() => Date)

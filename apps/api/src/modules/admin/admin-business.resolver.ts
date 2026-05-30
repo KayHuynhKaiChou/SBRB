@@ -7,6 +7,7 @@ import type { IJwtPayload } from '@sbrb/shared-types';
 import { AdminBusinessService } from './admin-business.service';
 import { AdminBusinessListResultType } from './dto/admin-business-list-result.type';
 import { AdminBusinessRowType } from './dto/admin-business-row.type';
+import { AdminBusinessMemberType } from './dto/admin-business-member.type';
 import { AdminBusinessFilterInput } from './dto/admin-business-filter.input';
 import { PageInput } from '../../common/dto/page.input';
 
@@ -24,6 +25,15 @@ export class AdminBusinessResolver {
     @Args('page', { nullable: true }) page?: PageInput,
   ): Promise<AdminBusinessListResultType> {
     return this.adminBusinessService.listBusinesses(filter, page);
+  }
+
+  @Query(() => [AdminBusinessMemberType], {
+    description: 'List all members of a business with user info. Admin only.',
+  })
+  async adminBusinessMembers(
+    @Args('businessId', { type: () => ID }) businessId: string,
+  ): Promise<AdminBusinessMemberType[]> {
+    return this.adminBusinessService.listBusinessMembers(businessId);
   }
 
   @Mutation(() => AdminBusinessRowType, {
@@ -45,5 +55,16 @@ export class AdminBusinessResolver {
     @CurrentUser() user: IJwtPayload,
   ): Promise<AdminBusinessRowType> {
     return this.adminBusinessService.reactivateBusiness(id, user.sub);
+  }
+
+  @Mutation(() => AdminBusinessRowType, {
+    description: 'Transfer business ownership to an existing member. Admin only.',
+  })
+  async adminChangeBusinessOwner(
+    @Args('businessId', { type: () => ID }) businessId: string,
+    @Args('newOwnerUserId', { type: () => ID }) newOwnerUserId: string,
+    @CurrentUser() user: IJwtPayload,
+  ): Promise<AdminBusinessRowType> {
+    return this.adminBusinessService.changeOwner(businessId, newOwnerUserId, user.sub);
   }
 }

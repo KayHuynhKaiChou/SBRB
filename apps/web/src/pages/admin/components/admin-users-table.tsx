@@ -1,11 +1,13 @@
 import React from 'react';
-import { Table, Tag, Popconfirm } from 'antd';
+import { Table, Tag, Popconfirm, Typography } from 'antd';
+import type { TableColumnsType } from 'antd';
 import { LockOutlined, UnlockOutlined } from '@ant-design/icons';
-import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 import { EPlatformRole } from '@sbrb/shared-constants';
 import { IconButton } from '@sbrb/ui';
 import type { IAdminUserRow } from '../../../hooks/use-admin-users';
+
+const { Text } = Typography;
 
 interface IAdminUsersTableProps {
   rows: IAdminUserRow[];
@@ -42,18 +44,30 @@ export function AdminUsersTable({
 }: IAdminUsersTableProps) {
   const { t } = useTranslation('admin');
 
-  const columns: ColumnsType<IAdminUserRow> = [
+  const columns: TableColumnsType<IAdminUserRow> = [
     {
       title: t('col_email'),
       dataIndex: 'email',
       key: 'email',
-      ellipsis: true,
+      width: 200,
+      ellipsis: { showTitle: false },
+      render: (email: string) => (
+        <Text ellipsis={{ tooltip: email }} className="block">
+          {email}
+        </Text>
+      ),
     },
     {
       title: t('col_full_name'),
       dataIndex: 'fullName',
       key: 'fullName',
-      render: (name: string) => <span className="font-medium">{name}</span>,
+      width: 180,
+      ellipsis: { showTitle: false },
+      render: (name: string) => (
+        <Text ellipsis={{ tooltip: name }} className="font-semibold block">
+          {name}
+        </Text>
+      ),
     },
     {
       title: t('col_platform_role'),
@@ -103,8 +117,9 @@ export function AdminUsersTable({
     {
       title: t('col_actions'),
       key: 'actions',
-      width: 80,
+      width: 90,
       align: 'center',
+      fixed: 'right' as const,
       // Stop row click propagation so drawer doesn't open when clicking action buttons
       onCell: () => ({ onClick: (e: React.MouseEvent) => e.stopPropagation() }),
       render: (_, row) => {
@@ -157,6 +172,7 @@ export function AdminUsersTable({
       columns={columns}
       rowKey="id"
       loading={loading}
+      scroll={{ x: 940 }}
       onRow={(row) => ({ onClick: () => onRowClick(row), style: { cursor: 'pointer' } })}
       className="[&_.ant-table-thead>tr>th]:bg-gray-100 [&_.ant-table-tbody>tr:hover>td]:bg-blue-50"
       pagination={{

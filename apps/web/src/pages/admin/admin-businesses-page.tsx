@@ -7,6 +7,7 @@ import { AdminLayout } from '../../components/layout/admin-layout';
 import { useAdminBusinesses } from '../../hooks/use-admin-businesses';
 import type { IAdminBusinessRow } from '../../hooks/use-admin-businesses';
 import { AdminBusinessesTable } from './components/admin-businesses-table';
+import { ChangeOwnerModal } from './components/change-owner-modal';
 import { InactivateBusinessModal } from './components/inactivate-business-modal';
 
 const { Title } = Typography;
@@ -25,6 +26,10 @@ export default function AdminBusinessesPage() {
   // Inactivate modal state
   const [selectedBiz, setSelectedBiz] = useState<IAdminBusinessRow | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+
+  // Change owner modal state
+  const [changeOwnerBiz, setChangeOwnerBiz] = useState<IAdminBusinessRow | null>(null);
+  const [changeOwnerOpen, setChangeOwnerOpen] = useState(false);
 
   // Debounce search input — avoids query on every keystroke
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -45,8 +50,10 @@ export default function AdminBusinessesPage() {
     loading,
     inactivateBusiness,
     reactivateBusiness,
+    changeOwner,
     inactivateLoading,
     reactivateLoading,
+    changeOwnerLoading,
   } = useAdminBusinesses({
     filter: {
       search: debouncedSearch || undefined,
@@ -77,6 +84,25 @@ export default function AdminBusinessesPage() {
   const handleModalClose = () => {
     setModalOpen(false);
     setSelectedBiz(null);
+  };
+
+  const handleChangeOwnerClick = (row: IAdminBusinessRow) => {
+    setChangeOwnerBiz(row);
+    setChangeOwnerOpen(true);
+  };
+
+  const handleChangeOwnerSubmit = async (businessId: string, newOwnerUserId: string) => {
+    const result = await changeOwner(businessId, newOwnerUserId);
+    // Close modal only on success (no GraphQL errors)
+    if (result && !result.errors) {
+      setChangeOwnerOpen(false);
+      setChangeOwnerBiz(null);
+    }
+  };
+
+  const handleChangeOwnerClose = () => {
+    setChangeOwnerOpen(false);
+    setChangeOwnerBiz(null);
   };
 
   const handlePageChange = (newPage: number, newPageSize: number) => {
@@ -128,6 +154,7 @@ export default function AdminBusinessesPage() {
         onPageChange={handlePageChange}
         onInactivate={handleInactivateClick}
         onReactivate={(id) => void reactivateBusiness(id)}
+        onChangeOwner={handleChangeOwnerClick}
         reactivateLoading={reactivateLoading}
       />
 
@@ -139,6 +166,18 @@ export default function AdminBusinessesPage() {
           loading={inactivateLoading}
           onClose={handleModalClose}
           onSubmit={handleInactivateSubmit}
+        />
+      )}
+
+      {/* Change owner modal */}
+      {changeOwnerBiz && (
+        <ChangeOwnerModal
+          open={changeOwnerOpen}
+          businessId={changeOwnerBiz.id}
+          businessName={changeOwnerBiz.name}
+          changeOwnerLoading={changeOwnerLoading}
+          onClose={handleChangeOwnerClose}
+          onSubmit={handleChangeOwnerSubmit}
         />
       )}
     </AdminLayout>

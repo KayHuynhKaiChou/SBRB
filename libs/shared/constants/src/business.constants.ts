@@ -35,6 +35,7 @@ export enum EAdminUserSortBy {
 export enum EAdminAuditAction {
   BUSINESS_INACTIVATE = 'business.inactivate',
   BUSINESS_REACTIVATE = 'business.reactivate',
+  BUSINESS_CHANGE_OWNER = 'business.change_owner',
   USER_DISABLE = 'user.disable',
   USER_ENABLE = 'user.enable',
 }

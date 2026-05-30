@@ -12,7 +12,7 @@ export class AdminUserRowType {
   @Field()
   fullName: string;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   platformRole?: string | null;
 
   @Field()

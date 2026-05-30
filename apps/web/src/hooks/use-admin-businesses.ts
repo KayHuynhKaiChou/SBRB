@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@apollo/client';
 import { message } from 'antd';
 import {
   ADMIN_BUSINESSES_QUERY,
+  ADMIN_CHANGE_BUSINESS_OWNER_MUTATION,
   INACTIVATE_BUSINESS_MUTATION,
   REACTIVATE_BUSINESS_MUTATION,
 } from '../graphql/admin.operations';
@@ -78,11 +79,24 @@ export function useAdminBusinesses({ filter, page }: IUseAdminBusinessesOptions 
     },
   );
 
+  const [changeOwnerMutation, { loading: changeOwnerLoading }] = useMutation(
+    ADMIN_CHANGE_BUSINESS_OWNER_MUTATION,
+    {
+      refetchQueries: ['AdminBusinesses'],
+      onError: (err) => {
+        void message.error(err.message || 'Failed to change business owner');
+      },
+    },
+  );
+
   const inactivateBusiness = (id: string, reason: string) =>
     inactivateMutation({ variables: { id, reason } });
 
   const reactivateBusiness = (id: string) =>
     reactivateMutation({ variables: { id } });
+
+  const changeOwner = (businessId: string, newOwnerUserId: string) =>
+    changeOwnerMutation({ variables: { businessId, newOwnerUserId } });
 
   return {
     rows: data?.adminBusinesses?.rows ?? [],
@@ -92,7 +106,9 @@ export function useAdminBusinesses({ filter, page }: IUseAdminBusinessesOptions 
     refetch,
     inactivateBusiness,
     reactivateBusiness,
+    changeOwner,
     inactivateLoading,
     reactivateLoading,
+    changeOwnerLoading,
   };
 }

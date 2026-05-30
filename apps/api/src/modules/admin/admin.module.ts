@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Business } from '../business/entities/business.entity';
 import { BusinessMember } from '../business/entities/business-member.entity';
+import { Department } from '../department/entities/department.entity';
+import { DepartmentMember } from '../department/entities/department-member.entity';
 import { User } from '../auth/entities/user.entity';
 import { AuditLog } from '../audit/entities/audit-log.entity';
 import { AuditModule } from '../audit/audit.module';
@@ -20,7 +22,7 @@ import { AdminPlatformResolver } from './admin-platform.resolver';
  */
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Business, BusinessMember, User, AuditLog]),
+    TypeOrmModule.forFeature([Business, BusinessMember, Department, DepartmentMember, User, AuditLog]),
     AuditModule,
     AuthModule,
   ],

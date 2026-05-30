@@ -19,10 +19,10 @@ export class AdminAuditRowType {
   @Field(() => ID, { nullable: true })
   targetId: string | null;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   targetType: string | null;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   targetName: string | null;
 
   @Field(() => ID, { nullable: true })

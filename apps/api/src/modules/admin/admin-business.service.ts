@@ -1,19 +1,23 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { EBusinessStatus, EAdminBusinessSortBy, EAdminAuditAction } from '@sbrb/shared-constants';
+import { DataSource, Repository } from 'typeorm';
+import { EBusinessStatus, EBusinessRole, EAdminBusinessSortBy, EAdminAuditAction } from '@sbrb/shared-constants';
 import { Business } from '../business/entities/business.entity';
 import { BusinessMember } from '../business/entities/business-member.entity';
+import { Department } from '../department/entities/department.entity';
+import { DepartmentMember } from '../department/entities/department-member.entity';
 import { User } from '../auth/entities/user.entity';
 import { AuditService } from '../audit/audit.service';
 import { AdminBusinessFilterInput } from './dto/admin-business-filter.input';
 import { AdminBusinessRowType } from './dto/admin-business-row.type';
 import { AdminBusinessListResultType } from './dto/admin-business-list-result.type';
+import { AdminBusinessMemberType } from './dto/admin-business-member.type';
 import { PageInput } from '../../common/dto/page.input';
 
 /** Raw row shape returned from QueryBuilder.getRawMany() */
@@ -56,6 +60,7 @@ export class AdminBusinessService {
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
     private readonly auditService: AuditService,
+    private readonly dataSource: DataSource,
   ) {}
 
   async listBusinesses(
@@ -199,6 +204,154 @@ export class AdminBusinessService {
     }
 
     return this.fetchRow(id);
+  }
+
+  /**
+   * List all business_members for a business, joined with user info.
+   * Returns [{ userId, fullName, email, role }]. NotFound if business missing.
+   */
+  async listBusinessMembers(businessId: string): Promise<AdminBusinessMemberType[]> {
+    const business = await this.businessRepo.findOne({ where: { id: businessId } });
+    if (!business) throw new NotFoundException(`Business ${businessId} not found`);
+
+    const rows = await this.memberRepo
+      .createQueryBuilder('bm')
+      .innerJoin(User, 'u', 'u.id = bm.user_id')
+      .select([
+        'bm.user_id AS user_id',
+        'u.full_name AS full_name',
+        'u.email AS email',
+        'bm.role AS role',
+      ])
+      .where('bm.business_id = :businessId', { businessId })
+      .getRawMany<{ user_id: string; full_name: string; email: string; role: string }>();
+
+    return rows.map((r) => ({
+      userId: r.user_id,
+      fullName: r.full_name,
+      email: r.email,
+      role: r.role,
+    }));
+  }
+
+  /**
+   * Transfer business ownership to an existing member.
+   *
+   * Transaction steps:
+   *   a. Demote all current `owner` business_members → `manager`.
+   *   b. Promote newOwner business_member → `owner`.
+   *   c. Set business.ownerId = newOwnerUserId.
+   *   d. Reassign root department head: demote current manager, promote newOwner.
+   *
+   * Audit log is written after the transaction; failure there does NOT roll back.
+   */
+  async changeOwner(
+    businessId: string,
+    newOwnerUserId: string,
+    adminId: string,
+  ): Promise<AdminBusinessRowType> {
+    const business = await this.businessRepo.findOne({ where: { id: businessId } });
+    if (!business) throw new NotFoundException(`Business ${businessId} not found`);
+
+    // newOwner MUST already be a business_member
+    const newOwnerMember = await this.memberRepo.findOne({
+      where: { businessId, userId: newOwnerUserId },
+    });
+    if (!newOwnerMember) {
+      throw new BadRequestException({
+        message: {
+          vi: 'Người dùng phải là thành viên của doanh nghiệp trước khi trở thành chủ sở hữu',
+          en: 'User must be a member of the business before becoming the owner',
+        },
+      });
+    }
+
+    const fromUserId = business.ownerId;
+
+    await this.dataSource.transaction(async (manager) => {
+      const bmRepo = manager.getRepository(BusinessMember);
+      const bizRepo = manager.getRepository(Business);
+      const deptRepo = manager.getRepository(Department);
+      const deptMemberRepo = manager.getRepository(DepartmentMember);
+
+      // a. Demote all current owners → manager
+      await bmRepo
+        .createQueryBuilder()
+        .update(BusinessMember)
+        .set({ role: EBusinessRole.MANAGER })
+        .where('business_id = :businessId AND role = :role', {
+          businessId,
+          role: EBusinessRole.OWNER,
+        })
+        .execute();
+
+      // b. Promote newOwner → owner
+      await bmRepo
+        .createQueryBuilder()
+        .update(BusinessMember)
+        .set({ role: EBusinessRole.OWNER })
+        .where('business_id = :businessId AND user_id = :userId', {
+          businessId,
+          userId: newOwnerUserId,
+        })
+        .execute();
+
+      // c. Update business.ownerId
+      await bizRepo.update(businessId, { ownerId: newOwnerUserId });
+
+      // d. Reassign root department head
+      // Find root department: prefer isRoot=true, fallback to parentId IS NULL
+      const rootDept = await deptRepo
+        .createQueryBuilder('d')
+        .where('d.business_id = :businessId', { businessId })
+        .andWhere('d.is_root = true OR d.parent_id IS NULL')
+        .orderBy('d.is_root', 'DESC') // true first
+        .getOne();
+
+      if (rootDept) {
+        // Demote current manager(s) of root dept
+        await deptMemberRepo
+          .createQueryBuilder()
+          .update(DepartmentMember)
+          .set({ isManager: false })
+          .where('department_id = :deptId AND is_manager = true', { deptId: rootDept.id })
+          .execute();
+
+        // Promote newOwner as root dept manager
+        const existing = await deptMemberRepo.findOne({
+          where: { departmentId: rootDept.id, userId: newOwnerUserId },
+        });
+        if (existing) {
+          await deptMemberRepo.update(
+            { departmentId: rootDept.id, userId: newOwnerUserId },
+            { isManager: true },
+          );
+        } else {
+          await deptMemberRepo.save({
+            departmentId: rootDept.id,
+            userId: newOwnerUserId,
+            isManager: true,
+          });
+        }
+      }
+    });
+
+    // Audit log — failure must NOT roll back the ownership transfer
+    try {
+      await this.auditService.log({
+        businessId,
+        actorId: adminId,
+        action: EAdminAuditAction.BUSINESS_CHANGE_OWNER,
+        targetType: 'business',
+        targetId: businessId,
+        targetName: business.name,
+        metadata: { fromUserId, toUserId: newOwnerUserId },
+      });
+    } catch (err) {
+      this.logger.warn(`Audit log failed for changeOwner(${businessId}): ${(err as Error).message}`);
+    }
+
+    return this.fetchRow(businessId);
   }
 
   /** Re-fetch a single business row with joins for return value. */

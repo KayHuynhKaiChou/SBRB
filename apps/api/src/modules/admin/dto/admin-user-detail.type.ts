@@ -28,16 +28,16 @@ export class AdminUserDetailType {
   @Field()
   fullName: string;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   phone?: string | null;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   avatarUrl?: string | null;
 
   @Field()
   language: string;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   bio?: string | null;
 
   @Field()
@@ -46,7 +46,7 @@ export class AdminUserDetailType {
   @Field()
   isDisabled: boolean;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   platformRole?: string | null;
 
   @Field(() => Date)

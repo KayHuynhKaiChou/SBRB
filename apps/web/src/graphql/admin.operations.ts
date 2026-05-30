@@ -138,3 +138,25 @@ export const ADMIN_AUDIT_LOG_QUERY = gql`
     }
   }
 `;
+
+export const ADMIN_BUSINESS_MEMBERS_QUERY = gql`
+  query AdminBusinessMembers($businessId: ID!) {
+    adminBusinessMembers(businessId: $businessId) {
+      userId
+      fullName
+      email
+      role
+    }
+  }
+`;
+
+export const ADMIN_CHANGE_BUSINESS_OWNER_MUTATION = gql`
+  mutation AdminChangeBusinessOwner($businessId: ID!, $newOwnerUserId: ID!) {
+    adminChangeBusinessOwner(businessId: $businessId, newOwnerUserId: $newOwnerUserId) {
+      id
+      name
+      ownerEmail
+      status
+    }
+  }
+`;
