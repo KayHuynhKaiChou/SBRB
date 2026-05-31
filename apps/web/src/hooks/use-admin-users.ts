@@ -13,6 +13,7 @@ export interface IAdminUserRow {
   platformRole?: string | null;
   isDisabled: boolean;
   businessCount: number;
+  businessNames?: string | null;
   lastLoginAt?: string | null;
   createdAt: string;
 }

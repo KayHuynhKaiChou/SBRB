@@ -53,6 +53,7 @@ export const ADMIN_USERS_QUERY = gql`
         platformRole
         isDisabled
         businessCount
+        businessNames
         lastLoginAt
         createdAt
       }

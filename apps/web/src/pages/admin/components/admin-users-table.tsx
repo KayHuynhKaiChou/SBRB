@@ -3,7 +3,6 @@ import { Table, Tag, Popconfirm, Typography } from 'antd';
 import type { TableColumnsType } from 'antd';
 import { LockOutlined, UnlockOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { EPlatformRole } from '@sbrb/shared-constants';
 import { IconButton } from '@sbrb/ui';
 import type { IAdminUserRow } from '../../../hooks/use-admin-users';
 
@@ -70,18 +69,6 @@ export function AdminUsersTable({
       ),
     },
     {
-      title: t('col_platform_role'),
-      dataIndex: 'platformRole',
-      key: 'platformRole',
-      width: 130,
-      render: (role?: string | null) =>
-        role === EPlatformRole.ADMIN ? (
-          <Tag color="volcano">{t('platform_role_admin')}</Tag>
-        ) : (
-          <span>{t('platform_role_user')}</span>
-        ),
-    },
-    {
       title: t('col_status'),
       dataIndex: 'isDisabled',
       key: 'isDisabled',
@@ -95,10 +82,18 @@ export function AdminUsersTable({
     },
     {
       title: t('col_businesses'),
-      dataIndex: 'businessCount',
-      key: 'businessCount',
-      width: 110,
-      align: 'right',
+      dataIndex: 'businessNames',
+      key: 'businessNames',
+      width: 200,
+      ellipsis: { showTitle: false },
+      render: (names?: string | null) =>
+        names ? (
+          <Text ellipsis={{ tooltip: names }} className="block">
+            {names}
+          </Text>
+        ) : (
+          <span className="text-gray-400">—</span>
+        ),
     },
     {
       title: t('col_last_login'),

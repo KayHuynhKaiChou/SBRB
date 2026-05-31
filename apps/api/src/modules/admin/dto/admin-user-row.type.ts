@@ -21,6 +21,10 @@ export class AdminUserRowType {
   @Field(() => Int)
   businessCount: number;
 
+  /** Comma-separated names of businesses the user belongs to. Null when none. */
+  @Field(() => String, { nullable: true })
+  businessNames?: string | null;
+
   @Field(() => Date, { nullable: true })
   lastLoginAt?: Date | null;
 

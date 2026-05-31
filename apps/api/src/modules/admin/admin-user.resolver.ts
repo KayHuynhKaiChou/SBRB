@@ -21,10 +21,11 @@ export class AdminUserResolver {
     description: 'Paginated list of all users across the platform. Admin only.',
   })
   async adminUsers(
+    @CurrentUser() admin: IJwtPayload,
     @Args('filter', { nullable: true }) filter?: AdminUserFilterInput,
     @Args('page', { nullable: true }) page?: PageInput,
   ): Promise<AdminUserListResultType> {
-    return this.adminUserService.listUsers(filter, page);
+    return this.adminUserService.listUsers(filter, page, admin.sub);
   }
 
   @Query(() => AdminUserDetailType, {

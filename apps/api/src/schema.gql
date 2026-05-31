@@ -119,6 +119,7 @@ type AdminUserListResultType {
 
 type AdminUserRowType {
   businessCount: Int!
+  businessNames: String
   createdAt: DateTime!
   email: String!
   fullName: String!

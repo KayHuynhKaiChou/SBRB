@@ -27,6 +27,7 @@ interface IRawUserRow {
   u_last_login_at: Date | null;
   u_created_at: Date;
   business_count: string;
+  business_names: string | null;
 }
 
 function toAdminUserRow(raw: IRawUserRow): AdminUserRowType {
@@ -37,6 +38,7 @@ function toAdminUserRow(raw: IRawUserRow): AdminUserRowType {
     platformRole: raw.u_platform_role ?? null,
     isDisabled: raw.u_is_disabled,
     businessCount: parseInt(raw.business_count ?? '0', 10),
+    businessNames: raw.business_names ?? null,
     lastLoginAt: raw.u_last_login_at ?? null,
     createdAt: raw.u_created_at,
   };
@@ -61,6 +63,8 @@ export class AdminUserService {
   async listUsers(
     filter?: AdminUserFilterInput,
     page?: PageInput,
+    /** Current admin's user id — excluded from the list (admins don't manage themselves here). */
+    excludeUserId?: string,
   ): Promise<AdminUserListResultType> {
     const limit = Math.min(page?.limit ?? 20, 100);
     const offset = page?.offset ?? 0;
@@ -77,6 +81,10 @@ export class AdminUserService {
       if (filter?.isDisabled !== undefined) {
         qb.andWhere('u.is_disabled = :isDisabled', { isDisabled: filter.isDisabled });
       }
+      // Hide the requesting admin from their own user-management list.
+      if (excludeUserId) {
+        qb.andWhere('u.id != :excludeUserId', { excludeUserId });
+      }
       return qb;
     };
 
@@ -92,8 +100,10 @@ export class AdminUserService {
         (subQb) =>
           subQb
             .from(BusinessMember, 'bm')
+            .innerJoin(Business, 'b', 'b.id = bm.business_id')
             .select('bm.user_id', 'user_id')
             .addSelect('COUNT(*)', 'cnt')
+            .addSelect("STRING_AGG(b.name, ', ' ORDER BY b.name)", 'names')
             .groupBy('bm.user_id'),
         'bc',
         'bc.user_id = u.id',
@@ -107,6 +117,7 @@ export class AdminUserService {
         'u.last_login_at AS u_last_login_at',
         'u.created_at AS u_created_at',
         'COALESCE(bc.cnt, 0) AS business_count',
+        'bc.names AS business_names',
       ]);
 
     addFilters(dataQb);
@@ -246,8 +257,10 @@ export class AdminUserService {
         (subQb) =>
           subQb
             .from(BusinessMember, 'bm')
+            .innerJoin(Business, 'b', 'b.id = bm.business_id')
             .select('bm.user_id', 'user_id')
             .addSelect('COUNT(*)', 'cnt')
+            .addSelect("STRING_AGG(b.name, ', ' ORDER BY b.name)", 'names')
             .groupBy('bm.user_id'),
         'bc',
         'bc.user_id = u.id',
@@ -261,6 +274,7 @@ export class AdminUserService {
         'u.last_login_at AS u_last_login_at',
         'u.created_at AS u_created_at',
         'COALESCE(bc.cnt, 0) AS business_count',
+        'bc.names AS business_names',
       ])
       .where('u.id = :id', { id });
 
