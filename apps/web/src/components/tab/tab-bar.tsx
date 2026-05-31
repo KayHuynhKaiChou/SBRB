@@ -26,7 +26,7 @@ export function TabBar({
   const sorted = sortTabsByPinnedThenOrder(tabs);
 
   return (
-    <div className="flex flex-row items-center gap-1 overflow-x-auto [scrollbar-width:none]">
+    <div className="flex flex-row items-center gap-1 overflow-x-auto overflow-y-visible [scrollbar-width:none] py-1 pr-2">
       {sorted.map((tab) => {
         const isActive = tab.id === activeTabId;
         return (
@@ -47,11 +47,12 @@ export function TabBar({
         );
       })}
 
-      {/* Add tab */}
+      {/* Add tab — sized to match the tab pill height */}
       <IconButton
         icon={<PlusOutlined />}
         tooltip={t('add_tab_tooltip')}
         size="small"
+        style={{ width: 26, height: 26, minWidth: 26, fontSize: 13 }}
         onClick={onAddTab}
       />
     </div>

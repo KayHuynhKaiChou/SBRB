@@ -17,7 +17,6 @@ import { IconButton } from '@sbrb/ui';
 import { Sidebar } from '../../components/layout/sidebar';
 import { AddDepartmentModal, type IParentOption } from '../../components/department/add-department-modal';
 import { AddMemberModal } from '../../components/department/add-member-modal';
-import { ChangeManagerModal } from '../../components/department/change-manager-modal';
 import { DepartmentModal } from '../../components/department/department-modal';
 import { DepartmentNodeCard } from '../../components/department/department-node-card';
 import {
@@ -61,7 +60,6 @@ export default function DepartmentPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [addParentId, setAddParentId] = useState<string | null>(null);
   const [addMemberFor, setAddMemberFor] = useState<string | null>(null);
-  const [changeManagerFor, setChangeManagerFor] = useState<string | null>(null);
 
   // Pass empty string when missing — useDepartmentTree skips when falsy.
   const { tree, loading } = useDepartmentTree(currentBusinessId ?? '');
@@ -111,9 +109,7 @@ export default function DepartmentPage() {
   }, []);
 
   const handleCloseAddMember = useCallback(() => setAddMemberFor(null), []);
-  const handleCloseChangeManager = useCallback(() => setChangeManagerFor(null), []);
   const handleRequestAddMember = useCallback((id: string) => setAddMemberFor(id), []);
-  const handleRequestChangeManager = useCallback((id: string) => setChangeManagerFor(id), []);
 
   const { data: roleData } = useQuery<{ myBusinessRole: string | null }>(
     MY_BUSINESS_ROLE_QUERY,
@@ -231,7 +227,6 @@ export default function DepartmentPage() {
           onClose={handleCloseDept}
           onRequestAddMember={handleRequestAddMember}
           onRequestAddSubDept={handleAddSubDept}
-          onRequestChangeManager={handleRequestChangeManager}
         />
 
         <AddDepartmentModal
@@ -247,12 +242,6 @@ export default function DepartmentPage() {
           businessId={currentBusinessId}
           departmentId={addMemberFor}
           onClose={handleCloseAddMember}
-        />
-
-        <ChangeManagerModal
-          open={!!changeManagerFor}
-          departmentId={changeManagerFor}
-          onClose={handleCloseChangeManager}
         />
       </Layout>
     </Layout>

@@ -24,14 +24,12 @@ export function PeriodCheckboxList({ allPeriods, value, onChange }: IPeriodCheck
       <Text type="secondary" className="!text-[11px] !block !mb-2">
         {t('period_filter')}
       </Text>
-      <div className="max-h-[150px] overflow-y-auto custom-scrollbar">
-        <Checkbox.Group
-          className="flex flex-col gap-1"
-          options={allPeriods}
-          value={value}
-          onChange={(checkedValues) => onChange(checkedValues as string[])}
-        />
-      </div>
+      <Checkbox.Group
+        className="flex flex-col gap-1"
+        options={allPeriods}
+        value={value}
+        onChange={(checkedValues) => onChange(checkedValues as string[])}
+      />
     </div>
   );
 }

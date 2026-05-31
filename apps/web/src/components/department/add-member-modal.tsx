@@ -1,10 +1,10 @@
-import { Avatar, Input, Modal, Table, Tag, Typography } from 'antd';
+import { Avatar, Input, Modal, Table, Typography } from 'antd';
 
 const { Text } = Typography;
 import { CheckOutlined, CloseOutlined, SearchOutlined } from '@ant-design/icons';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { IconButton, MODAL_BODY_SCROLL } from '@sbrb/ui';
+import { IconButton } from '@sbrb/ui';
 import { useBusinessMembers, type IBusinessMember } from '../../hooks/use-business-members';
 import { useDepartmentMembers } from '../../hooks/use-department-members';
 import { useAddDepartmentMembers } from '../../hooks/use-department-mutations';
@@ -98,12 +98,18 @@ export function AddMemberModal({ open, businessId, departmentId, onClose }: IPro
       ),
     },
     {
-      title: t('department:col_role'),
-      key: 'role',
-      width: 110,
-      render: (_: unknown, m: IBusinessMember) => (
-        <Tag>{t(`department:business_role_${m.role}`, { defaultValue: m.role })}</Tag>
-      ),
+      title: t('department:col_phone'),
+      key: 'phone',
+      width: 150,
+      ellipsis: { showTitle: false },
+      render: (_: unknown, m: IBusinessMember) =>
+        m.user.phone ? (
+          <Text ellipsis={{ tooltip: m.user.phone }} className="block">
+            {m.user.phone}
+          </Text>
+        ) : (
+          <span className="text-gray-400">—</span>
+        ),
     },
   ];
 
@@ -111,13 +117,12 @@ export function AddMemberModal({ open, businessId, departmentId, onClose }: IPro
     <Modal
       open={open}
       onCancel={onClose}
-      width={560}
+      width={680}
       centered
       closable={false}
       footer={null}
       destroyOnHidden
       styles={{ body: { padding: 0 } }}
-      classNames={{ body: MODAL_BODY_SCROLL }}
     >
       <div className="px-5 py-3.5 border-b border-gray-100 flex items-center gap-3">
         <Text strong className="!text-[15px] !flex-1">
@@ -162,6 +167,7 @@ export function AddMemberModal({ open, businessId, departmentId, onClose }: IPro
             selectedRowKeys: selectedKeys,
             onChange: (keys) => setSelectedKeys(keys as string[]),
           }}
+          scroll={{ y: 360 }}
           pagination={{ pageSize: 8, size: 'small' }}
           locale={{
             emptyText: (

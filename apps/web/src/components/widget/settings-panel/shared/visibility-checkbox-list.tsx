@@ -30,24 +30,20 @@ export function VisibilityCheckboxList({ items, selectedItems, onChange, title }
     }
   };
 
-  const handleSelectAll = () => onChange([]);
-  const handleDeselectAll = () => onChange([]);
-
   return (
     <div className="mt-4 pt-4 border-t border-gray-100">
       <div className="flex items-center justify-between mb-2">
         <Text type="secondary" className="!text-[11px] font-semibold">
           {title || t('global_criteria_filter')}
         </Text>
-        <div className="flex gap-2">
-          <span className="text-[11px] text-blue-500 cursor-pointer hover:underline" onClick={handleSelectAll}>
+        {!allSelected && (
+          <span
+            className="text-[11px] text-blue-500 cursor-pointer hover:underline"
+            onClick={() => onChange([])}
+          >
             {t('series_select_all')}
           </span>
-          <span className="text-[11px] text-gray-300">/</span>
-          <span className="text-[11px] text-blue-500 cursor-pointer hover:underline" onClick={handleDeselectAll}>
-            {t('series_deselect_all')}
-          </span>
-        </div>
+        )}
       </div>
       
       <div className="flex flex-col gap-1.5 max-h-[160px] overflow-y-auto">

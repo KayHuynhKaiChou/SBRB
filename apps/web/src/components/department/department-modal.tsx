@@ -9,7 +9,6 @@ import {
   DeleteOutlined,
   EditOutlined,
   EyeOutlined,
-  SwapOutlined,
   UserAddOutlined,
   UserDeleteOutlined,
 } from '@ant-design/icons';
@@ -39,7 +38,6 @@ interface IProps {
   onClose: () => void;
   onRequestAddMember: (deptId: string) => void;
   onRequestAddSubDept: (parentId: string) => void;
-  onRequestChangeManager: (deptId: string) => void;
 }
 
 export function DepartmentModal({
@@ -50,7 +48,6 @@ export function DepartmentModal({
   onClose,
   onRequestAddMember,
   onRequestAddSubDept,
-  onRequestChangeManager,
 }: IProps) {
   const { t, i18n } = useTranslation(['department', 'common']);
   const { fetch, members, loading } = useDepartmentSubtreeMembers();
@@ -360,24 +357,14 @@ export function DepartmentModal({
           {t('department:manager_label')}
         </div>
         {manager ? (
-          <div className="flex items-center justify-between p-3 rounded" style={{ background: '#FCEEF0' }}>
-            <div className="flex items-center gap-3">
-              <Avatar src={manager.user.avatarUrl ?? undefined}>
-                {manager.user.fullName?.[0] ?? '?'}
-              </Avatar>
-              <div>
-                <div className="font-medium">{manager.user.fullName}</div>
-                <div className="text-xs text-gray-500">{manager.user.email}</div>
-              </div>
+          <div className="flex items-center gap-3 p-3 rounded" style={{ background: '#FCEEF0' }}>
+            <Avatar src={manager.user.avatarUrl ?? undefined}>
+              {manager.user.fullName?.[0] ?? '?'}
+            </Avatar>
+            <div>
+              <div className="font-medium">{manager.user.fullName}</div>
+              <div className="text-xs text-gray-500">{manager.user.email}</div>
             </div>
-            {isOwner && !isRootDept && (
-              <IconButton
-                icon={<SwapOutlined />}
-                tooltip={t('department:change_manager')}
-                variant="ghost"
-                onClick={() => onRequestChangeManager(department.id)}
-              />
-            )}
           </div>
         ) : (
           <div className="p-3 rounded bg-gray-50 text-sm text-gray-500 italic">

@@ -33,7 +33,8 @@ export function SimpleLayout({
   getEffectiveColor
 }: ISimpleLayoutProps) {
   const { t } = useTranslation('widget');
-  const allSelected = selectedSeriesIds.length === 0;
+  const allSelected =
+    selectedSeriesIds.length === 0 || selectedSeriesIds.length === series.length;
   const isSeriesSelected = (id: string) => allSelected || selectedSeriesIds.includes(id);
 
   const handleToggle = (id: string, checked: boolean) => {
@@ -48,24 +49,20 @@ export function SimpleLayout({
     }
   };
 
-  const handleSelectAll = () => onChange([]);
-  const handleDeselectAll = () => onChange([]);
-
   return (
     <>
       <div className="flex items-center justify-between mb-2">
         <Text type="secondary" className="!text-[11px] font-semibold">
           {t('series_section')}
         </Text>
-        <div className="flex gap-2">
-          <span className="text-[11px] text-blue-500 cursor-pointer hover:underline" onClick={handleSelectAll}>
+        {!allSelected && (
+          <span
+            className="text-[11px] text-blue-500 cursor-pointer hover:underline"
+            onClick={() => onChange([])}
+          >
             {t('series_select_all')}
           </span>
-          <span className="text-[11px] text-gray-300">/</span>
-          <span className="text-[11px] text-blue-500 cursor-pointer hover:underline" onClick={handleDeselectAll}>
-            {t('series_deselect_all')}
-          </span>
-        </div>
+        )}
       </div>
 
       <div className="flex flex-col gap-2">

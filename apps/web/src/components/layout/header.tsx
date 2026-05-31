@@ -54,7 +54,7 @@ export function Header({
       <div className="w-px h-6 bg-[#e8e8e8] shrink-0" />
 
       {/* Tab pills row */}
-      <div className="flex-1 flex items-center gap-1 overflow-x-auto [scrollbar-width:none] min-w-0">
+      <div className="flex-1 flex items-center gap-1 overflow-x-auto [scrollbar-width:none] min-w-0 py-1 pr-2">
         {sorted.map((tab) => {
           const isActive = tab.id === activeTabId;
           return (
@@ -75,11 +75,12 @@ export function Header({
           );
         })}
 
-        {/* Add tab button */}
+        {/* Add tab button — sized to match the tab pill height */}
         <IconButton
           icon={<PlusOutlined />}
           tooltip={t('dashboard:add_tab_tooltip')}
           size="small"
+          style={{ width: 26, height: 26, minWidth: 26, fontSize: 13 }}
           onClick={onAddTab}
         />
       </div>

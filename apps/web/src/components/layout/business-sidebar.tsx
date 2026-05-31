@@ -32,6 +32,17 @@ interface INavIconProps {
   disabled?: boolean;
 }
 
+interface INavItem {
+  key: string;
+  icon: React.ReactNode;
+  label: string;
+  /** Route prefix for active-state matching + default navigation target. Omit for disabled items. */
+  path?: string;
+  /** Navigation target when it differs from `path` (e.g. dashboard → onboarding fallback). */
+  to?: string;
+  disabled?: boolean;
+}
+
 function NavIcon({ icon, label, active, onClick, disabled }: INavIconProps) {
   const [hoverRef, hovered] = useHover<HTMLDivElement>();
 
@@ -63,10 +74,21 @@ export function BusinessSidebar() {
   const location = useLocation();
   const { user, currentBusinessId } = useAuthStore();
 
-  const isDashboard = location.pathname.startsWith('/dashboard');
-  const isDataSheets = location.pathname === '/data-sheets';
-  const isDepartments = location.pathname === '/departments';
-  const isProfile = location.pathname.startsWith('/profile');
+  // Data-driven nav config — thêm menu mới chỉ cần thêm 1 entry vào mảng này.
+  const navItems: INavItem[] = [
+    {
+      key: 'dashboard',
+      icon: <AppstoreOutlined />,
+      label: 'Dashboard',
+      path: '/dashboard',
+      to: currentBusinessId ? '/dashboard' : '/onboarding',
+    },
+    { key: 'data-sheets', icon: <TableOutlined />, label: 'Dữ liệu', path: '/data-sheets' },
+    { key: 'departments', icon: <ApartmentOutlined />, label: 'Phòng ban', path: '/departments' },
+    { key: 'benchmark', icon: <BarChartOutlined />, label: 'Benchmark', disabled: true },
+    { key: 'talk-room', icon: <MessageOutlined />, label: 'Talk Room', disabled: true },
+    { key: 'data-box', icon: <DatabaseOutlined />, label: 'Data Box', disabled: true },
+  ];
 
   return (
     <Sider
@@ -86,45 +108,16 @@ export function BusinessSidebar() {
 
       {/* Top nav icons */}
       <div className="flex-1 pt-2 flex flex-col gap-0">
-        <NavIcon
-          icon={<AppstoreOutlined />}
-          label="Dashboard"
-          active={isDashboard}
-          onClick={() => navigate(currentBusinessId ? '/dashboard' : '/onboarding')}
-        />
-        <NavIcon
-          icon={<TableOutlined />}
-          label="Dữ liệu"
-          active={isDataSheets}
-          onClick={() => navigate('/data-sheets')}
-        />
-        <NavIcon
-          icon={<ApartmentOutlined />}
-          label="Phòng ban"
-          active={isDepartments}
-          onClick={() => navigate('/departments')}
-        />
-        <NavIcon
-          icon={<BarChartOutlined />}
-          label="Benchmark"
-          active={false}
-          disabled
-          onClick={() => undefined}
-        />
-        <NavIcon
-          icon={<MessageOutlined />}
-          label="Talk Room"
-          active={false}
-          disabled
-          onClick={() => undefined}
-        />
-        <NavIcon
-          icon={<DatabaseOutlined />}
-          label="Data Box"
-          active={false}
-          disabled
-          onClick={() => undefined}
-        />
+        {navItems.map((item) => (
+          <NavIcon
+            key={item.key}
+            icon={item.icon}
+            label={item.label}
+            disabled={item.disabled}
+            active={!item.disabled && !!item.path && location.pathname.startsWith(item.path)}
+            onClick={() => item.path && navigate(item.to ?? item.path)}
+          />
+        ))}
       </div>
 
       {/* Bottom icons: settings, bell, avatar */}
@@ -144,7 +137,9 @@ export function BusinessSidebar() {
           <div
             onClick={() => navigate('/profile')}
             style={{
-              borderLeft: isProfile ? '3px solid var(--sbrb-accent-coral)' : '3px solid transparent',
+              borderLeft: location.pathname.startsWith('/profile')
+                ? '3px solid var(--sbrb-accent-coral)'
+                : '3px solid transparent',
             }}
             className="w-11 h-11 rounded-[10px] flex items-center justify-center cursor-pointer mx-2 my-0.5 transition-[border-color] duration-150"
           >

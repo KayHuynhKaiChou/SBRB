@@ -64,3 +64,26 @@ body {
 .ant-notification-notice {
   border-radius: 8px;
 }
+
+/* ===== sbrb-scrollbar-theme: brand-coloured scrollbars ===== */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--sbrb-accent-coral, #D72A44) transparent;
+}
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--sbrb-accent-coral, #D72A44) 50%, transparent);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 0.15s ease;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--sbrb-accent-coral, #D72A44);
+}
+::-webkit-scrollbar-corner { background: transparent; }
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--sbrb-accent-coral, #D72A44) transparent;
+}
