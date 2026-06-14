@@ -3,6 +3,7 @@ import { Modal, Table, Button, Space, Form, Input, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { FormModal } from '@sbrb/ui';
 import type { IAdminChangeRequest } from '../../../hooks/use-admin-business-review';
+import { BUSINESS_FIELD_LABEL_KEY } from './business-field-label';
 
 interface IChangeRequestDiffProps {
   request: IAdminChangeRequest | null;
@@ -36,8 +37,10 @@ export function ChangeRequestDiff({
   approveLoading,
   rejectLoading,
 }: IChangeRequestDiffProps) {
-  const { t } = useTranslation('admin');
+  const { t } = useTranslation(['admin', 'business']);
   const [rejectOpen, setRejectOpen] = useState(false);
+  const fieldLabel = (k: string) =>
+    BUSINESS_FIELD_LABEL_KEY[k] ? t(`business:${BUSINESS_FIELD_LABEL_KEY[k]}`) : k;
 
   const rows: IDiffRow[] = request
     ? Object.entries(request.changes).map(([field, c]) => ({ field, old: c.old, new: c.new }))
@@ -78,7 +81,7 @@ export function ChangeRequestDiff({
           pagination={false}
           size="small"
           columns={[
-            { title: t('cr_field'), dataIndex: 'field', key: 'field', width: 160 },
+            { title: t('cr_field'), dataIndex: 'field', key: 'field', width: 160, render: (f: string) => fieldLabel(f) },
             { title: t('cr_old'), dataIndex: 'old', key: 'old', render: (v) => <span className="text-gray-400">{fmt(v)}</span> },
             { title: t('cr_new'), dataIndex: 'new', key: 'new', render: (v) => <span className="text-green-600 font-medium">{fmt(v)}</span> },
           ]}

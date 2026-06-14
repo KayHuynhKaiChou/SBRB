@@ -135,5 +135,6 @@
   "status_approved": "Approved",
   "status_rejected": "Rejected",
   "status_resubmitted": "Resubmitted",
-  "review_rejected_waiting": "Waiting for the owner to amend per the rejection reason."
+  "review_rejected_waiting": "Waiting for the owner to amend per the rejection reason.",
+  "cr_fields": "Fields"
 }

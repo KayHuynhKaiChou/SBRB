@@ -1,15 +1,24 @@
 import React, { useState } from 'react';
-import { Table, Button, Empty, Typography } from 'antd';
+import { Table, Empty, Typography } from 'antd';
+import { EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { IconButton } from '@sbrb/ui';
 import {
   useAdminChangeRequests,
   type IAdminChangeRequest,
 } from '../../../hooks/use-admin-business-review';
 import { ChangeRequestDiff } from './change-request-diff';
+import { BUSINESS_FIELD_LABEL_KEY } from './business-field-label';
 
 /** Admin panel listing pending change-requests; opens a diff modal to approve/reject. */
 export function AdminChangeRequestsPanel() {
-  const { t } = useTranslation('admin');
+  const { t } = useTranslation(['admin', 'business']);
+
+  /** "Contact phone, Address" — human field labels joined, with raw-key fallback. */
+  const fieldLabels = (changes: IAdminChangeRequest['changes']) =>
+    Object.keys(changes)
+      .map((k) => (BUSINESS_FIELD_LABEL_KEY[k] ? t(`business:${BUSINESS_FIELD_LABEL_KEY[k]}`) : k))
+      .join(', ');
   const { rows, loading, approveChange, rejectChange, approveLoading, rejectLoading } =
     useAdminChangeRequests();
   const [selected, setSelected] = useState<IAdminChangeRequest | null>(null);
@@ -45,13 +54,16 @@ export function AdminChangeRequestsPanel() {
           { title: t('cr_business'), dataIndex: 'businessName', key: 'businessName' },
           { title: t('cr_requested_by'), dataIndex: 'requestedByEmail', key: 'requestedByEmail' },
           {
-            title: t('cr_field'),
+            title: t('cr_fields'),
             key: 'fields',
-            render: (_, r) => (
-              <Typography.Text type="secondary">
-                {Object.keys(r.changes).join(', ')}
-              </Typography.Text>
-            ),
+            render: (_, r) => {
+              const labels = fieldLabels(r.changes);
+              return (
+                <Typography.Text type="secondary" ellipsis={{ tooltip: labels }} className="!block !max-w-[280px]">
+                  {labels}
+                </Typography.Text>
+              );
+            },
           },
           {
             title: t('audit_col_time'),
@@ -63,11 +75,10 @@ export function AdminChangeRequestsPanel() {
           {
             title: t('col_actions'),
             key: 'actions',
-            width: 130,
+            width: 90,
+            align: 'center',
             render: (_, r) => (
-              <Button type="link" onClick={() => view(r)} className="!text-[#D72A44]">
-                {t('cr_view')}
-              </Button>
+              <IconButton icon={<EyeOutlined />} tooltip={t('cr_view')} size="small" onClick={() => view(r)} />
             ),
           },
         ]}

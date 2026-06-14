@@ -135,5 +135,6 @@
   "status_approved": "Đã duyệt",
   "status_rejected": "Bị từ chối",
   "status_resubmitted": "Đã gửi lại",
-  "review_rejected_waiting": "Đang chờ doanh nghiệp chỉnh sửa theo lý do từ chối."
+  "review_rejected_waiting": "Đang chờ doanh nghiệp chỉnh sửa theo lý do từ chối.",
+  "cr_fields": "Trường thay đổi"
 }
