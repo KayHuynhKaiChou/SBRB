@@ -148,5 +148,17 @@
   "audit_act_change_reject": "Reject change",
   "audit_act_user_disable": "Disable user",
   "audit_act_user_enable": "Enable user",
-  "audit_detail_reason": "Reason"
+  "audit_detail_reason": "Reason",
+  "chart_no_data": "No data yet",
+  "chart_growth_title": "Platform Growth (12 months)",
+  "chart_growth_businesses": "New Businesses",
+  "chart_growth_users": "New Users",
+  "chart_status_title": "Business Status",
+  "chart_industries_title": "Top Industries",
+  "chart_company_size_title": "Businesses by Size",
+  "chart_company_size_unknown": "Unknown",
+  "chart_user_activity_title": "User Activity",
+  "chart_user_active": "Active",
+  "chart_user_disabled": "Disabled",
+  "chart_user_active_30d": "Logged in (30d)"
 }

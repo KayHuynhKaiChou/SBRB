@@ -148,5 +148,17 @@
   "audit_act_change_reject": "Từ chối thay đổi",
   "audit_act_user_disable": "Khóa người dùng",
   "audit_act_user_enable": "Mở khóa người dùng",
-  "audit_detail_reason": "Lý do"
+  "audit_detail_reason": "Lý do",
+  "chart_no_data": "Chưa có dữ liệu",
+  "chart_growth_title": "Tăng trưởng nền tảng (12 tháng)",
+  "chart_growth_businesses": "Doanh nghiệp mới",
+  "chart_growth_users": "Người dùng mới",
+  "chart_status_title": "Trạng thái doanh nghiệp",
+  "chart_industries_title": "Ngành nghề hàng đầu",
+  "chart_company_size_title": "Doanh nghiệp theo quy mô",
+  "chart_company_size_unknown": "Chưa rõ",
+  "chart_user_activity_title": "Hoạt động người dùng",
+  "chart_user_active": "Đang hoạt động",
+  "chart_user_disabled": "Bị khóa",
+  "chart_user_active_30d": "Đăng nhập (30 ngày)"
 }
