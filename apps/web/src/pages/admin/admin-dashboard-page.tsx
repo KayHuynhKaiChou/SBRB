@@ -9,7 +9,6 @@ import {
   UserAddOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { AdminLayout } from '../../components/layout/admin-layout';
 import { useAdminMetrics } from '../../hooks/use-admin-metrics';
 
 const { Title } = Typography;
@@ -83,7 +82,7 @@ export default function AdminDashboardPage() {
   ];
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6">
         <Title level={4} className="!mb-0">
           {t('dashboard_title')}
@@ -103,6 +102,6 @@ export default function AdminDashboardPage() {
           ))}
         </Row>
       )}
-    </AdminLayout>
+    </>
   );
 }

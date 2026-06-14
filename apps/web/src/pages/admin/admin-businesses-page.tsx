@@ -4,7 +4,6 @@ import { SearchOutlined } from '@ant-design/icons';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { EBusinessStatus, type TBusinessStatus } from '@sbrb/shared-constants';
-import { AdminLayout } from '../../components/layout/admin-layout';
 import { useAdminBusinesses } from '../../hooks/use-admin-businesses';
 import type { IAdminBusinessRow } from '../../hooks/use-admin-businesses';
 import { AdminBusinessesTable } from './components/admin-businesses-table';
@@ -118,7 +117,7 @@ export default function AdminBusinessesPage() {
   };
 
   return (
-    <AdminLayout>
+    <>
       {/* Page header */}
       <div className="mb-4 flex items-center justify-between flex-wrap gap-4">
         <Title level={4} className="!mb-0">
@@ -217,6 +216,6 @@ export default function AdminBusinessesPage() {
           onSubmit={handleChangeOwnerSubmit}
         />
       )}
-    </AdminLayout>
+    </>
   );
 }

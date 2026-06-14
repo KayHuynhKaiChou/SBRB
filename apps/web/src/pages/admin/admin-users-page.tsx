@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Input, Select, Typography } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { AdminLayout } from '../../components/layout/admin-layout';
 import { useAdminUsers } from '../../hooks/use-admin-users';
 import type { IAdminUserRow } from '../../hooks/use-admin-users';
 import { useAuthStore } from '../../store/auth.store';
@@ -77,7 +76,7 @@ export default function AdminUsersPage() {
   };
 
   return (
-    <AdminLayout>
+    <>
       {/* Page header */}
       <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <Title level={4} className="!mb-0">
@@ -137,6 +136,6 @@ export default function AdminUsersPage() {
         disableLoading={disableLoading}
         enableLoading={enableLoading}
       />
-    </AdminLayout>
+    </>
   );
 }

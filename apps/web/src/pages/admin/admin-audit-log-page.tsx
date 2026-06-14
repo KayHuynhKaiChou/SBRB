@@ -12,7 +12,6 @@ import type { ColumnsType } from 'antd/es/table';
 import { SearchOutlined } from '@ant-design/icons';
 import type { Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
-import { AdminLayout } from '../../components/layout/admin-layout';
 import { useAdminAudit, type IAdminAuditRow } from '../../hooks/use-admin-audit';
 import { EAdminAuditAction } from '@sbrb/shared-constants';
 
@@ -142,7 +141,7 @@ export default function AdminAuditLogPage() {
   ];
 
   return (
-    <AdminLayout>
+    <>
       <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
         <Title level={4} className="!mb-0">
           {t('audit_title')}
@@ -196,6 +195,6 @@ export default function AdminAuditLogPage() {
         size="middle"
         scroll={{ x: 900 }}
       />
-    </AdminLayout>
+    </>
   );
 }

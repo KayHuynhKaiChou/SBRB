@@ -3,6 +3,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { Spin } from 'antd';
 import { ProtectedRoute } from '../components/auth/protected-route';
 import { AdminRoute } from '../components/auth/admin-route';
+import { AdminLayout } from '../components/layout/admin-layout';
 import { BusinessGuard } from '../components/auth/business-guard';
 
 // Lazy-loaded pages
@@ -76,39 +77,19 @@ export default function App() {
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
 
-        {/* Admin routes — platform-admin only */}
+        {/* Admin routes — platform-admin only; persistent AdminLayout (shared sidebar) */}
         <Route
-          path="/admin"
           element={
             <AdminRoute>
-              <AdminDashboardPage />
+              <AdminLayout />
             </AdminRoute>
           }
-        />
-        <Route
-          path="/admin/businesses"
-          element={
-            <AdminRoute>
-              <AdminBusinessesPage />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/users"
-          element={
-            <AdminRoute>
-              <AdminUsersPage />
-            </AdminRoute>
-          }
-        />
-        <Route
-          path="/admin/audit"
-          element={
-            <AdminRoute>
-              <AdminAuditLogPage />
-            </AdminRoute>
-          }
-        />
+        >
+          <Route path="/admin" element={<AdminDashboardPage />} />
+          <Route path="/admin/businesses" element={<AdminBusinessesPage />} />
+          <Route path="/admin/users" element={<AdminUsersPage />} />
+          <Route path="/admin/audit" element={<AdminAuditLogPage />} />
+        </Route>
 
         <Route path="/" element={<Navigate to="/auth/login" replace />} />
         <Route path="*" element={<NotFoundPage />} />
