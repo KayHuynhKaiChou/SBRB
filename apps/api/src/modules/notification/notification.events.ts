@@ -6,8 +6,11 @@
 
 export enum ENotificationType {
   BUSINESS_SUBMITTED = 'business.submitted',
+  BUSINESS_RESUBMITTED = 'business.resubmitted',
   BUSINESS_APPROVED = 'business.approved',
   BUSINESS_REJECTED = 'business.rejected',
+  BUSINESS_INACTIVATED = 'business.inactivated',
+  BUSINESS_REACTIVATED = 'business.reactivated',
   BUSINESS_CHANGE_SUBMITTED = 'business.change_submitted',
   BUSINESS_CHANGE_APPROVED = 'business.change_approved',
   BUSINESS_CHANGE_REJECTED = 'business.change_rejected',
@@ -28,7 +31,10 @@ export interface INotificationPayload {
   metadata: Record<string, unknown>;
 }
 
-const ADMIN_PENDING_ROUTE = '/admin/businesses?approval=pending';
+/** Admin deep-link → opens the review drawer for this business on the Businesses tab. */
+const adminReviewRoute = (businessId: string) => `/admin/businesses?review=${businessId}`;
+/** Admin deep-link → the Change-requests tab. */
+const ADMIN_CHANGES_ROUTE = '/admin/businesses?tab=changes';
 const MY_BUSINESS_ROUTE = '/my-business';
 
 /** Build a notification payload (title/message/metadata) for a business event. */
@@ -51,7 +57,15 @@ export function buildBusinessNotification(
         type,
         title: 'Doanh nghiệp mới chờ duyệt',
         message: `"${ctx.businessName}" vừa được gửi và đang chờ bạn duyệt.`,
-        metadata: { ...base.metadata, route: ADMIN_PENDING_ROUTE },
+        metadata: { ...base.metadata, route: adminReviewRoute(ctx.businessId) },
+      };
+    case ENotificationType.BUSINESS_RESUBMITTED:
+      return {
+        ...base,
+        type,
+        title: 'Doanh nghiệp đã sửa & gửi lại',
+        message: `"${ctx.businessName}" đã chỉnh sửa theo phản hồi và chờ bạn duyệt lại.`,
+        metadata: { ...base.metadata, route: adminReviewRoute(ctx.businessId) },
       };
     case ENotificationType.BUSINESS_APPROVED:
       return {
@@ -69,13 +83,29 @@ export function buildBusinessNotification(
         message: `"${ctx.businessName}" bị từ chối${ctx.reason ? `: ${ctx.reason}` : ''}.`,
         metadata: { ...base.metadata, route: MY_BUSINESS_ROUTE, reason: ctx.reason ?? null },
       };
+    case ENotificationType.BUSINESS_INACTIVATED:
+      return {
+        ...base,
+        type,
+        title: 'Doanh nghiệp bị tạm khóa',
+        message: `"${ctx.businessName}" đã bị tạm khóa${ctx.reason ? `: ${ctx.reason}` : ''}.`,
+        metadata: { ...base.metadata, route: MY_BUSINESS_ROUTE, reason: ctx.reason ?? null },
+      };
+    case ENotificationType.BUSINESS_REACTIVATED:
+      return {
+        ...base,
+        type,
+        title: 'Doanh nghiệp đã mở lại',
+        message: `"${ctx.businessName}" đã được kích hoạt lại.`,
+        metadata: { ...base.metadata, route: MY_BUSINESS_ROUTE },
+      };
     case ENotificationType.BUSINESS_CHANGE_SUBMITTED:
       return {
         ...base,
         type,
         title: 'Yêu cầu thay đổi doanh nghiệp',
         message: `"${ctx.businessName}" gửi yêu cầu thay đổi thông tin, chờ bạn duyệt.`,
-        metadata: { ...base.metadata, route: ADMIN_PENDING_ROUTE },
+        metadata: { ...base.metadata, route: ADMIN_CHANGES_ROUTE },
       };
     case ENotificationType.BUSINESS_CHANGE_APPROVED:
       return {
