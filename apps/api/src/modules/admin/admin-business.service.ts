@@ -7,17 +7,29 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
-import { EBusinessStatus, EBusinessRole, EAdminBusinessSortBy, EAdminAuditAction } from '@sbrb/shared-constants';
+import {
+  EBusinessStatus,
+  EBusinessRole,
+  EAdminBusinessSortBy,
+  EAdminAuditAction,
+} from '@sbrb/shared-constants';
 import { Business } from '../business/entities/business.entity';
 import { BusinessMember } from '../business/entities/business-member.entity';
 import { Department } from '../department/entities/department.entity';
 import { DepartmentMember } from '../department/entities/department-member.entity';
 import { User } from '../auth/entities/user.entity';
 import { AuditService } from '../audit/audit.service';
+import { NotificationService } from '../notification/notification.service';
+import {
+  ENotificationType,
+  buildBusinessNotification,
+} from '../notification/notification.events';
+import { AvatarStorageService } from '../user/services/avatar-storage.service';
 import { AdminBusinessFilterInput } from './dto/admin-business-filter.input';
 import { AdminBusinessRowType } from './dto/admin-business-row.type';
 import { AdminBusinessListResultType } from './dto/admin-business-list-result.type';
 import { AdminBusinessMemberType } from './dto/admin-business-member.type';
+import { AdminBusinessDetailType } from './dto/admin-business-detail.type';
 import { PageInput } from '../../common/dto/page.input';
 
 /** Raw row shape returned from QueryBuilder.getRawMany() */
@@ -26,12 +38,27 @@ interface IRawBusinessRow {
   b_name: string;
   b_industry: string;
   b_status: string;
+  b_rejection_reason: string | null;
   b_created_at: Date;
   b_inactivated_at: Date | null;
   b_inactive_reason: string | null;
   owner_email: string;
   member_count: string; // Postgres returns numeric strings for aggregates
 }
+
+/** SELECT list shared by the data + single-row queries (keeps shapes in sync). */
+const BUSINESS_ROW_SELECT = [
+  'b.id AS b_id',
+  'b.name AS b_name',
+  'b.industry AS b_industry',
+  'b.status AS b_status',
+  'b.rejection_reason AS b_rejection_reason',
+  'b.created_at AS b_created_at',
+  'b.inactivated_at AS b_inactivated_at',
+  'b.inactive_reason AS b_inactive_reason',
+  'u.email AS owner_email',
+  'COALESCE(mc.cnt, 0) AS member_count',
+];
 
 function toAdminBusinessRow(raw: IRawBusinessRow): AdminBusinessRowType {
   return {
@@ -41,6 +68,7 @@ function toAdminBusinessRow(raw: IRawBusinessRow): AdminBusinessRowType {
     ownerEmail: raw.owner_email ?? '',
     memberCount: parseInt(raw.member_count ?? '0', 10),
     status: raw.b_status,
+    rejectionReason: raw.b_rejection_reason ?? null,
     inactivatedAt: raw.b_inactivated_at ?? null,
     inactiveReason: raw.b_inactive_reason ?? null,
     createdAt: raw.b_created_at,
@@ -60,6 +88,8 @@ export class AdminBusinessService {
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
     private readonly auditService: AuditService,
+    private readonly notificationService: NotificationService,
+    private readonly storageService: AvatarStorageService,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -107,17 +137,7 @@ export class AdminBusinessService {
         'mc',
         'mc.business_id = b.id',
       )
-      .select([
-        'b.id AS b_id',
-        'b.name AS b_name',
-        'b.industry AS b_industry',
-        'b.status AS b_status',
-        'b.created_at AS b_created_at',
-        'b.inactivated_at AS b_inactivated_at',
-        'b.inactive_reason AS b_inactive_reason',
-        'u.email AS owner_email',
-        'COALESCE(mc.cnt, 0) AS member_count',
-      ]);
+      .select(BUSINESS_ROW_SELECT);
 
     addFilters(dataQb);
 
@@ -143,8 +163,8 @@ export class AdminBusinessService {
   ): Promise<AdminBusinessRowType> {
     const business = await this.businessRepo.findOne({ where: { id } });
     if (!business) throw new NotFoundException(`Business ${id} not found`);
-    if (business.status === EBusinessStatus.INACTIVE) {
-      throw new ConflictException('Business is already inactive');
+    if (business.status !== EBusinessStatus.APPROVED) {
+      throw new ConflictException('Only an approved business can be deactivated');
     }
 
     await this.businessRepo.update(id, {
@@ -178,12 +198,12 @@ export class AdminBusinessService {
   ): Promise<AdminBusinessRowType> {
     const business = await this.businessRepo.findOne({ where: { id } });
     if (!business) throw new NotFoundException(`Business ${id} not found`);
-    if (business.status === EBusinessStatus.ACTIVE) {
-      throw new ConflictException('Business is already active');
+    if (business.status !== EBusinessStatus.INACTIVE) {
+      throw new ConflictException('Only an inactive business can be reactivated');
     }
 
     await this.businessRepo.update(id, {
-      status: EBusinessStatus.ACTIVE,
+      status: EBusinessStatus.APPROVED,
       inactivatedAt: null,
       inactivatedBy: null,
       inactiveReason: null,
@@ -369,21 +389,149 @@ export class AdminBusinessService {
         'mc',
         'mc.business_id = b.id',
       )
-      .select([
-        'b.id AS b_id',
-        'b.name AS b_name',
-        'b.industry AS b_industry',
-        'b.status AS b_status',
-        'b.created_at AS b_created_at',
-        'b.inactivated_at AS b_inactivated_at',
-        'b.inactive_reason AS b_inactive_reason',
-        'u.email AS owner_email',
-        'COALESCE(mc.cnt, 0) AS member_count',
-      ])
+      .select(BUSINESS_ROW_SELECT)
       .where('b.id = :id', { id });
 
     const row = await qb.getRawOne<IRawBusinessRow>();
     if (!row) throw new NotFoundException(`Business ${id} not found`);
     return toAdminBusinessRow(row);
+  }
+
+  /** Full business detail for the admin review drawer (KYB + owner + signed licence URL). */
+  async getBusinessDetail(id: string): Promise<AdminBusinessDetailType> {
+    const business = await this.businessRepo.findOne({ where: { id } });
+    if (!business) throw new NotFoundException(`Business ${id} not found`);
+
+    const owner = await this.userRepo.findOne({ where: { id: business.ownerId } });
+    const memberCount = await this.memberRepo.count({ where: { businessId: id } });
+    const licenseSignedUrl = await this.storageService.createSignedReadUrl(
+      'license',
+      business.licenseFileUrl,
+    );
+
+    return {
+      id: business.id,
+      name: business.name,
+      industry: business.industry,
+      currency: business.currency,
+      status: business.status,
+      rejectionReason: business.rejectionReason ?? null,
+      memberCount,
+      legalName: business.legalName ?? null,
+      taxCode: business.taxCode ?? null,
+      businessType: business.businessType ?? null,
+      address: business.address ?? null,
+      contactPhone: business.contactPhone ?? null,
+      contactEmail: business.contactEmail ?? null,
+      website: business.website ?? null,
+      description: business.description ?? null,
+      logoUrl: business.logoUrl ?? null,
+      bannerUrl: business.bannerUrl ?? null,
+      licenseSignedUrl,
+      foundedYear: business.foundedYear ?? null,
+      companySize: business.companySize ?? null,
+      createdAt: business.createdAt,
+      owner: {
+        id: owner?.id ?? business.ownerId,
+        fullName: owner?.fullName ?? '',
+        email: owner?.email ?? '',
+        phone: owner?.phone ?? null,
+        avatarUrl: owner?.avatarUrl ?? null,
+      },
+    };
+  }
+
+  /** Admin approves a pending/rejected business → approved + usable. */
+  async approveBusiness(id: string, adminId: string): Promise<AdminBusinessRowType> {
+    const business = await this.businessRepo.findOne({ where: { id } });
+    if (!business) throw new NotFoundException(`Business ${id} not found`);
+    if (business.status === EBusinessStatus.APPROVED) {
+      throw new ConflictException('Business is already approved');
+    }
+    if (business.status === EBusinessStatus.INACTIVE) {
+      throw new ConflictException('Use reactivate for an inactive business');
+    }
+
+    await this.businessRepo.update(id, {
+      status: EBusinessStatus.APPROVED,
+      approvedAt: new Date(),
+      approvedBy: adminId,
+      rejectionReason: null,
+      rejectedAt: null,
+      rejectedBy: null,
+    });
+
+    this.safeAudit(adminId, business, EAdminAuditAction.BUSINESS_APPROVE, {});
+    this.safeNotifyOwner(business, ENotificationType.BUSINESS_APPROVED);
+
+    return this.fetchRow(id);
+  }
+
+  /** Admin rejects a business with a required reason → owner edits + resubmits. */
+  async rejectBusiness(
+    id: string,
+    adminId: string,
+    reason: string,
+  ): Promise<AdminBusinessRowType> {
+    if (!reason?.trim()) {
+      throw new BadRequestException('A rejection reason is required');
+    }
+    const business = await this.businessRepo.findOne({ where: { id } });
+    if (!business) throw new NotFoundException(`Business ${id} not found`);
+    if (business.status !== EBusinessStatus.PENDING) {
+      throw new ConflictException('Only a pending business can be rejected');
+    }
+
+    await this.businessRepo.update(id, {
+      status: EBusinessStatus.REJECTED,
+      rejectionReason: reason,
+      rejectedAt: new Date(),
+      rejectedBy: adminId,
+    });
+
+    this.safeAudit(adminId, business, EAdminAuditAction.BUSINESS_REJECT, { reason });
+    this.safeNotifyOwner(business, ENotificationType.BUSINESS_REJECTED, reason);
+
+    return this.fetchRow(id);
+  }
+
+  private safeAudit(
+    adminId: string,
+    business: Business,
+    action: EAdminAuditAction,
+    metadata: Record<string, unknown>,
+  ): void {
+    void this.auditService
+      .log({
+        businessId: business.id,
+        actorId: adminId,
+        action,
+        targetType: 'business',
+        targetId: business.id,
+        targetName: business.name,
+        metadata,
+      })
+      .catch((err: Error) =>
+        this.logger.warn(`Audit log failed (${action}): ${err.message}`),
+      );
+  }
+
+  private safeNotifyOwner(
+    business: Business,
+    type: ENotificationType,
+    reason?: string,
+  ): void {
+    void this.notificationService
+      .notifyUser(
+        business.ownerId,
+        buildBusinessNotification(type, {
+          businessId: business.id,
+          businessName: business.name,
+          reason,
+        }),
+      )
+      .catch((err: Error) =>
+        this.logger.warn(`notifyUser(${type}) failed: ${err.message}`),
+      );
   }
 }

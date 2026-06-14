@@ -1,9 +1,8 @@
 import React from 'react';
-import { Table, Popconfirm, Typography } from 'antd';
+import { Table, Typography } from 'antd';
 import type { TableColumnsType } from 'antd';
-import { LockOutlined, UnlockOutlined, UserSwitchOutlined } from '@ant-design/icons';
+import { UserSwitchOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { EBusinessStatus } from '@sbrb/shared-constants';
 import { IconButton } from '@sbrb/ui';
 import type { IAdminBusinessRow } from '../../../hooks/use-admin-businesses';
 import { BusinessStatusTag } from './business-status-tag';
@@ -17,15 +16,15 @@ interface IAdminBusinessesTableProps {
   page: number;
   pageSize: number;
   onPageChange: (page: number, pageSize: number) => void;
-  onInactivate: (row: IAdminBusinessRow) => void;
-  onReactivate: (id: string) => void;
   onChangeOwner: (row: IAdminBusinessRow) => void;
-  reactivateLoading: boolean;
+  /** Open the detail drawer — all status changes happen there. */
+  onReview: (row: IAdminBusinessRow) => void;
 }
 
 /**
- * Ant Design Table for admin business list.
- * Columns: Name | Owner | Members | Status | Created | Actions
+ * Admin business list table.
+ * Columns: Name | Owner | Members | Status | Created | Actions (view + change owner).
+ * Status transitions (approve/reject/inactivate/reactivate) live in the review drawer.
  */
 export function AdminBusinessesTable({
   rows,
@@ -34,10 +33,8 @@ export function AdminBusinessesTable({
   page,
   pageSize,
   onPageChange,
-  onInactivate,
-  onReactivate,
   onChangeOwner,
-  reactivateLoading,
+  onReview,
 }: IAdminBusinessesTableProps) {
   const { t } = useTranslation('admin');
 
@@ -46,9 +43,8 @@ export function AdminBusinessesTable({
       title: t('col_name'),
       dataIndex: 'name',
       key: 'name',
-      width: 200,
+      width: 180,
       ellipsis: { showTitle: false },
-      sorter: false,
       render: (name: string) => (
         <Text ellipsis={{ tooltip: name }} className="font-semibold block">
           {name}
@@ -59,7 +55,7 @@ export function AdminBusinessesTable({
       title: t('col_owner'),
       dataIndex: 'ownerEmail',
       key: 'ownerEmail',
-      width: 200,
+      width: 180,
       ellipsis: { showTitle: false },
       render: (email: string | null) => (
         <Text ellipsis={{ tooltip: email ?? undefined }} className="block">
@@ -71,21 +67,21 @@ export function AdminBusinessesTable({
       title: t('col_members'),
       dataIndex: 'memberCount',
       key: 'memberCount',
-      width: 100,
+      width: 90,
       align: 'right',
     },
     {
       title: t('col_status'),
       dataIndex: 'status',
       key: 'status',
-      width: 110,
+      width: 120,
       render: (status: string) => <BusinessStatusTag status={status} />,
     },
     {
       title: t('col_created'),
       dataIndex: 'createdAt',
       key: 'createdAt',
-      width: 130,
+      width: 120,
       render: (date: string) =>
         new Date(date).toLocaleDateString('en-GB', {
           day: '2-digit',
@@ -102,34 +98,17 @@ export function AdminBusinessesTable({
       render: (_, row) => (
         <div className="flex items-center justify-center gap-1">
           <IconButton
+            icon={<EyeOutlined />}
+            tooltip={t('review_title')}
+            size="small"
+            onClick={() => onReview(row)}
+          />
+          <IconButton
             icon={<UserSwitchOutlined />}
             tooltip={t('change_owner')}
             size="small"
             onClick={() => onChangeOwner(row)}
           />
-          {row.status === EBusinessStatus.ACTIVE ? (
-            <IconButton
-              icon={<LockOutlined />}
-              tooltip={t('action_inactivate')}
-              size="small"
-              onClick={() => onInactivate(row)}
-            />
-          ) : (
-            <Popconfirm
-              title={t('reactivate_confirm_title')}
-              description={t('reactivate_confirm_desc')}
-              onConfirm={() => onReactivate(row.id)}
-              okText={t('action_reactivate')}
-              cancelText={t('common:cancel', 'Cancel')}
-            >
-              <IconButton
-                icon={<UnlockOutlined />}
-                tooltip={t('action_reactivate')}
-                size="small"
-                loading={reactivateLoading}
-              />
-            </Popconfirm>
-          )}
         </div>
       ),
     },
@@ -141,7 +120,7 @@ export function AdminBusinessesTable({
       columns={columns}
       rowKey="id"
       loading={loading}
-      scroll={{ x: 860 }}
+      scroll={{ x: 820 }}
       className="[&_.ant-table-thead>tr>th]:bg-gray-100 [&_.ant-table-tbody>tr:hover>td]:bg-blue-50"
       pagination={{
         current: page,
@@ -149,7 +128,7 @@ export function AdminBusinessesTable({
         total,
         showSizeChanger: true,
         pageSizeOptions: ['10', '20', '50', '100'],
-        showTotal: (total) => `${total} businesses`,
+        showTotal: (n) => `${n} businesses`,
         onChange: onPageChange,
       }}
     />

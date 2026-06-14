@@ -42,10 +42,11 @@ const mockBusiness = (overrides: Partial<Business> = {}): Business =>
     name: 'Test Biz',
     industry: 'Tech',
     ownerId: 'user-1',
-    status: 'active',
+    status: 'approved',
     inactivatedAt: null,
     inactivatedBy: null,
     inactiveReason: null,
+    rejectionReason: null,
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-01'),
     ...overrides,
@@ -148,8 +149,15 @@ function buildService() {
     findOne: jest.fn(),
     createQueryBuilder: jest.fn(),
   };
-  const userRepo = {} as unknown as typeof businessRepo;
+  const userRepo = { findOne: jest.fn() } as unknown as typeof businessRepo;
   const auditService = { log: jest.fn().mockResolvedValue(undefined) };
+  const notificationService = {
+    notifyUser: jest.fn().mockResolvedValue(undefined),
+    notifyAdmins: jest.fn().mockResolvedValue(undefined),
+  };
+  const storageService = {
+    createSignedReadUrl: jest.fn().mockResolvedValue(null),
+  };
   const dataSource = {
     transaction: jest.fn(),
   };
@@ -159,10 +167,12 @@ function buildService() {
     memberRepo as never,
     userRepo as never,
     auditService as never,
+    notificationService as never,
+    storageService as never,
     dataSource as never,
   );
 
-  return { service, businessRepo, memberRepo, auditService, dataSource };
+  return { service, businessRepo, memberRepo, userRepo, auditService, notificationService, dataSource };
 }
 
 describe('AdminBusinessService', () => {
@@ -220,6 +230,62 @@ describe('AdminBusinessService', () => {
     });
   });
 
+  describe('approveBusiness', () => {
+    it('throws NotFoundException when business not found', async () => {
+      const { service, businessRepo } = buildService();
+      businessRepo.findOne.mockResolvedValue(null);
+      await expect(service.approveBusiness('missing', 'admin')).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws ConflictException when already approved', async () => {
+      const { service, businessRepo } = buildService();
+      businessRepo.findOne.mockResolvedValue(mockBusiness({ status: 'approved' }));
+      await expect(service.approveBusiness('biz-1', 'admin')).rejects.toThrow(ConflictException);
+    });
+
+    it('sets approved status + notifies owner', async () => {
+      const { service, businessRepo, notificationService } = buildService();
+      businessRepo.findOne.mockResolvedValue(mockBusiness({ status: 'pending', ownerId: 'owner-1' }));
+      businessRepo.createQueryBuilder.mockReturnValue(buildQbChain());
+
+      await service.approveBusiness('biz-1', 'admin');
+
+      expect(businessRepo.update).toHaveBeenCalledWith(
+        'biz-1',
+        expect.objectContaining({ status: 'approved', approvedBy: 'admin' }),
+      );
+      expect(notificationService.notifyUser).toHaveBeenCalledWith(
+        'owner-1',
+        expect.objectContaining({ type: 'business.approved' }),
+      );
+    });
+  });
+
+  describe('rejectBusiness', () => {
+    it('throws ConflictException when already approved', async () => {
+      const { service, businessRepo } = buildService();
+      businessRepo.findOne.mockResolvedValue(mockBusiness({ status: 'approved' }));
+      await expect(service.rejectBusiness('biz-1', 'admin', 'bad')).rejects.toThrow(ConflictException);
+    });
+
+    it('sets rejected status + reason + notifies owner', async () => {
+      const { service, businessRepo, notificationService } = buildService();
+      businessRepo.findOne.mockResolvedValue(mockBusiness({ status: 'pending', ownerId: 'owner-1' }));
+      businessRepo.createQueryBuilder.mockReturnValue(buildQbChain());
+
+      await service.rejectBusiness('biz-1', 'admin', 'missing license');
+
+      expect(businessRepo.update).toHaveBeenCalledWith(
+        'biz-1',
+        expect.objectContaining({ status: 'rejected', rejectionReason: 'missing license' }),
+      );
+      expect(notificationService.notifyUser).toHaveBeenCalledWith(
+        'owner-1',
+        expect.objectContaining({ type: 'business.rejected' }),
+      );
+    });
+  });
+
   describe('reactivateBusiness', () => {
     it('throws NotFoundException when business not found', async () => {
       const { service, businessRepo } = buildService();
@@ -229,26 +295,26 @@ describe('AdminBusinessService', () => {
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('throws ConflictException when business already active', async () => {
+    it('throws ConflictException when business is not inactive', async () => {
       const { service, businessRepo } = buildService();
-      businessRepo.findOne.mockResolvedValue(mockBusiness({ status: 'active' }));
+      businessRepo.findOne.mockResolvedValue(mockBusiness({ status: 'approved' }));
       await expect(
         service.reactivateBusiness('biz-1', 'admin-id'),
       ).rejects.toThrow(ConflictException);
     });
 
-    it('calls update with active status and nulls out inactivation fields', async () => {
+    it('calls update with approved status and nulls out inactivation fields', async () => {
       const { service, businessRepo } = buildService();
       businessRepo.findOne.mockResolvedValue(mockBusiness({ status: 'inactive' }));
       businessRepo.createQueryBuilder.mockReturnValue(
-        buildQbChain({ ...{}, b_status: 'active', b_inactivated_at: null, b_inactive_reason: null }),
+        buildQbChain({ ...{}, b_status: 'approved', b_inactivated_at: null, b_inactive_reason: null }),
       );
 
       await service.reactivateBusiness('biz-1', 'admin-id');
 
       expect(businessRepo.update).toHaveBeenCalledWith(
         'biz-1',
-        expect.objectContaining({ status: 'active', inactivatedAt: null, inactivatedBy: null, inactiveReason: null }),
+        expect.objectContaining({ status: 'approved', inactivatedAt: null, inactivatedBy: null, inactiveReason: null }),
       );
     });
   });
@@ -292,7 +358,7 @@ describe('AdminBusinessService', () => {
       businessRepo.createQueryBuilder.mockReturnValue(
         buildQbChain({
           b_id: BUSINESS_ID, b_name: 'Test Biz', b_industry: 'Tech',
-          b_status: 'active', b_created_at: new Date(),
+          b_status: 'approved', b_created_at: new Date(),
           b_inactivated_at: null, b_inactive_reason: null,
           owner_email: 'newowner@test.com', member_count: '3',
         }),

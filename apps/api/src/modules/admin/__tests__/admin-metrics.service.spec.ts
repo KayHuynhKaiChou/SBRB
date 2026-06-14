@@ -87,7 +87,7 @@ describe('AdminMetricsService', () => {
         .filter((args): args is Record<string, string> => args != null)
         .map((args) => args['status']);
 
-      expect(statusValues).toContain(EBusinessStatus.ACTIVE);
+      expect(statusValues).toContain(EBusinessStatus.APPROVED);
       expect(statusValues).toContain(EBusinessStatus.INACTIVE);
     });
   });

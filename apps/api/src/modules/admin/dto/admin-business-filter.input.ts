@@ -1,6 +1,10 @@
 import { Field, InputType } from '@nestjs/graphql';
 import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
-import { EAdminBusinessSortBy, EBusinessStatus, type TBusinessStatus } from '@sbrb/shared-constants';
+import {
+  EAdminBusinessSortBy,
+  EBusinessStatus,
+  type TBusinessStatus,
+} from '@sbrb/shared-constants';
 
 @InputType()
 export class AdminBusinessFilterInput {
@@ -11,7 +15,7 @@ export class AdminBusinessFilterInput {
   @MaxLength(200)
   search?: string;
 
-  /** Filter by business status. Omit for all. */
+  /** Filter by unified status (pending/approved/rejected/inactive). Omit for all. */
   @Field({ nullable: true })
   @IsOptional()
   @IsIn(Object.values(EBusinessStatus))

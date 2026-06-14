@@ -10,12 +10,95 @@ export const ADMIN_BUSINESSES_QUERY = gql`
         ownerEmail
         memberCount
         status
+        rejectionReason
         inactivatedAt
         inactiveReason
         createdAt
       }
       total
     }
+  }
+`;
+
+/** Full business detail for the admin verification review drawer. */
+export const ADMIN_BUSINESS_DETAIL_QUERY = gql`
+  query AdminBusinessDetail($id: ID!) {
+    adminBusinessDetail(id: $id) {
+      id
+      name
+      industry
+      currency
+      status
+      rejectionReason
+      memberCount
+      legalName
+      taxCode
+      businessType
+      address
+      contactPhone
+      contactEmail
+      website
+      description
+      logoUrl
+      bannerUrl
+      licenseSignedUrl
+      foundedYear
+      companySize
+      createdAt
+      owner {
+        id
+        fullName
+        email
+        phone
+        avatarUrl
+      }
+    }
+  }
+`;
+
+export const APPROVE_BUSINESS_MUTATION = gql`
+  mutation ApproveBusiness($id: ID!) {
+    approveBusiness(id: $id) {
+      id
+      status
+    }
+  }
+`;
+
+export const REJECT_BUSINESS_MUTATION = gql`
+  mutation RejectBusiness($id: ID!, $reason: String!) {
+    rejectBusiness(id: $id, reason: $reason) {
+      id
+      status
+      rejectionReason
+    }
+  }
+`;
+
+/** Pending change-requests awaiting admin review. */
+export const ADMIN_CHANGE_REQUESTS_QUERY = gql`
+  query AdminChangeRequests($businessId: ID) {
+    adminChangeRequests(businessId: $businessId) {
+      id
+      businessId
+      businessName
+      requestedByEmail
+      status
+      changes
+      createdAt
+    }
+  }
+`;
+
+export const APPROVE_CHANGE_REQUEST_MUTATION = gql`
+  mutation ApproveChangeRequest($id: ID!) {
+    approveChangeRequest(id: $id)
+  }
+`;
+
+export const REJECT_CHANGE_REQUEST_MUTATION = gql`
+  mutation RejectChangeRequest($id: ID!, $reason: String!) {
+    rejectChangeRequest(id: $id, reason: $reason)
   }
 `;
 

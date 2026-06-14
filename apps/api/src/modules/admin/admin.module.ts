@@ -8,6 +8,9 @@ import { User } from '../auth/entities/user.entity';
 import { AuditLog } from '../audit/entities/audit-log.entity';
 import { AuditModule } from '../audit/audit.module';
 import { AuthModule } from '../auth/auth.module';
+import { UserModule } from '../user/user.module';
+import { NotificationModule } from '../notification/notification.module';
+import { BusinessModule } from '../business/business.module';
 import { AdminBusinessService } from './admin-business.service';
 import { AdminBusinessResolver } from './admin-business.resolver';
 import { AdminUserService } from './admin-user.service';
@@ -25,6 +28,9 @@ import { AdminPlatformResolver } from './admin-platform.resolver';
     TypeOrmModule.forFeature([Business, BusinessMember, Department, DepartmentMember, User, AuditLog]),
     AuditModule,
     AuthModule,
+    UserModule,
+    NotificationModule,
+    BusinessModule,
   ],
   providers: [
     AdminBusinessService,

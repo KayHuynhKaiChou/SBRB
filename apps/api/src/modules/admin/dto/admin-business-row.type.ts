@@ -18,8 +18,12 @@ export class AdminBusinessRowType {
   @Field(() => Int)
   memberCount: number;
 
+  /** Unified lifecycle: pending | approved | rejected | inactive. */
   @Field()
   status: string;
+
+  @Field(() => String, { nullable: true })
+  rejectionReason?: string | null;
 
   @Field(() => Date, { nullable: true })
   inactivatedAt?: Date | null;

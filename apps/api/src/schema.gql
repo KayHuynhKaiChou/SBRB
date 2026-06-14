@@ -42,6 +42,41 @@ type AdminAuditRowType {
   targetType: String
 }
 
+type AdminBusinessChangeRequestType {
+  businessId: ID!
+  businessName: String!
+  changes: JSON!
+  createdAt: DateTime!
+  id: ID!
+  requestedByEmail: String!
+  status: String!
+}
+
+type AdminBusinessDetailType {
+  address: String
+  bannerUrl: String
+  businessType: String
+  companySize: String
+  contactEmail: String
+  contactPhone: String
+  createdAt: DateTime!
+  currency: String!
+  description: String
+  foundedYear: Int
+  id: ID!
+  industry: String!
+  legalName: String
+  licenseSignedUrl: String
+  logoUrl: String
+  memberCount: Int!
+  name: String!
+  owner: AdminBusinessOwnerType!
+  rejectionReason: String
+  status: String!
+  taxCode: String
+  website: String
+}
+
 input AdminBusinessFilterInput {
   search: String
   sortBy: String
@@ -61,6 +96,14 @@ type AdminBusinessMemberType {
   userId: ID!
 }
 
+type AdminBusinessOwnerType {
+  avatarUrl: String
+  email: String!
+  fullName: String!
+  id: ID!
+  phone: String
+}
+
 type AdminBusinessRowType {
   createdAt: DateTime!
   id: ID!
@@ -70,6 +113,7 @@ type AdminBusinessRowType {
   memberCount: Int!
   name: String!
   ownerEmail: String!
+  rejectionReason: String
   status: String!
 }
 
@@ -157,21 +201,48 @@ type AvatarUploadUrl {
   uploadUrl: String!
 }
 
+type BusinessChangeRequestType {
+  businessId: ID!
+  changes: JSON!
+  createdAt: DateTime!
+  id: ID!
+  requestedBy: ID!
+  reviewReason: String
+  reviewedAt: DateTime
+  status: String!
+  updatedAt: DateTime!
+}
+
 type BusinessType {
+  address: String
+  approvedAt: DateTime
+  bannerUrl: String
+  businessType: String
   canvasHeight: Int!
   canvasWidth: Int!
+  companySize: String
+  contactEmail: String
+  contactPhone: String
   createdAt: DateTime!
   currency: String!
+  description: String
+  foundedYear: Int
   id: ID!
   inactivatedAt: DateTime
   inactiveReason: String
   industry: String!
+  legalName: String
+  licenseFileUrl: String
   logoUrl: String
   name: String!
   ownerId: String!
+  rejectedAt: DateTime
+  rejectionReason: String
   snapGrid: Int!
   status: String!
+  taxCode: String
   updatedAt: DateTime!
+  website: String
   weekStart: Int!
 }
 
@@ -207,9 +278,22 @@ type ChartDataset {
 }
 
 input CreateBusinessDto {
+  address: String!
+  bannerUrl: String
+  businessType: String
+  companySize: String
+  contactEmail: String
+  contactPhone: String!
   currency: String = "VND"
+  description: String
+  foundedYear: Int
   industry: String
+  legalName: String!
+  licenseFileUrl: String!
+  logoUrl: String
   name: String!
+  taxCode: String!
+  website: String
 }
 
 input CreateDepartmentDto {
@@ -354,6 +438,11 @@ input GetAvatarUploadUrlDto {
   filename: String!
 }
 
+input GetBusinessAssetUploadUrlDto {
+  filename: String!
+  kind: String!
+}
+
 type ImportProgressType {
   datasheetId: ID!
   errorMessage: String
@@ -439,6 +528,12 @@ type Mutation {
 
   """Transfer business ownership to an existing member. Admin only."""
   adminChangeBusinessOwner(businessId: ID!, newOwnerUserId: ID!): AdminBusinessRowType!
+
+  """Approve a pending/rejected business → approved. Admin only."""
+  approveBusiness(id: ID!): AdminBusinessRowType!
+
+  """Approve a change-request → apply diff to live business. Admin only."""
+  approveChangeRequest(id: ID!): Boolean!
   assignWidgets(businessId: ID!, input: AssignWidgetsDto!, targetUserId: ID!): MemberType!
   cancelInvitation(businessId: ID!, invitationId: ID!): Boolean!
   changeMemberRole(businessId: ID!, input: UpdateMemberRoleDto!, targetUserId: ID!): MemberType!
@@ -467,6 +562,11 @@ type Mutation {
   enableUser(id: ID!): AdminUserRowType!
   forgotPassword(email: String!): Boolean!
   getAvatarUploadUrl(input: GetAvatarUploadUrlDto!): AvatarUploadUrl!
+
+  """
+  Signed upload URL for a business asset (logo/banner image or licence doc). businessId omitted during signup (no business yet) → path keyed by the owner.
+  """
+  getBusinessAssetUploadUrl(businessId: ID, input: GetBusinessAssetUploadUrlDto!): AvatarUploadUrl!
   getLogoUploadUrl(businessId: ID!, input: GetAvatarUploadUrlDto!): AvatarUploadUrl!
 
   """Set a business to inactive. Requires reason string. Admin only."""
@@ -476,19 +576,35 @@ type Mutation {
   inviteMember(businessId: ID!, input: InviteMemberDto!): InvitationType!
   login(input: LoginDto!): AuthResult!
   logout: Boolean!
+  markAllNotificationsRead: Boolean!
+  markNotificationRead(id: ID!): Boolean!
 
   """Restore an inactive business to active status. Admin only."""
   reactivateBusiness(id: ID!): AdminBusinessRowType!
   refreshToken: AuthResult!
   register(input: RegisterDto!): AuthResult!
+
+  """Reject a business with a required reason. Admin only."""
+  rejectBusiness(id: ID!, reason: String!): AdminBusinessRowType!
+
+  """
+  Reject a change-request with a reason → live data unchanged. Admin only.
+  """
+  rejectChangeRequest(id: ID!, reason: String!): Boolean!
   removeDepartmentMember(departmentId: ID!, userId: ID!): DepartmentMemberResponse!
   removeMember(businessId: ID!, targetUserId: ID!): Boolean!
   removeWidgetDataLink(id: ID!): WidgetResponse!
   renameDataSheet(id: ID!, input: UpdateDatasheetDto!): DataSheetType!
   renameSeries(name: String!, seriesId: ID!): DataSeriesType!
   reorderTabs(orders: [TabOrderInput!]!): TabResponse
+
+  """Owner requests a change to an approved business (admin must approve)."""
+  requestBusinessChange(id: ID!, input: UpdateBusinessDto!): BusinessChangeRequestType!
   resetPassword(input: ResetPasswordDto!): Boolean!
   setDepartmentManager(departmentId: ID!, userId: ID!): DepartmentMemberResponse!
+
+  """Owner resubmits a rejected/pending business for admin review."""
+  submitBusinessForReview(id: ID!): BusinessType!
   toggleDataSheetStatus(id: ID!): DataSheetType!
   transferOwnership(id: ID!, newOwnerId: ID!): Boolean!
   updateBusiness(id: ID!, input: UpdateBusinessDto!): BusinessType!
@@ -502,7 +618,18 @@ type Mutation {
   updateWidgetConfig(config: JSON!, id: ID!): WidgetResponse!
   updateWidgetDataLink(id: ID!, input: UpdateDataLinkDto!): WidgetResponse!
   upsertCellValue(input: UpsertCellValueDto!): DataSeriesType!
-  verifyEmail(token: String!): Boolean!
+  verifyEmailOtp(code: String!, email: String!): Boolean!
+}
+
+type NotificationType {
+  businessId: ID
+  createdAt: DateTime!
+  id: ID!
+  isRead: Boolean!
+  message: String!
+  metadata: JSON
+  title: String!
+  type: String!
 }
 
 input PageInput {
@@ -514,11 +641,19 @@ type Query {
   """Paginated audit log of all admin mutations. Admin only."""
   adminAuditLog(filter: AdminAuditFilterInput, page: PageInput): AdminAuditListResultType!
 
+  """
+  Full business detail for verification review (KYB + owner + licence). Admin only.
+  """
+  adminBusinessDetail(id: ID!): AdminBusinessDetailType!
+
   """List all members of a business with user info. Admin only."""
   adminBusinessMembers(businessId: ID!): [AdminBusinessMemberType!]!
 
   """Paginated list of all businesses across the platform. Admin only."""
   adminBusinesses(filter: AdminBusinessFilterInput, page: PageInput): AdminBusinessListResultType!
+
+  """Pending business change-requests awaiting review. Admin only."""
+  adminChangeRequests(businessId: ID): [AdminBusinessChangeRequestType!]!
 
   """Platform-wide aggregate stats for admin dashboard. Admin only."""
   adminMetrics: AdminMetricsType!
@@ -542,7 +677,10 @@ type Query {
   myBusinessRole(businessId: ID!): String
   myBusinesses: [BusinessType!]!
   myMembership(businessId: ID!): MemberType
+  myNotifications(limit: Int, unreadOnly: Boolean): [NotificationType!]!
+  myOpenChangeRequest(businessId: ID!): BusinessChangeRequestType
   mySessions: [Session!]!
+  myUnreadCount: Int!
   pendingInvitations(businessId: ID!): [InvitationType!]!
   tabs(businessId: ID!): [Tab!]!
   widget(id: ID!): Widget!
@@ -612,13 +750,25 @@ type TrendBadge {
 }
 
 input UpdateBusinessDto {
+  address: String
+  bannerUrl: String
+  businessType: String
   canvasHeight: Int
   canvasWidth: Int
+  companySize: String
+  contactEmail: String
+  contactPhone: String
   currency: String = "VND"
+  description: String
+  foundedYear: Int
   industry: String
+  legalName: String
+  licenseFileUrl: String
   logoUrl: String
   name: String
   snapGrid: Int
+  taxCode: String
+  website: String
 }
 
 input UpdateDataLinkDto {

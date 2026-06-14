@@ -5,6 +5,8 @@ import {
   ADMIN_CHANGE_BUSINESS_OWNER_MUTATION,
   INACTIVATE_BUSINESS_MUTATION,
   REACTIVATE_BUSINESS_MUTATION,
+  APPROVE_BUSINESS_MUTATION,
+  REJECT_BUSINESS_MUTATION,
 } from '../graphql/admin.operations';
 
 export interface IAdminBusinessRow {
@@ -14,6 +16,7 @@ export interface IAdminBusinessRow {
   ownerEmail: string;
   memberCount: number;
   status: string;
+  rejectionReason?: string | null;
   inactivatedAt?: string | null;
   inactiveReason?: string | null;
   createdAt: string;
@@ -28,7 +31,7 @@ interface IAdminBusinessesQueryResult {
 
 interface IAdminBusinessesFilter {
   search?: string;
-  status?: 'active' | 'inactive';
+  status?: 'pending' | 'approved' | 'rejected' | 'inactive';
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }
@@ -98,6 +101,32 @@ export function useAdminBusinesses({ filter, page }: IUseAdminBusinessesOptions 
   const changeOwner = (businessId: string, newOwnerUserId: string) =>
     changeOwnerMutation({ variables: { businessId, newOwnerUserId } });
 
+  const [approveMutation, { loading: approveLoading }] = useMutation(
+    APPROVE_BUSINESS_MUTATION,
+    {
+      onCompleted: () => {
+        void message.success('Business approved');
+        void refetch();
+      },
+      onError: (err) => void message.error(err.message || 'Failed to approve'),
+    },
+  );
+
+  const [rejectMutation, { loading: rejectLoading }] = useMutation(
+    REJECT_BUSINESS_MUTATION,
+    {
+      onCompleted: () => {
+        void message.success('Business rejected');
+        void refetch();
+      },
+      onError: (err) => void message.error(err.message || 'Failed to reject'),
+    },
+  );
+
+  const approveBusiness = (id: string) => approveMutation({ variables: { id } });
+  const rejectBusiness = (id: string, reason: string) =>
+    rejectMutation({ variables: { id, reason } });
+
   return {
     rows: data?.adminBusinesses?.rows ?? [],
     total: data?.adminBusinesses?.total ?? 0,
@@ -107,8 +136,12 @@ export function useAdminBusinesses({ filter, page }: IUseAdminBusinessesOptions 
     inactivateBusiness,
     reactivateBusiness,
     changeOwner,
+    approveBusiness,
+    rejectBusiness,
     inactivateLoading,
     reactivateLoading,
     changeOwnerLoading,
+    approveLoading,
+    rejectLoading,
   };
 }

@@ -36,7 +36,7 @@ export class AdminMetricsService {
 
       this.businessRepo
         .createQueryBuilder('b')
-        .where('b.status = :status', { status: EBusinessStatus.ACTIVE })
+        .where('b.status = :status', { status: EBusinessStatus.APPROVED })
         .getCount(),
 
       this.businessRepo

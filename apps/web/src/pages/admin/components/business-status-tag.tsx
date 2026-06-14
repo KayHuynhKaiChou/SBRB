@@ -1,16 +1,31 @@
 import React from 'react';
 import { Tag } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { EBusinessStatus, BUSINESS_STATUS_TAG_COLOR } from '@sbrb/shared-constants';
+import {
+  EBusinessStatus,
+  BUSINESS_STATUS_TAG_COLOR,
+  type TBusinessStatus,
+} from '@sbrb/shared-constants';
 
 interface IBusinessStatusTagProps {
   status: string;
 }
 
-/** Status badge for business rows in the admin table. */
+/** i18n key per unified status value. */
+const STATUS_LABEL_KEY: Record<TBusinessStatus, string> = {
+  [EBusinessStatus.PENDING]: 'status_pending',
+  [EBusinessStatus.APPROVED]: 'status_approved',
+  [EBusinessStatus.REJECTED]: 'status_rejected',
+  [EBusinessStatus.INACTIVE]: 'status_inactive',
+};
+
+/** Unified status badge — pending=gold, approved=green, rejected=red, inactive=gray. */
 export function BusinessStatusTag({ status }: IBusinessStatusTagProps) {
   const { t } = useTranslation('admin');
-  const color = BUSINESS_STATUS_TAG_COLOR[status as EBusinessStatus] ?? 'default';
-  const label = status === EBusinessStatus.INACTIVE ? t('status_inactive') : t('status_active');
-  return <Tag color={color}>{label}</Tag>;
+  const s = status as TBusinessStatus;
+  return (
+    <Tag color={BUSINESS_STATUS_TAG_COLOR[s] ?? 'default'}>
+      {t(STATUS_LABEL_KEY[s] ?? 'status_pending')}
+    </Tag>
+  );
 }
