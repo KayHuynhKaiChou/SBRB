@@ -54,7 +54,7 @@ export function BusinessPendingPage({ business }: IBusinessPendingPageProps) {
             showIcon
             className="!text-left !mb-5"
             message={t('rejected_reason_label')}
-            description={business.rejectionReason}
+            description={<span className="whitespace-pre-line">{business.rejectionReason}</span>}
           />
         )}
 

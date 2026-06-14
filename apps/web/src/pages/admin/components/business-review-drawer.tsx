@@ -172,7 +172,7 @@ export function BusinessReviewDrawer({
             {detail.rejectionReason && (
               <Descriptions column={1} size="small">
                 <Descriptions.Item label="Lý do từ chối gần nhất">
-                  {detail.rejectionReason}
+                  <span className="whitespace-pre-line">{detail.rejectionReason}</span>
                 </Descriptions.Item>
               </Descriptions>
             )}

@@ -39,7 +39,7 @@ export function InactiveBanner({ businessName, inactiveReason, inactivatedAt }: 
       {inactiveReason && (
         <div className="bg-red-50 border border-red-100 rounded-lg px-4 py-3 mb-4 text-left">
           <Text className="!text-sm !text-gray-500 block mb-1">{t('business_inactive_reason')}:</Text>
-          <Paragraph className="!mb-0 !text-gray-700 !text-sm">{inactiveReason}</Paragraph>
+          <Paragraph className="!mb-0 !text-gray-700 !text-sm whitespace-pre-line">{inactiveReason}</Paragraph>
         </div>
       )}
 

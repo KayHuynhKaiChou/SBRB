@@ -138,7 +138,7 @@ export default function MyBusinessPage() {
             type="error"
             showIcon
             message={t('rejected_reason_label')}
-            description={biz.rejectionReason}
+            description={<span className="whitespace-pre-line">{biz.rejectionReason}</span>}
           />
         )}
         {openChange && <Alert type="warning" showIcon message={t('change_pending_banner')} />}
