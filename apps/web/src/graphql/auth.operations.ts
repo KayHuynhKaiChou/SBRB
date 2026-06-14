@@ -64,6 +64,7 @@ export const MY_BUSINESSES_QUERY = gql`
       id
       name
       status
+      logoUrl
     }
   }
 `;
