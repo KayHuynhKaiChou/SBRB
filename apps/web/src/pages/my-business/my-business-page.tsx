@@ -1,16 +1,5 @@
 import React from 'react';
-import {
-  Layout,
-  Card,
-  Form,
-  Button,
-  Tag,
-  Typography,
-  Spin,
-  Empty,
-  Alert,
-  message,
-} from 'antd';
+import { Card, Form, Button, Tag, Typography, Spin, Empty, Alert, message } from 'antd';
 import { useQuery, useMutation } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
 import {
@@ -19,7 +8,6 @@ import {
   BUSINESS_STATUS_TAG_COLOR,
   type TBusinessStatus,
 } from '@sbrb/shared-constants';
-import { Sidebar } from '../../components/layout/sidebar';
 import { useAuthStore } from '../../store/auth.store';
 import {
   MY_BUSINESS_DETAIL_QUERY,
@@ -176,12 +164,5 @@ export default function MyBusinessPage() {
     );
   };
 
-  return (
-    <Layout className="!min-h-screen">
-      <Sidebar />
-      <Layout className="!ml-[60px]">
-        <div className="p-6 h-full overflow-y-auto">{renderBody()}</div>
-      </Layout>
-    </Layout>
-  );
+  return <div className="p-6 h-full overflow-y-auto">{renderBody()}</div>;
 }

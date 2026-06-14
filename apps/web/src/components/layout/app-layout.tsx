@@ -2,7 +2,6 @@ import React from 'react';
 import { Layout } from 'antd';
 import type { ITabDto } from '@sbrb/shared-types';
 import { Header } from './header';
-import { Sidebar } from './sidebar';
 
 const { Content } = Layout;
 
@@ -27,32 +26,25 @@ export function AppLayout({
   onDeleteTab,
   onAddWidget,
 }: IAppLayoutProps) {
+  // Sidebar + 60px offset are provided by the shared BusinessLayout; this only renders
+  // the dashboard's Header (tabs) + canvas Content, filling the layout's content area.
   return (
-    <Layout className="!h-screen !overflow-hidden">
-      {/* Fixed 60px sidebar */}
-      <Sidebar />
-
-      {/* Main area offset by sidebar width */}
-      <Layout
-        style={{ marginLeft: 'var(--sidebar-width)' }}
-        className="!flex !flex-col !h-screen !overflow-hidden"
+    <Layout className="!flex !flex-col !h-full !overflow-hidden">
+      <Header
+        tabs={tabs}
+        activeTabId={activeTabId}
+        onTabSelect={onTabSelect}
+        onAddTab={onAddTab}
+        onEditTab={onEditTab}
+        onDeleteTab={onDeleteTab}
+        onAddWidget={onAddWidget}
+      />
+      <Content
+        style={{ background: 'var(--canvas-bg)' }}
+        className="!flex-1 !overflow-hidden !flex !flex-col"
       >
-        <Header
-          tabs={tabs}
-          activeTabId={activeTabId}
-          onTabSelect={onTabSelect}
-          onAddTab={onAddTab}
-          onEditTab={onEditTab}
-          onDeleteTab={onDeleteTab}
-          onAddWidget={onAddWidget}
-        />
-        <Content
-          style={{ background: 'var(--canvas-bg)' }}
-          className="!flex-1 !overflow-hidden !flex !flex-col"
-        >
-          {children}
-        </Content>
-      </Layout>
+        {children}
+      </Content>
     </Layout>
   );
 }

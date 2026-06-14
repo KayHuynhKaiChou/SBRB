@@ -11,6 +11,7 @@ import { BUSINESS_QUERY } from '../../graphql/business.operations';
 import { useQuery } from '@apollo/client';
 import { BusinessInactivePage } from '../../pages/business-inactive/business-inactive-page';
 import { BusinessPendingPage } from '../../pages/business-pending/business-pending-page';
+import { BusinessLayout } from '../layout/business-layout';
 
 interface IBusinessData {
   business: {
@@ -77,8 +78,8 @@ export function BusinessGuard() {
     if (!allowed) {
       return <BusinessPendingPage business={business} />;
     }
-    return <Outlet />;
   }
 
-  return <Outlet />;
+  // Approved (or the allowed pending/rejected surfaces) → persistent shell with shared sidebar.
+  return <BusinessLayout />;
 }

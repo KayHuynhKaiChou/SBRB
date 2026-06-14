@@ -1,9 +1,8 @@
 import React, { useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Layout, Button, Typography, Skeleton, Alert, Space, Result } from 'antd';
+import { Button, Typography, Skeleton, Alert, Space, Result } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { Sidebar } from '../../components/layout/sidebar';
 import { DataTable } from '../../components/datasheet/data-table';
 import { DepartmentDataTable } from '../../components/datasheet/department-data-table';
 import { TableToolbar } from '../../components/datasheet/table-toolbar';
@@ -163,11 +162,8 @@ export default function DataSheetDetailPage() {
   const isDepartmentTemplate = sheet?.templateType === 'department';
 
   return (
-    <Layout className="!min-h-screen">
-      <Sidebar />
-      <Layout className="!ml-[60px]">
-        <div className="p-6 h-full overflow-y-auto">
-          <div className="flex items-center gap-3 mb-4">
+    <div className="p-6 h-full overflow-y-auto">
+      <div className="flex items-center gap-3 mb-4">
             <Button
               icon={<ArrowLeftOutlined />}
               type="text"
@@ -232,7 +228,5 @@ export default function DataSheetDetailPage() {
             )}
           </Space>
         </div>
-      </Layout>
-    </Layout>
   );
 }

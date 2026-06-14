@@ -1,4 +1,4 @@
-import { Layout, Spin, Typography, message } from 'antd';
+import { Spin, Typography, message } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useMutation, useQuery } from '@apollo/client';
 import {
@@ -14,7 +14,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { IconButton } from '@sbrb/ui';
-import { Sidebar } from '../../components/layout/sidebar';
 import { AddDepartmentModal, type IParentOption } from '../../components/department/add-department-modal';
 import { AddMemberModal } from '../../components/department/add-member-modal';
 import { DepartmentModal } from '../../components/department/department-modal';
@@ -172,10 +171,8 @@ export default function DepartmentPage() {
   if (!currentBusinessId) return <Navigate to="/onboarding" replace />;
 
   return (
-    <Layout className="!min-h-screen">
-      <Sidebar />
-      <Layout className="!ml-[60px]">
-        <div className="flex flex-col h-screen">
+    <>
+      <div className="flex flex-col h-screen">
           <div className="flex justify-between items-center p-4 border-b bg-white">
             <Title level={4} className="!m-0">
               {businessName
@@ -243,7 +240,6 @@ export default function DepartmentPage() {
           departmentId={addMemberFor}
           onClose={handleCloseAddMember}
         />
-      </Layout>
-    </Layout>
+    </>
   );
 }

@@ -10,11 +10,9 @@ import {
   Tag,
   Tooltip,
   Empty,
-  Layout,
   Avatar,
   Badge,
 } from 'antd';
-import { Sidebar } from '../../components/layout/sidebar';
 import {
   PlusOutlined,
   DownloadOutlined,
@@ -318,9 +316,6 @@ export default function DataSheetListPage() {
   ];
 
   return (
-    <Layout className="!min-h-screen">
-      <Sidebar />
-      <Layout className="!ml-[60px]">
     <div className="p-6 h-full overflow-y-auto">
       <div className="flex justify-between items-center mb-4">
         <Title level={4} className="!m-0">
@@ -405,7 +400,5 @@ export default function DataSheetListPage() {
         }}
       />
     </div>
-      </Layout>
-    </Layout>
   );
 }
