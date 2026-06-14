@@ -89,8 +89,9 @@ export function Header({
       <div className="flex items-center gap-1.5 shrink-0">
         <IconButton
           icon={<PlusOutlined />}
-          tooltip={t('dashboard:add_widget')}
+          tooltip={activeTabId ? t('dashboard:add_widget') : t('dashboard:add_widget_no_tab')}
           size="small"
+          disabled={!activeTabId}
           onClick={onAddWidget}
         />
 

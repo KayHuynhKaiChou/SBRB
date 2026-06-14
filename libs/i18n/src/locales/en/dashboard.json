@@ -15,5 +15,6 @@
   "add_tab_tooltip": "Add new tab",
   "snap_grid_on": "Snap grid: On (Alt)",
   "snap_grid_off": "Snap grid: Off (Alt)",
-  "no_tabs_message": "No tabs yet. Create a new tab to get started."
+  "no_tabs_message": "No tabs yet. Create a new tab to get started.",
+  "add_widget_no_tab": "Create a tab first to add widgets"
 }
