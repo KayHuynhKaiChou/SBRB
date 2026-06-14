@@ -1,16 +1,17 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Notification } from './entities/notification.entity';
+import { User } from '../auth/entities/user.entity';
+import { NotificationService } from './notification.service';
+import { NotificationResolver } from './notification.resolver';
 
 /**
- * Notification module — SRS 4.9
- * Handles: bell icon notifications (invite, import done, alert threshold),
- * mark read, delete
- * GraphQL: subscription for realtime new notification
+ * Notification module — bell notifications (business approval/change events).
+ * In-app, non-realtime: the FE polls myNotifications / myUnreadCount.
  */
 @Module({
-  imports: [TypeOrmModule.forFeature([Notification])],
-  // providers: [NotificationService, NotificationResolver],
-  // exports: [NotificationService],
+  imports: [TypeOrmModule.forFeature([Notification, User])],
+  providers: [NotificationService, NotificationResolver],
+  exports: [NotificationService],
 })
 export class NotificationModule {}
