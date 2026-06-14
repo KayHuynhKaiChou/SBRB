@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layout, Tooltip, Avatar, Badge } from 'antd';
+import { Layout, Tooltip, Avatar } from 'antd';
 import { useHover } from '@uidotdev/usehooks';
 import {
   AppstoreOutlined,
@@ -9,20 +9,29 @@ import {
   MessageOutlined,
   DatabaseOutlined,
   SettingOutlined,
-  BellOutlined,
+  ShopOutlined,
   UserOutlined,
+  LogoutOutlined,
 } from '@ant-design/icons';
+import { NotificationBell } from '../notification/notification-bell';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useQuery } from '@apollo/client';
+import { useAuth } from '../../hooks/use-auth';
 import {
   SIDEBAR_BG,
   SIDEBAR_ICON_ACTIVE_BG,
   SIDEBAR_ICON_ACTIVE_COLOR,
   SIDEBAR_ICON_COLOR,
   SIDEBAR_ICON_HOVER_BG,
+  EBusinessStatus,
 } from '@sbrb/shared-constants';
 import { useAuthStore } from '../../store/auth.store';
+import { BUSINESS_QUERY } from '../../graphql/business.operations';
 
 const { Sider } = Layout;
+
+/** Nav key that stays usable while the business is awaiting/has failed approval. */
+const APPROVAL_UNLOCKED_KEY = 'my-business';
 
 interface INavIconProps {
   icon: React.ReactNode;
@@ -30,6 +39,8 @@ interface INavIconProps {
   active?: boolean;
   onClick: () => void;
   disabled?: boolean;
+  /** Text shown in parentheses when disabled. Default: "sắp ra mắt". */
+  disabledHint?: string;
 }
 
 interface INavItem {
@@ -43,14 +54,14 @@ interface INavItem {
   disabled?: boolean;
 }
 
-function NavIcon({ icon, label, active, onClick, disabled }: INavIconProps) {
+function NavIcon({ icon, label, active, onClick, disabled, disabledHint }: INavIconProps) {
   const [hoverRef, hovered] = useHover<HTMLDivElement>();
 
   const bg = active ? SIDEBAR_ICON_ACTIVE_BG : hovered && !disabled ? SIDEBAR_ICON_HOVER_BG : 'transparent';
   const color = active ? SIDEBAR_ICON_ACTIVE_COLOR : SIDEBAR_ICON_COLOR;
 
   return (
-    <Tooltip title={disabled ? `${label} (sắp ra mắt)` : label} placement="right">
+    <Tooltip title={disabled ? `${label} (${disabledHint ?? 'sắp ra mắt'})` : label} placement="right">
       <div
         ref={hoverRef}
         onClick={disabled ? undefined : onClick}
@@ -73,6 +84,18 @@ export function BusinessSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, currentBusinessId } = useAuthStore();
+  const { logout } = useAuth();
+
+  // Reuse the BusinessGuard's cached fetch — when the business isn't approved yet,
+  // every feature menu is locked except "My Business" (the only place to fix/resubmit).
+  const { data: bizData } = useQuery(BUSINESS_QUERY, {
+    variables: { id: currentBusinessId ?? '' },
+    skip: !currentBusinessId,
+    fetchPolicy: 'cache-first',
+  });
+  const notApproved =
+    !!bizData?.business &&
+    bizData.business.status !== EBusinessStatus.APPROVED;
 
   // Data-driven nav config — thêm menu mới chỉ cần thêm 1 entry vào mảng này.
   const navItems: INavItem[] = [
@@ -85,6 +108,7 @@ export function BusinessSidebar() {
     },
     { key: 'data-sheets', icon: <TableOutlined />, label: 'Dữ liệu', path: '/data-sheets' },
     { key: 'departments', icon: <ApartmentOutlined />, label: 'Phòng ban', path: '/departments' },
+    { key: 'my-business', icon: <ShopOutlined />, label: 'Doanh nghiệp', path: '/my-business' },
     { key: 'benchmark', icon: <BarChartOutlined />, label: 'Benchmark', disabled: true },
     { key: 'talk-room', icon: <MessageOutlined />, label: 'Talk Room', disabled: true },
     { key: 'data-box', icon: <DatabaseOutlined />, label: 'Data Box', disabled: true },
@@ -108,31 +132,28 @@ export function BusinessSidebar() {
 
       {/* Top nav icons */}
       <div className="flex-1 pt-2 flex flex-col gap-0">
-        {navItems.map((item) => (
-          <NavIcon
-            key={item.key}
-            icon={item.icon}
-            label={item.label}
-            disabled={item.disabled}
-            active={!item.disabled && !!item.path && location.pathname.startsWith(item.path)}
-            onClick={() => item.path && navigate(item.to ?? item.path)}
-          />
-        ))}
+        {navItems.map((item) => {
+          // Pending/rejected business → lock everything except My Business.
+          const lockedByApproval = notApproved && item.key !== APPROVAL_UNLOCKED_KEY;
+          const disabled = item.disabled || lockedByApproval;
+          return (
+            <NavIcon
+              key={item.key}
+              icon={item.icon}
+              label={item.label}
+              disabled={disabled}
+              disabledHint={lockedByApproval ? 'chờ duyệt doanh nghiệp' : undefined}
+              active={!disabled && !!item.path && location.pathname.startsWith(item.path)}
+              onClick={() => item.path && navigate(item.to ?? item.path)}
+            />
+          );
+        })}
       </div>
 
       {/* Bottom icons: settings, bell, avatar */}
       <div className="border-t border-white/[0.08] py-2 flex flex-col items-center gap-1">
         <NavIcon icon={<SettingOutlined />} label="Cài đặt" active={false} disabled onClick={() => undefined} />
-        <Tooltip title="Thông báo" placement="right">
-          <div
-            style={{ color: SIDEBAR_ICON_COLOR }}
-            className="w-11 h-11 rounded-[10px] flex items-center justify-center cursor-pointer mx-2 my-0.5 text-lg"
-          >
-            <Badge dot offset={[2, -2]}>
-              <BellOutlined style={{ color: SIDEBAR_ICON_COLOR, fontSize: 18 }} />
-            </Badge>
-          </div>
-        </Tooltip>
+        <NotificationBell />
         <Tooltip title={user?.fullName ?? user?.email ?? 'Profile'} placement="right">
           <div
             onClick={() => navigate('/profile')}
@@ -149,6 +170,15 @@ export function BusinessSidebar() {
               icon={!user?.avatarUrl ? <UserOutlined /> : undefined}
               style={{ background: 'var(--sbrb-accent-coral)' }}
             />
+          </div>
+        </Tooltip>
+        <Tooltip title="Đăng xuất" placement="right">
+          <div
+            onClick={logout}
+            style={{ color: SIDEBAR_ICON_COLOR }}
+            className="w-11 h-11 rounded-[10px] flex items-center justify-center text-lg mx-2 my-0.5 cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            <LogoutOutlined />
           </div>
         </Tooltip>
       </div>

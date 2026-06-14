@@ -2,13 +2,12 @@ import { Layout, Spin, Typography } from 'antd';
 import { Navigate } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
-import { EBusinessRole } from '@sbrb/shared-constants';
 import type { IProfileQueryData, IProfileQueryVars } from '@sbrb/shared-types';
 import { Sidebar } from '../../components/layout/sidebar';
 import { useAuthStore } from '../../store/auth.store';
 import { PROFILE_QUERY } from '../../graphql/profile.operations';
 import { PersonalInfoCard } from '../../components/profile/personal-info-card';
-import { BusinessInfoCard } from '../../components/profile/business-info-card';
+// Business info now lives in the dedicated "My Business" page (all changes admin-gated).
 import { SecurityCard } from '../../components/profile/security-card';
 
 const { Title } = Typography;
@@ -39,12 +38,6 @@ export default function ProfilePage() {
                 {t('title', 'Profile')}
               </Title>
               <PersonalInfoCard user={data.me} role={data.myMembership?.role} />
-              {data.myMembership?.role === EBusinessRole.OWNER && data.business && (
-                <BusinessInfoCard
-                  business={data.business}
-                  joinedAt={data.myMembership?.joinedAt}
-                />
-              )}
               <SecurityCard />
             </div>
           )}

@@ -1,6 +1,6 @@
 import { Field, ID, Int, ObjectType } from '@nestjs/graphql';
 
-/** GraphQL return type for Business */
+/** GraphQL return type for Business (incl. approval + KYB profile). */
 @ObjectType()
 export class BusinessType {
   @Field(() => ID)
@@ -33,6 +33,7 @@ export class BusinessType {
   @Field(() => String)
   ownerId: string;
 
+  /** Unified lifecycle: pending | approved | rejected | inactive. */
   @Field(() => String)
   status: string;
 
@@ -41,6 +42,53 @@ export class BusinessType {
 
   @Field(() => String, { nullable: true })
   inactiveReason?: string | null;
+
+  // ===== Approval / verification metadata =====
+  @Field(() => String, { nullable: true })
+  rejectionReason?: string | null;
+
+  @Field(() => Date, { nullable: true })
+  approvedAt?: Date | null;
+
+  @Field(() => Date, { nullable: true })
+  rejectedAt?: Date | null;
+
+  // ===== KYB profile =====
+  @Field(() => String, { nullable: true })
+  legalName?: string | null;
+
+  @Field(() => String, { nullable: true })
+  taxCode?: string | null;
+
+  @Field(() => String, { nullable: true })
+  businessType?: string | null;
+
+  @Field(() => String, { nullable: true })
+  address?: string | null;
+
+  @Field(() => String, { nullable: true })
+  contactPhone?: string | null;
+
+  @Field(() => String, { nullable: true })
+  contactEmail?: string | null;
+
+  @Field(() => String, { nullable: true })
+  website?: string | null;
+
+  @Field(() => String, { nullable: true })
+  description?: string | null;
+
+  @Field(() => String, { nullable: true })
+  bannerUrl?: string | null;
+
+  @Field(() => String, { nullable: true })
+  licenseFileUrl?: string | null;
+
+  @Field(() => Int, { nullable: true })
+  foundedYear?: number | null;
+
+  @Field(() => String, { nullable: true })
+  companySize?: string | null;
 
   @Field(() => Date)
   createdAt: Date;

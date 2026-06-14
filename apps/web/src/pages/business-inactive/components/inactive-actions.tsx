@@ -33,7 +33,7 @@ export function InactiveActions({ currentBusinessId }: IInactiveActionsProps) {
   });
 
   const activeOthers = (data?.myBusinesses ?? []).filter(
-    (b) => b.id !== currentBusinessId && b.status === EBusinessStatus.ACTIVE,
+    (b) => b.id !== currentBusinessId && b.status === EBusinessStatus.APPROVED,
   );
 
   const switchItems: MenuProps['items'] = activeOthers.map((b) => ({

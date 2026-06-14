@@ -14,10 +14,8 @@ import type {
   IUpdateBusinessData,
   IUpdateBusinessVars,
 } from '@sbrb/shared-types';
-import {
-  GET_LOGO_UPLOAD_URL_MUTATION,
-  UPDATE_BUSINESS_MUTATION,
-} from '../../graphql/profile.operations';
+import { GET_LOGO_UPLOAD_URL_MUTATION } from '../../graphql/profile.operations';
+import { UPDATE_BUSINESS_MUTATION } from '../../graphql/business.operations';
 import { uploadToSignedUrl } from '../../lib/supabase-upload';
 
 interface IBusinessInfoCardProps {

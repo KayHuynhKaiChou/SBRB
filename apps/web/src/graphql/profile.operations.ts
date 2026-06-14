@@ -100,15 +100,7 @@ export const GET_LOGO_UPLOAD_URL_MUTATION = gql`
   }
 `;
 
-/** Returns updated Business — Apollo auto-merges by `id` into normalized cache. */
-export const UPDATE_BUSINESS_MUTATION = gql`
-  mutation UpdateBusiness($id: ID!, $input: UpdateBusinessDto!) {
-    updateBusiness(id: $id, input: $input) {
-      id
-      name
-      industry
-      currency
-      logoUrl
-    }
-  }
-`;
+// UPDATE_BUSINESS_MUTATION is defined in graphql/business.operations.ts (single source
+// of truth — avoids duplicate Apollo operation name "UpdateBusiness"). Re-exported here
+// for existing importers (e.g. profile business-info-card).
+export { UPDATE_BUSINESS_MUTATION } from './business.operations';

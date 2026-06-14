@@ -5,8 +5,10 @@ import { DepartmentMember } from '../department/entities/department-member.entit
 import { Business } from './entities/business.entity';
 import { BusinessMember } from './entities/business-member.entity';
 import { BusinessInvitation } from './entities/business-invitation.entity';
+import { BusinessChangeRequest } from './entities/business-change-request.entity';
 import { BusinessCrudService } from './business-crud.service';
 import { BusinessOwnershipService } from './business-ownership.service';
+import { BusinessChangeRequestService } from './business-change-request.service';
 import { BusinessService } from './business.service';
 import { BusinessResolver } from './business.resolver';
 import { BusinessController } from './business.controller';
@@ -18,6 +20,7 @@ import { MailModule } from '../mail/mail.module';
 import { MinioModule } from '../minio/minio.module';
 import { AuditModule } from '../audit/audit.module';
 import { UserModule } from '../user/user.module';
+import { NotificationModule } from '../notification/notification.module';
 
 /**
  * Business module — SRS 4.2
@@ -26,15 +29,25 @@ import { UserModule } from '../user/user.module';
  */
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Business, BusinessMember, BusinessInvitation, User, Department, DepartmentMember]),
+    TypeOrmModule.forFeature([
+      Business,
+      BusinessMember,
+      BusinessInvitation,
+      BusinessChangeRequest,
+      User,
+      Department,
+      DepartmentMember,
+    ]),
     MailModule,
     MinioModule,
     AuditModule,
     UserModule,
+    NotificationModule,
   ],
   providers: [
     BusinessCrudService,
     BusinessOwnershipService,
+    BusinessChangeRequestService,
     BusinessService,
     BusinessResolver,
     MemberService,
@@ -42,6 +55,13 @@ import { UserModule } from '../user/user.module';
     InvitationService,
   ],
   controllers: [BusinessController],
-  exports: [BusinessService, BusinessCrudService, BusinessOwnershipService, MemberService, InvitationService],
+  exports: [
+    BusinessService,
+    BusinessCrudService,
+    BusinessOwnershipService,
+    BusinessChangeRequestService,
+    MemberService,
+    InvitationService,
+  ],
 })
 export class BusinessModule {}

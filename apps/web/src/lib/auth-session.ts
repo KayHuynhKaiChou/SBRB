@@ -131,8 +131,8 @@ export function createAuthSession({ apolloClient }: IAuthSessionDeps): IAuthSess
       const match = businesses.find((b) => b.id === currentId);
       if (match) return match;
     }
-    // Prefer first active business; fall back to any business (guard handles inactive state)
-    return businesses.find((b) => b.status === EBusinessStatus.ACTIVE) ?? businesses[0] ?? null;
+    // Prefer first approved (usable) business; fall back to any (guard handles pending/inactive)
+    return businesses.find((b) => b.status === EBusinessStatus.APPROVED) ?? businesses[0] ?? null;
   }
 
   async function doBootstrap(): Promise<void> {

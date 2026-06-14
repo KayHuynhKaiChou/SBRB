@@ -1,16 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { BusinessCrudService } from './business-crud.service';
 import { BusinessOwnershipService } from './business-ownership.service';
+import { BusinessChangeRequestService } from './business-change-request.service';
 import { CreateBusinessDto } from './dto/create-business.dto';
 import { UpdateBusinessDto } from './dto/update-business.dto';
 import { Business } from './entities/business.entity';
+import { BusinessChangeRequest } from './entities/business-change-request.entity';
 
-/** Facade — delegates to BusinessCrudService and BusinessOwnershipService */
+/** Facade — delegates to CRUD, ownership and change-request services. */
 @Injectable()
 export class BusinessService {
   constructor(
     private readonly crudService: BusinessCrudService,
     private readonly ownershipService: BusinessOwnershipService,
+    private readonly changeRequestService: BusinessChangeRequestService,
   ) {}
 
   create(userId: string, dto: CreateBusinessDto): Promise<Business> {
@@ -29,11 +32,31 @@ export class BusinessService {
     return this.crudService.update(id, userId, dto);
   }
 
+  submitForReview(id: string, userId: string): Promise<Business> {
+    return this.crudService.submitForReview(id, userId);
+  }
+
   delete(id: string, userId: string, confirmName: string): Promise<void> {
     return this.crudService.delete(id, userId, confirmName);
   }
 
   transferOwnership(id: string, ownerId: string, newOwnerId: string): Promise<void> {
     return this.ownershipService.transferOwnership(id, ownerId, newOwnerId);
+  }
+
+  // ===== Change-requests (approved business edits) =====
+  requestChange(
+    id: string,
+    userId: string,
+    dto: UpdateBusinessDto,
+  ): Promise<BusinessChangeRequest> {
+    return this.changeRequestService.requestChange(id, userId, dto);
+  }
+
+  getOpenChangeRequest(
+    id: string,
+    userId: string,
+  ): Promise<BusinessChangeRequest | null> {
+    return this.changeRequestService.getOpenRequest(id, userId);
   }
 }
