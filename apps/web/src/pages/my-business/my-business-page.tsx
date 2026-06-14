@@ -25,7 +25,6 @@ import {
   MY_BUSINESS_DETAIL_QUERY,
   MY_OPEN_CHANGE_REQUEST_QUERY,
   UPDATE_BUSINESS_MUTATION,
-  SUBMIT_BUSINESS_FOR_REVIEW_MUTATION,
   REQUEST_BUSINESS_CHANGE_MUTATION,
 } from '../../graphql/business.operations';
 import { BusinessKybFields } from '../../components/business/business-kyb-fields';
@@ -65,7 +64,6 @@ export default function MyBusinessPage() {
   });
 
   const [updateBusiness, { loading: updating }] = useMutation(UPDATE_BUSINESS_MUTATION);
-  const [submitForReview, { loading: submitting }] = useMutation(SUBMIT_BUSINESS_FOR_REVIEW_MUTATION);
   const [requestChange, { loading: requesting }] = useMutation(REQUEST_BUSINESS_CHANGE_MUTATION);
 
   const renderBody = () => {
@@ -89,16 +87,18 @@ export default function MyBusinessPage() {
 
     // Only the owner edits. An open change-request locks the form until admin acts.
     const canEdit = isOwner && !openChange;
-    const saving = updating || submitting || requesting;
+    const saving = updating || requesting;
 
-    const statusLabel = isApproved
-      ? t('status_approved')
-      : isRejected
-        ? t('status_rejected')
-        : status === EBusinessStatus.INACTIVE
-          ? t('status_inactive')
-          : t('status_pending');
+    const STATUS_LABEL_KEY: Record<TBusinessStatus, string> = {
+      [EBusinessStatus.PENDING]: 'status_pending',
+      [EBusinessStatus.APPROVED]: 'status_approved',
+      [EBusinessStatus.REJECTED]: 'status_rejected',
+      [EBusinessStatus.RESUBMITTED]: 'status_resubmitted',
+      [EBusinessStatus.INACTIVE]: 'status_inactive',
+    };
+    const statusLabel = t(STATUS_LABEL_KEY[status] ?? 'status_pending');
 
+    // Rejected → saving counts as "fix & resubmit" (BE flips it to resubmitted).
     const submitLabel = isRejected ? t('my_business_resubmit') : t('my_business_save');
 
     const handleSubmit = async (values: Record<string, unknown>) => {
@@ -110,8 +110,8 @@ export default function MyBusinessPage() {
           void message.success(t('my_business_change_submitted'));
           await refetchCr();
         } else {
+          // Pending/resubmitted → live edit. Rejected → BE auto-moves to resubmitted.
           await updateBusiness({ variables: { id: businessId, input } });
-          if (isRejected) await submitForReview({ variables: { id: businessId } });
           void message.success(t('my_business_save_success'));
           await refetch();
         }

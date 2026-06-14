@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Drawer, Descriptions, Avatar, Button, Space, Spin, Typography, Tag, Image, Form, Input } from 'antd';
+import { Drawer, Descriptions, Avatar, Button, Space, Spin, Typography, Tag, Image, Form, Input, Alert } from 'antd';
 import { RiFileTextLine } from 'react-icons/ri';
 import { useTranslation } from 'react-i18next';
 import { FormModal } from '@sbrb/ui';
@@ -53,6 +53,7 @@ export function BusinessReviewDrawer({
     if (!detail || !status) return null;
     switch (status) {
       case EBusinessStatus.PENDING:
+      case EBusinessStatus.RESUBMITTED:
         return (
           <Space className="!w-full !justify-end">
             <Button danger onClick={() => setRejectOpen(true)} loading={rejectLoading}>
@@ -68,19 +69,9 @@ export function BusinessReviewDrawer({
             </Button>
           </Space>
         );
+      // Rejected → NO actions: the owner must amend it first (→ resubmitted) before re-review.
       case EBusinessStatus.REJECTED:
-        return (
-          <Space className="!w-full !justify-end">
-            <Button
-              type="primary"
-              onClick={() => onApprove(detail.id)}
-              loading={approveLoading}
-              className="!bg-[#D72A44] !border-[#D72A44]"
-            >
-              {t('action_approve')}
-            </Button>
-          </Space>
-        );
+        return null;
       case EBusinessStatus.APPROVED:
         return (
           <Space className="!w-full !justify-end">
@@ -123,6 +114,9 @@ export function BusinessReviewDrawer({
           </div>
         ) : detail ? (
           <div className="flex flex-col gap-5">
+            {status === EBusinessStatus.REJECTED && (
+              <Alert type="warning" showIcon message={t('review_rejected_waiting')} />
+            )}
             {detail.bannerUrl && (
               <Image src={detail.bannerUrl} alt="banner" className="!rounded-lg !object-cover" height={120} />
             )}

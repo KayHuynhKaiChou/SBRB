@@ -94,5 +94,6 @@
   "status_pending": "Chờ duyệt",
   "status_approved": "Đã duyệt",
   "status_rejected": "Bị từ chối",
-  "status_inactive": "Ngừng hoạt động"
+  "status_inactive": "Ngừng hoạt động",
+  "status_resubmitted": "Đã gửi lại"
 }

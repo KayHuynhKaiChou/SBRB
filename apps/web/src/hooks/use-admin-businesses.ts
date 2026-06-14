@@ -31,7 +31,7 @@ interface IAdminBusinessesQueryResult {
 
 interface IAdminBusinessesFilter {
   search?: string;
-  status?: 'pending' | 'approved' | 'rejected' | 'inactive';
+  status?: 'pending' | 'approved' | 'rejected' | 'resubmitted' | 'inactive';
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }

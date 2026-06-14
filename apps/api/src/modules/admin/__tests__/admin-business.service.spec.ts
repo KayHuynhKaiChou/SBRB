@@ -243,6 +243,25 @@ describe('AdminBusinessService', () => {
       await expect(service.approveBusiness('biz-1', 'admin')).rejects.toThrow(ConflictException);
     });
 
+    it('throws ConflictException when rejected (owner must amend first)', async () => {
+      const { service, businessRepo } = buildService();
+      businessRepo.findOne.mockResolvedValue(mockBusiness({ status: 'rejected' }));
+      await expect(service.approveBusiness('biz-1', 'admin')).rejects.toThrow(ConflictException);
+    });
+
+    it('approves a resubmitted business', async () => {
+      const { service, businessRepo } = buildService();
+      businessRepo.findOne.mockResolvedValue(mockBusiness({ status: 'resubmitted', ownerId: 'owner-1' }));
+      businessRepo.createQueryBuilder.mockReturnValue(buildQbChain());
+
+      await service.approveBusiness('biz-1', 'admin');
+
+      expect(businessRepo.update).toHaveBeenCalledWith(
+        'biz-1',
+        expect.objectContaining({ status: 'approved' }),
+      );
+    });
+
     it('sets approved status + notifies owner', async () => {
       const { service, businessRepo, notificationService } = buildService();
       businessRepo.findOne.mockResolvedValue(mockBusiness({ status: 'pending', ownerId: 'owner-1' }));
@@ -282,6 +301,19 @@ describe('AdminBusinessService', () => {
       expect(notificationService.notifyUser).toHaveBeenCalledWith(
         'owner-1',
         expect.objectContaining({ type: 'business.rejected' }),
+      );
+    });
+
+    it('rejects a resubmitted business', async () => {
+      const { service, businessRepo } = buildService();
+      businessRepo.findOne.mockResolvedValue(mockBusiness({ status: 'resubmitted', ownerId: 'owner-1' }));
+      businessRepo.createQueryBuilder.mockReturnValue(buildQbChain());
+
+      await service.rejectBusiness('biz-1', 'admin', 'still missing license');
+
+      expect(businessRepo.update).toHaveBeenCalledWith(
+        'biz-1',
+        expect.objectContaining({ status: 'rejected' }),
       );
     });
   });

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Input, Select, Typography, Segmented } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
+import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { EBusinessStatus, type TBusinessStatus } from '@sbrb/shared-constants';
 import { AdminLayout } from '../../components/layout/admin-layout';
@@ -20,7 +21,8 @@ type TTab = 'businesses' | 'changes';
 /** Admin page for managing all platform businesses. SRS §5.12, §5.14 + approval review. */
 export default function AdminBusinessesPage() {
   const { t } = useTranslation('admin');
-  const [tab, setTab] = useState<TTab>('businesses');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [tab, setTab] = useState<TTab>(searchParams.get('tab') === 'changes' ? 'changes' : 'businesses');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<TBusinessStatus | undefined>(undefined);
@@ -34,6 +36,21 @@ export default function AdminBusinessesPage() {
   // Review drawer state
   const [reviewBizId, setReviewBizId] = useState<string | null>(null);
   const [reviewOpen, setReviewOpen] = useState(false);
+
+  // Deep-link from a notification: ?review=<businessId> opens the review drawer; ?tab=changes
+  // selects the change-requests tab. Consume the params once so refresh/close behaves normally.
+  useEffect(() => {
+    const reviewId = searchParams.get('review');
+    if (reviewId) {
+      setReviewBizId(reviewId);
+      setReviewOpen(true);
+    }
+    if (searchParams.get('review') || searchParams.get('tab')) {
+      setSearchParams({}, { replace: true });
+    }
+    // run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Debounce search input — avoids query on every keystroke
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -142,6 +159,7 @@ export default function AdminBusinessesPage() {
               allowClear
               options={[
                 { label: t('status_pending'), value: EBusinessStatus.PENDING },
+                { label: t('status_resubmitted'), value: EBusinessStatus.RESUBMITTED },
                 { label: t('status_approved'), value: EBusinessStatus.APPROVED },
                 { label: t('status_rejected'), value: EBusinessStatus.REJECTED },
                 { label: t('status_inactive'), value: EBusinessStatus.INACTIVE },

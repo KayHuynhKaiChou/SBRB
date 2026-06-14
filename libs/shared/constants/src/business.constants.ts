@@ -10,6 +10,8 @@ export enum EBusinessStatus {
   PENDING = 'pending',
   APPROVED = 'approved',
   REJECTED = 'rejected',
+  /** Owner amended a rejected business (fixed the admin's reason) → awaits re-review. */
+  RESUBMITTED = 'resubmitted',
   INACTIVE = 'inactive',
 }
 
@@ -21,6 +23,7 @@ export const BUSINESS_STATUS_TAG_COLOR: Record<TBusinessStatus, string> = {
   [EBusinessStatus.PENDING]: 'gold',
   [EBusinessStatus.APPROVED]: 'green',
   [EBusinessStatus.REJECTED]: 'red',
+  [EBusinessStatus.RESUBMITTED]: 'cyan',
   [EBusinessStatus.INACTIVE]: 'default',
 };
 

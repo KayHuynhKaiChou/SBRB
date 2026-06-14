@@ -16,6 +16,7 @@ const STATUS_LABEL_KEY: Record<TBusinessStatus, string> = {
   [EBusinessStatus.PENDING]: 'status_pending',
   [EBusinessStatus.APPROVED]: 'status_approved',
   [EBusinessStatus.REJECTED]: 'status_rejected',
+  [EBusinessStatus.RESUBMITTED]: 'status_resubmitted',
   [EBusinessStatus.INACTIVE]: 'status_inactive',
 };
 

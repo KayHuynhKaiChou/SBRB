@@ -189,6 +189,8 @@ export class AdminBusinessService {
       this.logger.warn(`Audit log failed for inactivateBusiness(${id}): ${(err as Error).message}`);
     }
 
+    this.safeNotifyOwner(business, ENotificationType.BUSINESS_INACTIVATED, reason);
+
     return this.fetchRow(id);
   }
 
@@ -222,6 +224,8 @@ export class AdminBusinessService {
     } catch (err) {
       this.logger.warn(`Audit log failed for reactivateBusiness(${id}): ${(err as Error).message}`);
     }
+
+    this.safeNotifyOwner(business, ENotificationType.BUSINESS_REACTIVATED);
 
     return this.fetchRow(id);
   }
@@ -445,11 +449,13 @@ export class AdminBusinessService {
   async approveBusiness(id: string, adminId: string): Promise<AdminBusinessRowType> {
     const business = await this.businessRepo.findOne({ where: { id } });
     if (!business) throw new NotFoundException(`Business ${id} not found`);
-    if (business.status === EBusinessStatus.APPROVED) {
-      throw new ConflictException('Business is already approved');
-    }
-    if (business.status === EBusinessStatus.INACTIVE) {
-      throw new ConflictException('Use reactivate for an inactive business');
+    // A rejected business CANNOT be approved directly — the owner must amend it first
+    // (which moves it to `resubmitted`). Only pending/resubmitted are approvable.
+    if (
+      business.status !== EBusinessStatus.PENDING &&
+      business.status !== EBusinessStatus.RESUBMITTED
+    ) {
+      throw new ConflictException('Only a pending or resubmitted business can be approved');
     }
 
     await this.businessRepo.update(id, {
@@ -478,8 +484,11 @@ export class AdminBusinessService {
     }
     const business = await this.businessRepo.findOne({ where: { id } });
     if (!business) throw new NotFoundException(`Business ${id} not found`);
-    if (business.status !== EBusinessStatus.PENDING) {
-      throw new ConflictException('Only a pending business can be rejected');
+    if (
+      business.status !== EBusinessStatus.PENDING &&
+      business.status !== EBusinessStatus.RESUBMITTED
+    ) {
+      throw new ConflictException('Only a pending or resubmitted business can be rejected');
     }
 
     await this.businessRepo.update(id, {

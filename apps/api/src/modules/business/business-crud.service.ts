@@ -63,18 +63,16 @@ export class BusinessCrudService {
     private readonly notificationService: NotificationService,
   ) {}
 
-  /** Notify all platform admins a business is awaiting review (non-blocking). */
-  private notifyAdminsPending(business: Business): void {
+  /** Notify all platform admins about a business event (submitted / resubmitted), non-blocking. */
+  private notifyAdmins(business: Business, type: ENotificationType): void {
     void this.notificationService
       .notifyAdmins(
-        buildBusinessNotification(ENotificationType.BUSINESS_SUBMITTED, {
+        buildBusinessNotification(type, {
           businessId: business.id,
           businessName: business.name,
         }),
       )
-      .catch((err: Error) =>
-        this.logger.warn(`notifyAdmins(submitted) failed: ${err.message}`),
-      );
+      .catch((err: Error) => this.logger.warn(`notifyAdmins(${type}) failed: ${err.message}`));
   }
 
   async create(userId: string, dto: CreateBusinessDto): Promise<Business> {
@@ -139,7 +137,7 @@ export class BusinessCrudService {
       targetName: saved.name,
     });
 
-    this.notifyAdminsPending(saved);
+    this.notifyAdmins(saved, ENotificationType.BUSINESS_SUBMITTED);
 
     return saved;
   }
@@ -187,9 +185,14 @@ export class BusinessCrudService {
       }
     }
 
+    // Owner editing a REJECTED business = "fixed the admin's reason" → moves to RESUBMITTED
+    // (awaits re-review). Other statuses keep their value (live edit while pending/resubmitted).
+    const wasRejected = business.status === EBusinessStatus.REJECTED;
+
     // ValidationPipe strips unknown keys + `exposeUnsetFields: false` keeps only
     // fields the client actually sent. Direct merge — DTO is already clean.
     Object.assign(business, dto);
+    if (wasRejected) business.status = EBusinessStatus.RESUBMITTED;
 
     const updated = await this.businessRepo.save(business);
 
@@ -201,6 +204,8 @@ export class BusinessCrudService {
       targetId: id,
       targetName: updated.name,
     });
+
+    if (wasRejected) this.notifyAdmins(updated, ENotificationType.BUSINESS_RESUBMITTED);
 
     return updated;
   }
@@ -229,7 +234,7 @@ export class BusinessCrudService {
     business.rejectionReason = null;
     const saved = await this.businessRepo.save(business);
 
-    this.notifyAdminsPending(saved);
+    this.notifyAdmins(saved, ENotificationType.BUSINESS_SUBMITTED);
 
     return saved;
   }

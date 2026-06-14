@@ -94,5 +94,6 @@
   "status_pending": "Pending",
   "status_approved": "Approved",
   "status_rejected": "Rejected",
-  "status_inactive": "Inactive"
+  "status_inactive": "Inactive",
+  "status_resubmitted": "Resubmitted"
 }

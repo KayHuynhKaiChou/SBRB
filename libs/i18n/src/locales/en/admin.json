@@ -133,5 +133,7 @@
   "audit_col_time": "Time",
   "status_pending": "Pending",
   "status_approved": "Approved",
-  "status_rejected": "Rejected"
+  "status_rejected": "Rejected",
+  "status_resubmitted": "Resubmitted",
+  "review_rejected_waiting": "Waiting for the owner to amend per the rejection reason."
 }

@@ -133,5 +133,7 @@
   "audit_col_time": "Thời gian",
   "status_pending": "Chờ duyệt",
   "status_approved": "Đã duyệt",
-  "status_rejected": "Bị từ chối"
+  "status_rejected": "Bị từ chối",
+  "status_resubmitted": "Đã gửi lại",
+  "review_rejected_waiting": "Đang chờ doanh nghiệp chỉnh sửa theo lý do từ chối."
 }
