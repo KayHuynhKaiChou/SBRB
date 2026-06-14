@@ -4,7 +4,6 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  Param,
   Post,
   Req,
   Res,
@@ -84,10 +83,10 @@ export class AuthController {
   }
 
   @Public()
-  @Get('verify-email/:token')
+  @Post('verify-otp')
   @HttpCode(HttpStatus.OK)
-  async verifyEmail(@Param('token') token: string) {
-    const result = await this.authService.verifyEmail(token);
+  async verifyEmailOtp(@Body('email') email: string, @Body('code') code: string) {
+    const result = await this.authService.verifyEmailOtp(email, code);
     return ok(result, 'Email verified', 'Xác thực email thành công');
   }
 

@@ -8,6 +8,9 @@ export const LOGIN_MAX_ATTEMPTS = 5;
 export const LOGIN_LOCKOUT_MINUTES = 15;
 export const EMAIL_VERIFY_LINK_EXPIRY_HOURS = 24;
 export const PASSWORD_RESET_EXPIRY_HOURS = 1;
+/** Email verification via 6-digit OTP code (entered in the signup wizard). */
+export const EMAIL_VERIFY_OTP_LENGTH = 6;
+export const EMAIL_VERIFY_OTP_EXPIRY_MINUTES = 15;
 
 // Business / Tab / Widget names
 export const WIDGET_NAME_MAX_LENGTH = 40;     // SRS 4.5

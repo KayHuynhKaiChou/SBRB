@@ -22,7 +22,9 @@ export class EmailVerification {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column({ type: 'varchar', length: 255, unique: true })
+  /** Holds the 6-digit OTP code. NOT unique — codes are scoped per user (userId + token). */
+  @Column({ type: 'varchar', length: 255 })
+  @Index()
   token: string;
 
   @Column({ name: 'expires_at', type: 'timestamptz' })

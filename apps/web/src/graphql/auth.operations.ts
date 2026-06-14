@@ -49,21 +49,14 @@ export const RESET_PASSWORD_MUTATION = gql`
   }
 `;
 
-export const VERIFY_EMAIL_MUTATION = gql`
-  mutation VerifyEmail($token: String!) {
-    verifyEmail(token: $token)
+export const VERIFY_OTP_MUTATION = gql`
+  mutation VerifyEmailOtp($email: String!, $code: String!) {
+    verifyEmailOtp(email: $email, code: $code)
   }
 `;
 
-export const CREATE_BUSINESS_MUTATION = gql`
-  mutation CreateBusiness($input: CreateBusinessDto!) {
-    createBusiness(input: $input) {
-      id
-      name
-      currency
-    }
-  }
-`;
+// NOTE: CREATE_BUSINESS_MUTATION moved to graphql/business.operations.ts (now carries KYB).
+// ACCEPT_INVITATION_MUTATION removed — staff join is no longer a public flow (owner adds members).
 
 export const MY_BUSINESSES_QUERY = gql`
   query MyBusinesses {

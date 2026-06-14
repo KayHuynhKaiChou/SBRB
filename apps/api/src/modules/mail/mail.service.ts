@@ -7,15 +7,15 @@ export class MailService {
 
   constructor(private readonly mailer: MailerService) {}
 
-  /** SRS 4.1.3 — Verify email after registration */
-  async sendVerifyEmail(to: string, name: string, verifyUrl: string) {
+  /** SRS 4.1.3 — Verify email after registration (6-digit OTP code) */
+  async sendVerifyEmail(to: string, name: string, code: string) {
     await this.mailer.sendMail({
       to,
-      subject: 'Xác nhận email — SBRB',
+      subject: 'Mã xác nhận email — SBRB',
       template: 'verify-email',
-      context: { name, verifyUrl },
+      context: { name, code },
     });
-    this.logger.log(`Verify email sent to ${to}`);
+    this.logger.log(`Verify OTP sent to ${to}`);
   }
 
   /** SRS 4.1.3 — Password reset link */

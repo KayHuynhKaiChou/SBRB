@@ -4,14 +4,15 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
-import { Repository } from 'typeorm';
-import { v4 as uuidv4 } from 'uuid';
-import { EMAIL_VERIFY_LINK_EXPIRY_HOURS } from '@sbrb/shared-constants';
+import { randomInt } from 'crypto';
+import { IsNull, Repository } from 'typeorm';
+import {
+  EMAIL_VERIFY_OTP_LENGTH,
+  EMAIL_VERIFY_OTP_EXPIRY_MINUTES,
+} from '@sbrb/shared-constants';
 import { EmailVerification } from './entities/email-verification.entity';
 import { User } from './entities/user.entity';
 import { MailService } from '../mail/mail.service';
@@ -30,14 +31,26 @@ export class AuthRegisterService {
     private readonly verifyRepo: Repository<EmailVerification>,
     private readonly mailService: MailService,
     private readonly redis: RedisRateLimitService,
-    private readonly config: ConfigService,
   ) {}
 
   async register(dto: RegisterDto): Promise<{ message: string }> {
-    const exists = await this.userRepo.findOne({ where: { email: dto.email } });
-    if (exists) throw new ConflictException('Email already registered');
-
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS);
+    const exists = await this.userRepo.findOne({ where: { email: dto.email } });
+
+    if (exists) {
+      // A verified account is a real conflict — tell the user to log in instead.
+      if (exists.emailVerified) {
+        throw new ConflictException('Email already registered');
+      }
+      // Unverified account = an abandoned signup. Let the user resume: refresh
+      // their details + issue a new OTP rather than dead-ending on a conflict.
+      exists.fullName = dto.fullName;
+      exists.passwordHash = passwordHash;
+      await this.userRepo.save(exists);
+      await this.sendVerificationOtp(exists);
+      return { message: 'Verification code sent' };
+    }
+
     const user = this.userRepo.create({
       email: dto.email,
       passwordHash,
@@ -46,45 +59,69 @@ export class AuthRegisterService {
     });
     await this.userRepo.save(user);
 
-    await this.sendVerificationEmail(user);
-    return { message: 'Verification email sent' };
+    await this.sendVerificationOtp(user);
+    return { message: 'Verification code sent' };
   }
 
-  async verifyEmail(token: string): Promise<void> {
+  /**
+   * Verify a 6-digit OTP for the given email. Marks the code used + flags the
+   * account verified. Idempotent no-op if already verified.
+   */
+  async verifyEmailOtp(email: string, code: string): Promise<void> {
+    const user = await this.userRepo.findOne({ where: { email } });
+    if (!user) throw new BadRequestException('Mã không hợp lệ hoặc đã hết hạn');
+    if (user.emailVerified) return;
+
     const record = await this.verifyRepo.findOne({
-      where: { token },
-      relations: ['user'],
+      where: { userId: user.id, token: code, usedAt: IsNull() },
     });
-    if (!record) throw new NotFoundException('Invalid verification token');
-    if (record.usedAt) throw new BadRequestException('Token already used');
-    if (record.expiresAt < new Date()) throw new BadRequestException('Token expired');
+    if (!record) throw new BadRequestException('Mã không hợp lệ hoặc đã hết hạn');
+    if (record.expiresAt < new Date()) {
+      throw new BadRequestException('Mã đã hết hạn, vui lòng gửi lại');
+    }
 
     record.usedAt = new Date();
     await this.verifyRepo.save(record);
-
-    await this.userRepo.update(record.userId, { emailVerified: true });
+    await this.userRepo.update(user.id, { emailVerified: true });
   }
 
   async resendVerification(email: string): Promise<void> {
     const count = await this.redis.increment(RESEND_KEY(email), RESEND_TTL);
-    if (count > 1) throw new HttpException('Please wait 60 seconds before resending', HttpStatus.TOO_MANY_REQUESTS);
+    if (count > 1) {
+      throw new HttpException(
+        'Please wait 60 seconds before resending',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
 
     const user = await this.userRepo.findOne({ where: { email } });
-    if (!user || user.emailVerified) return; // Silently no-op to prevent enumeration
+    if (!user || user.emailVerified) return; // Silent no-op — prevents enumeration
 
-    await this.sendVerificationEmail(user);
+    await this.sendVerificationOtp(user);
   }
 
-  private async sendVerificationEmail(user: User): Promise<void> {
-    const token = uuidv4();
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + EMAIL_VERIFY_LINK_EXPIRY_HOURS);
+  /** Cryptographically-random zero-padded numeric OTP. */
+  private generateOtp(): string {
+    const max = 10 ** EMAIL_VERIFY_OTP_LENGTH;
+    return randomInt(0, max).toString().padStart(EMAIL_VERIFY_OTP_LENGTH, '0');
+  }
 
-    const record = this.verifyRepo.create({ userId: user.id, token, expiresAt });
+  /** Create a fresh OTP (invalidating earlier unused ones) and email it. */
+  private async sendVerificationOtp(user: User): Promise<void> {
+    // Only the latest code stays valid.
+    await this.verifyRepo.update(
+      { userId: user.id, usedAt: IsNull() },
+      { usedAt: new Date() },
+    );
+
+    const code = this.generateOtp();
+    const expiresAt = new Date(
+      Date.now() + EMAIL_VERIFY_OTP_EXPIRY_MINUTES * 60 * 1000,
+    );
+
+    const record = this.verifyRepo.create({ userId: user.id, token: code, expiresAt });
     await this.verifyRepo.save(record);
 
-    const feUrl = this.config.get<string>('FRONTEND_URL', 'http://localhost:3000');
-    const verifyUrl = `${feUrl}/auth/verify-email?token=${token}`;
-    await this.mailService.sendVerifyEmail(user.email, user.fullName, verifyUrl);
+    await this.mailService.sendVerifyEmail(user.email, user.fullName, code);
   }
 }

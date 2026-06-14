@@ -8,7 +8,7 @@
     .logo { font-size: 20px; font-weight: 700; color: #D72A44; margin-bottom: 24px; }
     h1 { font-size: 22px; color: #171717; margin-bottom: 8px; }
     p { color: #525252; line-height: 1.6; }
-    .btn { display: inline-block; margin: 24px 0; padding: 12px 28px; background: #D72A44; color: #fff; text-decoration: none; border-radius: 50px; font-weight: 600; }
+    .code { display: inline-block; margin: 24px 0; padding: 16px 28px; background: #FFF1F3; border: 1px solid #F5C2C9; border-radius: 10px; color: #D72A44; font-size: 32px; font-weight: 700; letter-spacing: 10px; }
     .footer { margin-top: 32px; font-size: 12px; color: #A3A3A3; }
   </style>
 </head>
@@ -17,10 +17,10 @@
     <div class="logo">SBRB</div>
     <h1>Xác nhận địa chỉ email</h1>
     <p>Xin chào <strong>{{name}}</strong>,</p>
-    <p>Cảm ơn bạn đã đăng ký SBRB. Nhấn nút bên dưới để xác nhận email và bắt đầu sử dụng:</p>
-    <a href="{{verifyUrl}}" class="btn">Xác nhận email</a>
-    <p>Link có hiệu lực trong <strong>24 giờ</strong>. Nếu bạn không đăng ký, hãy bỏ qua email này.</p>
-    <div class="footer">Small Business Report Board &mdash; <a href="{{verifyUrl}}">{{verifyUrl}}</a></div>
+    <p>Cảm ơn bạn đã đăng ký SBRB. Nhập mã xác nhận bên dưới vào màn hình đăng ký để tiếp tục:</p>
+    <div class="code">{{code}}</div>
+    <p>Mã có hiệu lực trong <strong>15 phút</strong>. Nếu bạn không đăng ký, hãy bỏ qua email này.</p>
+    <div class="footer">Small Business Report Board</div>
   </div>
 </body>
 </html>

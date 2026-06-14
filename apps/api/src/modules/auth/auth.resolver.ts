@@ -61,8 +61,11 @@ export class AuthResolver {
 
   @Public()
   @Mutation(() => Boolean)
-  async verifyEmail(@Args('token') token: string): Promise<boolean> {
-    await this.authService.verifyEmail(token);
+  async verifyEmailOtp(
+    @Args('email') email: string,
+    @Args('code') code: string,
+  ): Promise<boolean> {
+    await this.authService.verifyEmailOtp(email, code);
     return true;
   }
 

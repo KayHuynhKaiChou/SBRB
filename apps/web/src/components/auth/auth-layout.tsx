@@ -13,9 +13,9 @@ interface AuthLayoutProps {
 /** Split-screen auth layout: brand panel left, form panel right */
 export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
   return (
-    <div className="min-h-screen flex">
+    <div className="h-screen flex overflow-hidden">
       {/* Left brand panel */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col items-center justify-center p-12 relative overflow-hidden bg-gradient-to-br from-[#D72A44] to-[#8B1429]">
+      <div className="hidden lg:flex lg:w-1/2 min-w-0 flex-col items-center justify-center p-12 relative overflow-hidden bg-gradient-to-br from-[#D72A44] to-[#8B1429]">
         {/* Decorative circles */}
         <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-10 bg-white translate-x-[30%] -translate-y-[30%]" />
         <div className="absolute bottom-0 left-0 w-96 h-96 rounded-full opacity-10 bg-white -translate-x-[30%] translate-y-[30%]" />
@@ -59,26 +59,29 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
         </div>
       </div>
 
-      {/* Right form panel */}
-      <div className="flex-1 lg:w-1/2 flex flex-col items-center justify-center p-6 lg:p-12 bg-white min-h-screen overflow-y-auto">
-        {/* Mobile logo */}
-        <div className="lg:hidden flex items-center gap-2 mb-8">
-          <RiBarChartBoxLine size={24} color="#D72A44" />
-          <Title level={3} className="!text-[#D72A44] !m-0 !font-extrabold">SBRB</Title>
-        </div>
-
-        <div className="w-full max-w-md">
-          {/* Form header */}
-          <div className="mb-8">
-            <Title level={3} className="!mt-0 !mb-1.5 !font-bold !text-gray-900">
-              {title}
-            </Title>
-            {subtitle && (
-              <Text className="!text-gray-500 !text-[15px]">{subtitle}</Text>
-            )}
+      {/* Right form panel — this is the ONLY scroll container; the page itself never scrolls.
+          Inner min-h-full wrapper centers the card when short, scrolls from the top when tall. */}
+      <div className="flex-1 min-w-0 lg:w-1/2 h-screen overflow-y-auto bg-white">
+        <div className="min-h-full flex flex-col items-center justify-center p-6 lg:p-12">
+          {/* Mobile logo */}
+          <div className="lg:hidden flex items-center gap-2 mb-8">
+            <RiBarChartBoxLine size={24} color="#D72A44" />
+            <Title level={3} className="!text-[#D72A44] !m-0 !font-extrabold">SBRB</Title>
           </div>
 
-          {children}
+          <div className="w-full max-w-md">
+            {/* Form header */}
+            <div className="mb-8">
+              <Title level={3} className="!mt-0 !mb-1.5 !font-bold !text-gray-900">
+                {title}
+              </Title>
+              {subtitle && (
+                <Text className="!text-gray-500 !text-[15px]">{subtitle}</Text>
+              )}
+            </div>
+
+            {children}
+          </div>
         </div>
       </div>
     </div>

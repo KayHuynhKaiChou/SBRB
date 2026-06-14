@@ -6,7 +6,7 @@ const mockAuthService = {
   login: jest.fn(),
   logout: jest.fn(),
   refresh: jest.fn(),
-  verifyEmail: jest.fn(),
+  verifyEmailOtp: jest.fn(),
   resendVerification: jest.fn(),
   forgotPassword: jest.fn(),
   resetPassword: jest.fn(),
@@ -53,10 +53,10 @@ describe('AuthController', () => {
     expect(result.data?.accessToken).toBe('tok');
   });
 
-  it('should call authService.verifyEmail', async () => {
-    (mockAuthService.verifyEmail as jest.Mock).mockResolvedValue(undefined);
-    await controller.verifyEmail('test-token');
-    expect(mockAuthService.verifyEmail).toHaveBeenCalledWith('test-token');
+  it('should call authService.verifyEmailOtp', async () => {
+    (mockAuthService.verifyEmailOtp as jest.Mock).mockResolvedValue(undefined);
+    await controller.verifyEmailOtp('a@b.com', '123456');
+    expect(mockAuthService.verifyEmailOtp).toHaveBeenCalledWith('a@b.com', '123456');
   });
 
   it('should call authService.forgotPassword', async () => {

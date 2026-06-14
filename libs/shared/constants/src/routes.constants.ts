@@ -10,7 +10,7 @@ export const API_ROUTES = {
     REGISTER: `${API_BASE}/auth/register`,
     FORGOT_PASSWORD: `${API_BASE}/auth/forgot-password`,
     RESET_PASSWORD: `${API_BASE}/auth/reset-password`,
-    VERIFY_EMAIL: (token: string) => `${API_BASE}/auth/verify-email/${token}`,
+    VERIFY_OTP: `${API_BASE}/auth/verify-otp`,
     RESEND_VERIFICATION: `${API_BASE}/auth/resend-verification`,
   },
   WIDGET: {
@@ -39,6 +39,8 @@ export const APP_ROUTES = {
   AUTH_CALLBACK: '/auth/callback',
   DASHBOARD: '/dashboard',
   ONBOARDING: '/onboarding',
+  MY_BUSINESS: '/my-business',
+  BUSINESS_PENDING: '/business-pending',
   DATA_SHEETS: '/data-sheets',
   DEPARTMENTS: '/departments',
   PROFILE: '/profile',

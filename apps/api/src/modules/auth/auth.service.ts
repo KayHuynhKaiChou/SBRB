@@ -25,8 +25,8 @@ export class AuthService {
     return this.registerService.register(dto);
   }
 
-  verifyEmail(token: string) {
-    return this.registerService.verifyEmail(token);
+  verifyEmailOtp(email: string, code: string) {
+    return this.registerService.verifyEmailOtp(email, code);
   }
 
   resendVerification(email: string) {

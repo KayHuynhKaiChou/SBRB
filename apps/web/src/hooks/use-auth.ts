@@ -12,7 +12,6 @@ import {
   REGISTER_MUTATION,
   FORGOT_PASSWORD_MUTATION,
   RESET_PASSWORD_MUTATION,
-  VERIFY_EMAIL_MUTATION,
 } from '../graphql/auth.operations';
 
 export type TAuthStatus = 'loading' | 'authenticated' | 'guest';
@@ -56,10 +55,6 @@ export function useAuth() {
       onSuccess: () => navigate(APP_ROUTES.LOGIN),
     },
   );
-  const [verifyEmailMutation, { loading: verifyLoading }] = useAppMutation(VERIFY_EMAIL_MUTATION, {
-    fallbackSuccess: { vi: 'Email đã được xác nhận', en: 'Email verified' },
-    onSuccess: () => navigate(APP_ROUTES.LOGIN),
-  });
 
   // Bootstrap on mount — mutex'd in service, safe across N mounts + StrictMode
   useEffect(() => {
@@ -131,9 +126,6 @@ export function useAuth() {
     await resetPasswordMutation({ variables: { token, password } });
   };
 
-  const verifyEmail = async (token: string) => {
-    await verifyEmailMutation({ variables: { token } });
-  };
 
   const logout = () => authSession.logout();
 
@@ -151,13 +143,11 @@ export function useAuth() {
     logout,
     forgotPassword,
     resetPassword,
-    verifyEmail,
 
     // Loading flags
     loginLoading,
     registerLoading,
     forgotLoading,
     resetLoading,
-    verifyLoading,
   };
 }
