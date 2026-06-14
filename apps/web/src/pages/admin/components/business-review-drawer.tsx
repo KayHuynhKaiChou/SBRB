@@ -201,7 +201,7 @@ export function BusinessReviewDrawer({
           <Form.Item
             name="reason"
             label={t('reject_modal_reason_label')}
-            rules={[{ required: true, message: t('reject_modal_reason_required') }]}
+            rules={[{ required: true, whitespace: true, message: t('reject_modal_reason_required') }]}
           >
             <Input.TextArea rows={4} maxLength={500} showCount placeholder={t('reject_modal_reason_ph')} />
           </Form.Item>
@@ -223,7 +223,7 @@ export function BusinessReviewDrawer({
           <Form.Item
             name="reason"
             label={t('inactivate_modal_reason_label')}
-            rules={[{ required: true, message: t('inactivate_modal_reason_required') }]}
+            rules={[{ required: true, whitespace: true, message: t('inactivate_modal_reason_required') }]}
           >
             <Input.TextArea rows={4} maxLength={500} showCount placeholder={t('inactivate_modal_reason_ph')} />
           </Form.Item>
