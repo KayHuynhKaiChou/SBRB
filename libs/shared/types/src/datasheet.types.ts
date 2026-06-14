@@ -33,26 +33,88 @@ export enum ESortOrder {
   DESC = 'DESC',
 }
 
-/** A single row in a DataSheet (one series = one metric over time) */
-export interface IDataSeriesDto {
+/** String-literal unions derived from the datasheet list enums. */
+export type TTemplateType = `${EDataSheetTemplateType}`;
+export type TDataSheetStatus = `${EDataSheetStatusFilter}`;
+export type TDataSheetSortField = `${EDataSheetSortField}`;
+export type TSortOrder = `${ESortOrder}`;
+
+/** @deprecated Use `TTemplateType`. */
+export type TemplateType = TTemplateType;
+/** @deprecated Use `TDataSheetStatus`. */
+export type DataSheetStatus = TDataSheetStatus;
+/** @deprecated Use `TDataSheetSortField`. */
+export type DataSheetSortField = TDataSheetSortField;
+/** @deprecated Use `TSortOrder`. */
+export type SortOrder = TSortOrder;
+
+/** Uploader reference shown in the datasheet list. */
+export interface IUploaderInfo {
   id: string;
-  datasheetId: string;
-  name: string; // Row label (e.g., "Doanh thu cửa hàng A")
-  /** Values keyed by period label. e.g., { "T1": 1000, "T2": 2000 } */
-  values: Record<string, number | null>;
+  fullName: string;
+  email: string;
+  avatarUrl?: string | null;
 }
 
+/** Filter input for the datasheet list query. */
+export interface IListDataSheetsFilter {
+  status?: TDataSheetStatus[];
+  templateType?: TTemplateType[];
+  sortBy?: TDataSheetSortField;
+  sortOrder?: TSortOrder;
+}
+
+/** DataSheet list-row DTO. */
 export interface IDataSheetDto {
   id: string;
-  businessId: string;
   name: string;
-  periodType: TPeriodType;
-  /** Column headers (period labels) in order */
-  periods: string[];
-  seriesCount: number;
-  importedAt: string;
-  importedBy: string; // userId
-  sizeBytes: number;
+  status: string;
+  templateType: TemplateType;
+  periodHeaders: string[];
+  widgetCount: number;
+  originalFilename: string | null;
+  importedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  uploader: IUploaderInfo | null;
+}
+
+/** DataSeries list-row DTO (one metric row, no values). */
+export interface IDataSeriesDto {
+  id: string;
+  seriesName: string;
+  dataSheetId: string;
+  rowIndex: number;
+  departmentId?: string | null;
+  department?: { id: string; name: string } | null;
+}
+
+/** DataSeries grid row (with period values) for the detail editor. */
+export interface IDataSeriesRow {
+  id: string;
+  seriesName: string;
+  rowIndex: number;
+  values: Record<string, number | null>;
+  departmentId?: string | null;
+  department?: { id: string; name: string } | null;
+}
+
+/** DataSheet detail metadata for the editor view. */
+export interface IDataSheetDetail {
+  id: string;
+  name: string;
+  periodHeaders: string[];
+  status: string;
+  periodType: string;
+  templateType?: string;
+}
+
+/** Live import progress payload (subscription). */
+export interface IImportProgress {
+  datasheetId: string;
+  percent: number;
+  status: string;
+  errorMessage?: string;
 }
 
 export interface IImportBatchDto {

@@ -1,18 +1,8 @@
 import { useQuery } from '@apollo/client';
+import type { IAdminAuditRow } from '@sbrb/shared-types';
 import { ADMIN_AUDIT_LOG_QUERY } from '../graphql/admin.operations';
 
-export interface IAdminAuditRow {
-  id: string;
-  action: string;
-  actorId: string;
-  actorEmail: string;
-  targetId: string | null;
-  targetType: string | null;
-  targetName: string | null;
-  businessId: string | null;
-  meta: string;
-  createdAt: string;
-}
+export type { IAdminAuditRow };
 
 interface IAuditFilter {
   actorEmail?: string;

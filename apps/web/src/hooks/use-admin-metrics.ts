@@ -1,14 +1,6 @@
 import { useQuery } from '@apollo/client';
+import type { IAdminMetrics } from '@sbrb/shared-types';
 import { ADMIN_METRICS_QUERY } from '../graphql/admin.operations';
-
-export interface IAdminMetrics {
-  totalBusinesses: number;
-  activeBusinesses: number;
-  inactiveBusinesses: number;
-  totalUsers: number;
-  newBusinessesLast30d: number;
-  newUsersLast30d: number;
-}
 
 interface IAdminMetricsQueryResult {
   adminMetrics: IAdminMetrics;

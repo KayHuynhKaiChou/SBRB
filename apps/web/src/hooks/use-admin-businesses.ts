@@ -8,19 +8,9 @@ import {
   APPROVE_BUSINESS_MUTATION,
   REJECT_BUSINESS_MUTATION,
 } from '../graphql/admin.operations';
+import type { IAdminBusinessRow } from '@sbrb/shared-types';
 
-export interface IAdminBusinessRow {
-  id: string;
-  name: string;
-  industry: string;
-  ownerEmail: string;
-  memberCount: number;
-  status: string;
-  rejectionReason?: string | null;
-  inactivatedAt?: string | null;
-  inactiveReason?: string | null;
-  createdAt: string;
-}
+export type { IAdminBusinessRow };
 
 interface IAdminBusinessesQueryResult {
   adminBusinesses: {

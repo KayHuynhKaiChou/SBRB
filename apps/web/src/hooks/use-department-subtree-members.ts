@@ -1,13 +1,9 @@
 import { useLazyQuery } from '@apollo/client';
 import { useCallback, useMemo } from 'react';
+import type { IDepartmentSubtreeMember } from '@sbrb/shared-types';
 import { DEPARTMENT_SUBTREE_MEMBERS_QUERY } from '../graphql/department.operations';
-import type { IDepartmentMemberRef } from './use-department-tree';
 
-/** A subtree member: a direct/inherited member tagged with its real department + isDirect flag. */
-export interface IDepartmentSubtreeMember extends IDepartmentMemberRef {
-  departmentName: string | null;
-  isDirect: boolean;
-}
+export type { IDepartmentSubtreeMember };
 
 const EMPTY: IDepartmentSubtreeMember[] = [];
 

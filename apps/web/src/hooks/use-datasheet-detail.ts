@@ -7,24 +7,9 @@ import {
   UPDATE_SERIES_VALUE_MUTATION,
   UPSERT_CELL_VALUE_MUTATION,
 } from '../graphql/datasheet.operations';
+import type { IDataSeriesRow, IDataSheetDetail } from '@sbrb/shared-types';
 
-export interface IDataSeriesRow {
-  id: string;
-  seriesName: string;
-  rowIndex: number;
-  values: Record<string, number | null>;
-  departmentId?: string | null;
-  department?: { id: string; name: string } | null;
-}
-
-export interface IDataSheetDetail {
-  id: string;
-  name: string;
-  periodHeaders: string[];
-  status: string;
-  periodType: string;
-  templateType?: string;
-}
+export type { IDataSeriesRow, IDataSheetDetail };
 
 /** Fetch datasheet detail with all series and their values */
 export function useDataSheetDetail(id: string | undefined) {

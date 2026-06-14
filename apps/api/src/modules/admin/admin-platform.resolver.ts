@@ -3,8 +3,10 @@ import { Args, Query, Resolver } from '@nestjs/graphql';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PlatformAdminGuard } from '../../common/guards/platform-admin.guard';
 import { AdminMetricsService } from './admin-metrics.service';
+import { AdminChartsService } from './admin-charts.service';
 import { AdminAuditService } from './admin-audit.service';
 import { AdminMetricsType } from './dto/admin-metrics.type';
+import { AdminDashboardChartsType } from './dto/admin-dashboard-charts.type';
 import { AdminAuditListResultType } from './dto/admin-audit-list-result.type';
 import { AdminAuditFilterInput } from './dto/admin-audit-filter.input';
 import { PageInput } from '../../common/dto/page.input';
@@ -15,6 +17,7 @@ import { PageInput } from '../../common/dto/page.input';
 export class AdminPlatformResolver {
   constructor(
     private readonly metricsService: AdminMetricsService,
+    private readonly chartsService: AdminChartsService,
     private readonly auditService: AdminAuditService,
   ) {}
 
@@ -23,6 +26,13 @@ export class AdminPlatformResolver {
   })
   async adminMetrics(): Promise<AdminMetricsType> {
     return this.metricsService.getMetrics();
+  }
+
+  @Query(() => AdminDashboardChartsType, {
+    description: 'Chart datasets (growth, status mix, industries, sizes, activity). Admin only.',
+  })
+  async adminDashboardCharts(): Promise<AdminDashboardChartsType> {
+    return this.chartsService.getCharts();
   }
 
   @Query(() => AdminAuditListResultType, {

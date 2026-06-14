@@ -25,6 +25,22 @@ export interface IBusinessMemberDto {
   status: 'active' | 'invited';
 }
 
+/** Business member table row (members table — nested user object). */
+export interface IBusinessMember {
+  id: string;
+  userId: string;
+  role: string;
+  status: string;
+  joinedAt: string;
+  user: {
+    id: string;
+    fullName: string;
+    email: string;
+    avatarUrl: string | null;
+    phone: string | null;
+  };
+}
+
 /** Business switcher item (header dropdown) */
 export interface IBusinessSwitcherItem {
   businessId: string;

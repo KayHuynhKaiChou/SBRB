@@ -16,6 +16,7 @@ import { AdminBusinessResolver } from './admin-business.resolver';
 import { AdminUserService } from './admin-user.service';
 import { AdminUserResolver } from './admin-user.resolver';
 import { AdminMetricsService } from './admin-metrics.service';
+import { AdminChartsService } from './admin-charts.service';
 import { AdminAuditService } from './admin-audit.service';
 import { AdminPlatformResolver } from './admin-platform.resolver';
 
@@ -38,6 +39,7 @@ import { AdminPlatformResolver } from './admin-platform.resolver';
     AdminUserService,
     AdminUserResolver,
     AdminMetricsService,
+    AdminChartsService,
     AdminAuditService,
     AdminPlatformResolver,
   ],

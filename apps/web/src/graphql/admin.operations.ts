@@ -203,6 +203,35 @@ export const ADMIN_METRICS_QUERY = gql`
   }
 `;
 
+export const ADMIN_DASHBOARD_CHARTS_QUERY = gql`
+  query AdminDashboardCharts {
+    adminDashboardCharts {
+      monthlyGrowth {
+        month
+        newBusinesses
+        newUsers
+      }
+      statusBreakdown {
+        status
+        count
+      }
+      topIndustries {
+        industry
+        count
+      }
+      companySizes {
+        size
+        count
+      }
+      userActivity {
+        active
+        disabled
+        activeLast30d
+      }
+    }
+  }
+`;
+
 export const ADMIN_AUDIT_LOG_QUERY = gql`
   query AdminAuditLog($filter: AdminAuditFilterInput, $page: PageInput) {
     adminAuditLog(filter: $filter, page: $page) {

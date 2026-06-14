@@ -1,35 +1,13 @@
 import { useQuery } from '@apollo/client';
+import type {
+  IChartDataset,
+  IChartTrend,
+  IChartDataResult,
+  IAvailableSeries,
+} from '@sbrb/shared-types';
 import { AVAILABLE_SERIES_QUERY, WIDGET_CHART_DATA_QUERY } from '../graphql/widget-config.operations';
 
-export interface IChartDataset {
-  label: string;
-  data: number[];
-  backgroundColor: string;
-  borderColor: string;
-  departmentName?: string | null;
-}
-
-export interface IChartTrend {
-  value: number;
-  direction: 'up' | 'down' | 'neutral';
-  vsLabel: string;
-}
-
-export interface IChartDataResult {
-  labels: string[];
-  datasets: IChartDataset[];
-  trend: IChartTrend | null;
-  departmentId?: string | null;
-  departmentName?: string | null;
-  allPeriods?: string[];
-}
-
-export interface IAvailableSeries {
-  id: string;
-  name: string;
-  templateType?: string;
-  departmentName?: string | null;
-}
+export type { IChartDataset, IChartTrend, IChartDataResult, IAvailableSeries };
 
 export function useAvailableSeries(widgetId: string | null) {
   const { data, loading } = useQuery<{ availableSeries: IAvailableSeries[] }>(

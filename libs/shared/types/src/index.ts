@@ -1,3 +1,4 @@
+export * from './admin.types';
 export * from './api-code';
 export * from './api-response.types';
 export * from './auth.types';
@@ -5,6 +6,7 @@ export * from './business.types';
 export * from './canvas.types';
 export * from './datasheet.types';
 export * from './department.types';
+export * from './notification.types';
 export * from './profile.types';
 export * from './user.types';
 export * from './widget.types';

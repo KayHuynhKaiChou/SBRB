@@ -3,7 +3,7 @@ import { useMutation } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
 import { useAppMutation } from '@sbrb/shared-apollo-client';
 import { APP_ROUTES, EPlatformRole } from '@sbrb/shared-constants';
-import type { ILoginInput, IRegisterInput } from '@sbrb/shared-types';
+import type { ILoginInput, IRegisterInput, TAuthStatus, AuthStatus } from '@sbrb/shared-types';
 import { useAuthStore } from '../store/auth.store';
 import { authSession } from '../lib/auth-session';
 import { apolloClient } from '../apollo/apollo-client';
@@ -14,9 +14,7 @@ import {
   RESET_PASSWORD_MUTATION,
 } from '../graphql/auth.operations';
 
-export type TAuthStatus = 'loading' | 'authenticated' | 'guest';
-/** @deprecated Use `TAuthStatus`. */
-export type AuthStatus = TAuthStatus;
+export type { TAuthStatus, AuthStatus };
 
 export function useAuth() {
   const navigate = useNavigate();

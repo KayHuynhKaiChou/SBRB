@@ -117,6 +117,14 @@ type AdminBusinessRowType {
   status: String!
 }
 
+type AdminDashboardChartsType {
+  companySizes: [CompanySizeCountPointType!]!
+  monthlyGrowth: [MonthlyGrowthPointType!]!
+  statusBreakdown: [StatusBreakdownPointType!]!
+  topIndustries: [IndustryCountPointType!]!
+  userActivity: UserActivityType!
+}
+
 type AdminMetricsType {
   activeBusinesses: Int!
   inactiveBusinesses: Int!
@@ -275,6 +283,11 @@ type ChartDataset {
   data: [Float!]!
   departmentName: String
   label: String!
+}
+
+type CompanySizeCountPointType {
+  count: Int!
+  size: String!
 }
 
 input CreateBusinessDto {
@@ -450,6 +463,11 @@ type ImportProgressType {
   status: String!
 }
 
+type IndustryCountPointType {
+  count: Int!
+  industry: String!
+}
+
 input InsertPeriodDto {
   datasheetId: ID!
   index: Int!
@@ -516,6 +534,12 @@ type MemberType {
   status: String!
   user: User
   userId: String!
+}
+
+type MonthlyGrowthPointType {
+  month: String!
+  newBusinesses: Int!
+  newUsers: Int!
 }
 
 type Mutation {
@@ -655,6 +679,11 @@ type Query {
   """Pending business change-requests awaiting review. Admin only."""
   adminChangeRequests(businessId: ID): [AdminBusinessChangeRequestType!]!
 
+  """
+  Chart datasets (growth, status mix, industries, sizes, activity). Admin only.
+  """
+  adminDashboardCharts: AdminDashboardChartsType!
+
   """Platform-wide aggregate stats for admin dashboard. Admin only."""
   adminMetrics: AdminMetricsType!
 
@@ -711,6 +740,11 @@ type Session {
 enum SortOrder {
   ASC
   DESC
+}
+
+type StatusBreakdownPointType {
+  count: Int!
+  status: String!
 }
 
 type Subscription {
@@ -846,6 +880,12 @@ type User {
   lastLoginAt: DateTime
   phone: String
   platformRole: String
+}
+
+type UserActivityType {
+  active: Int!
+  activeLast30d: Int!
+  disabled: Int!
 }
 
 type Widget {

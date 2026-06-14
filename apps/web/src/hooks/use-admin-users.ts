@@ -5,18 +5,9 @@ import {
   DISABLE_USER_MUTATION,
   ENABLE_USER_MUTATION,
 } from '../graphql/admin.operations';
+import type { IAdminUserRow } from '@sbrb/shared-types';
 
-export interface IAdminUserRow {
-  id: string;
-  email: string;
-  fullName: string;
-  platformRole?: string | null;
-  isDisabled: boolean;
-  businessCount: number;
-  businessNames?: string | null;
-  lastLoginAt?: string | null;
-  createdAt: string;
-}
+export type { IAdminUserRow };
 
 interface IAdminUsersQueryResult {
   adminUsers: {

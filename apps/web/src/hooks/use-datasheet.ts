@@ -3,11 +3,20 @@ import { useQuery, useSubscription } from '@apollo/client';
 import { apiClient } from '../lib/api-client';
 import { useAppMutation, useNotify } from '@sbrb/shared-apollo-client';
 import { API_ROUTES } from '@sbrb/shared-constants';
-import {
-  EDataSheetSortField,
-  EDataSheetStatusFilter,
-  EDataSheetTemplateType,
-  ESortOrder,
+import type {
+  IUploaderInfo,
+  IListDataSheetsFilter,
+  IDataSheetDto,
+  IDataSeriesDto,
+  IImportProgress,
+  TTemplateType,
+  TDataSheetStatus,
+  TDataSheetSortField,
+  TSortOrder,
+  TemplateType,
+  DataSheetStatus,
+  DataSheetSortField,
+  SortOrder,
 } from '@sbrb/shared-types';
 import {
   DATA_SHEETS_QUERY,
@@ -17,64 +26,22 @@ import {
   DELETE_DATASHEET_MUTATION,
 } from '../graphql/datasheet.operations';
 
-export interface IUploaderInfo {
-  id: string;
-  fullName: string;
-  email: string;
-  avatarUrl?: string | null;
-}
-
-// Re-export for back-compat with existing consumers in this app.
-export type TTemplateType = `${EDataSheetTemplateType}`;
-export type TDataSheetStatus = `${EDataSheetStatusFilter}`;
-export type TDataSheetSortField = `${EDataSheetSortField}`;
-export type TSortOrder = `${ESortOrder}`;
-
-/** @deprecated Use `TTemplateType`. */
-export type TemplateType = TTemplateType;
-/** @deprecated Use `TDataSheetStatus`. */
-export type DataSheetStatus = TDataSheetStatus;
-/** @deprecated Use `TDataSheetSortField`. */
-export type DataSheetSortField = TDataSheetSortField;
-/** @deprecated Use `TSortOrder`. */
-export type SortOrder = TSortOrder;
-
-export interface IListDataSheetsFilter {
-  status?: TDataSheetStatus[];
-  templateType?: TTemplateType[];
-  sortBy?: TDataSheetSortField;
-  sortOrder?: TSortOrder;
-}
-
-export interface IDataSheetDto {
-  id: string;
-  name: string;
-  status: string;
-  templateType: TemplateType;
-  periodHeaders: string[];
-  widgetCount: number;
-  originalFilename: string | null;
-  importedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-  uploader: IUploaderInfo | null;
-}
-
-export interface IDataSeriesDto {
-  id: string;
-  seriesName: string;
-  dataSheetId: string;
-  rowIndex: number;
-  departmentId?: string | null;
-  department?: { id: string; name: string } | null;
-}
-
-export interface IImportProgress {
-  datasheetId: string;
-  percent: number;
-  status: string;
-  errorMessage?: string;
-}
+// Re-export shared datasheet types for back-compat with existing consumers in this app.
+export type {
+  IUploaderInfo,
+  IListDataSheetsFilter,
+  IDataSheetDto,
+  IDataSeriesDto,
+  IImportProgress,
+  TTemplateType,
+  TDataSheetStatus,
+  TDataSheetSortField,
+  TSortOrder,
+  TemplateType,
+  DataSheetStatus,
+  DataSheetSortField,
+  SortOrder,
+};
 
 /** Fetch all datasheets for a business. BE handles filter + sort. */
 export function useDataSheets(businessId: string, filter?: IListDataSheetsFilter) {

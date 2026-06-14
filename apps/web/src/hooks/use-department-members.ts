@@ -1,9 +1,9 @@
 import { useLazyQuery } from '@apollo/client';
 import { useCallback, useMemo } from 'react';
+import type { IDepartmentMember } from '@sbrb/shared-types';
 import { DEPARTMENT_MEMBERS_QUERY } from '../graphql/department.operations';
-import type { IDepartmentMemberRef } from './use-department-tree';
 
-export type IDepartmentMember = IDepartmentMemberRef;
+export type { IDepartmentMember };
 
 const EMPTY: IDepartmentMember[] = [];
 

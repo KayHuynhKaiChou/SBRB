@@ -19,3 +19,8 @@ export interface IResetPasswordInput {
   token: string;
   password: string;
 }
+
+/** Auth session view-state (frontend). */
+export type TAuthStatus = 'loading' | 'authenticated' | 'guest';
+/** @deprecated Use `TAuthStatus`. */
+export type AuthStatus = TAuthStatus;

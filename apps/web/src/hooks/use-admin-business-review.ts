@@ -6,47 +6,9 @@ import {
   APPROVE_CHANGE_REQUEST_MUTATION,
   REJECT_CHANGE_REQUEST_MUTATION,
 } from '../graphql/admin.operations';
+import type { IAdminBusinessDetail, IAdminChangeRequest } from '@sbrb/shared-types';
 
-export interface IAdminBusinessDetail {
-  id: string;
-  name: string;
-  industry: string;
-  currency: string;
-  status: string;
-  rejectionReason?: string | null;
-  memberCount: number;
-  legalName?: string | null;
-  taxCode?: string | null;
-  businessType?: string | null;
-  address?: string | null;
-  contactPhone?: string | null;
-  contactEmail?: string | null;
-  website?: string | null;
-  description?: string | null;
-  logoUrl?: string | null;
-  bannerUrl?: string | null;
-  licenseSignedUrl?: string | null;
-  foundedYear?: number | null;
-  companySize?: string | null;
-  createdAt: string;
-  owner: {
-    id: string;
-    fullName: string;
-    email: string;
-    phone?: string | null;
-    avatarUrl?: string | null;
-  };
-}
-
-export interface IAdminChangeRequest {
-  id: string;
-  businessId: string;
-  businessName: string;
-  requestedByEmail: string;
-  status: string;
-  changes: Record<string, { old: unknown; new: unknown }>;
-  createdAt: string;
-}
+export type { IAdminBusinessDetail, IAdminChangeRequest };
 
 /** Fetch full business detail for the review drawer (skipped until an id is set). */
 export function useAdminBusinessDetail(id: string | null) {

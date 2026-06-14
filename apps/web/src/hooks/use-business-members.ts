@@ -1,21 +1,9 @@
 import { useQuery } from '@apollo/client';
 import { useMemo } from 'react';
+import type { IBusinessMember } from '@sbrb/shared-types';
 import { BUSINESS_MEMBERS_QUERY } from '../graphql/member.operations';
 
-export interface IBusinessMember {
-  id: string;
-  userId: string;
-  role: string;
-  status: string;
-  joinedAt: string;
-  user: {
-    id: string;
-    fullName: string;
-    email: string;
-    avatarUrl: string | null;
-    phone: string | null;
-  };
-}
+export type { IBusinessMember };
 
 const EMPTY: IBusinessMember[] = [];
 

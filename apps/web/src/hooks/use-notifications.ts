@@ -5,17 +5,9 @@ import {
   MARK_NOTIFICATION_READ_MUTATION,
   MARK_ALL_NOTIFICATIONS_READ_MUTATION,
 } from '../graphql/notification.operations';
+import type { INotification } from '@sbrb/shared-types';
 
-export interface INotification {
-  id: string;
-  businessId?: string | null;
-  type: string;
-  title: string;
-  message: string;
-  isRead: boolean;
-  metadata?: { route?: string; [k: string]: unknown } | null;
-  createdAt: string;
-}
+export type { INotification };
 
 const POLL_MS = 45000;
 

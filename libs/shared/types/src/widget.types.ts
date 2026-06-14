@@ -85,3 +85,37 @@ export interface IAddWidgetResult {
   dataSheetId: string | null;
   selectedSeries: string[];
 }
+
+/** Chart.js-shaped dataset for widget chart rendering. */
+export interface IChartDataset {
+  label: string;
+  data: number[];
+  backgroundColor: string;
+  borderColor: string;
+  departmentName?: string | null;
+}
+
+/** Period-over-period trend summary for a widget chart. */
+export interface IChartTrend {
+  value: number;
+  direction: 'up' | 'down' | 'neutral';
+  vsLabel: string;
+}
+
+/** Resolved chart data payload (labels + datasets + trend). */
+export interface IChartDataResult {
+  labels: string[];
+  datasets: IChartDataset[];
+  trend: IChartTrend | null;
+  departmentId?: string | null;
+  departmentName?: string | null;
+  allPeriods?: string[];
+}
+
+/** A series selectable as a widget data source. */
+export interface IAvailableSeries {
+  id: string;
+  name: string;
+  templateType?: string;
+  departmentName?: string | null;
+}
