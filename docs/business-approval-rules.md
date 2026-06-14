@@ -7,8 +7,13 @@
 > Status: ACTIVE (implemented). Last updated: 2026-06-14.
 >
 > **Update 2026-06-14:** (a) email verification is a **6-digit OTP** entered in the wizard (not a link);
-> (b) `approval_status` and the operational `status` are **merged into one `status`** column with four
-> values: `pending | approved | rejected | inactive`. All references below use the unified field.
+> (b) `approval_status` and the operational `status` are **merged into one `status`** column with five
+> values: `pending | approved | rejected | resubmitted | inactive`.
+> (c) A **rejected** business CANNOT be approved directly (Approve hidden). The owner must edit it
+> (`updateBusiness`) → status auto-moves to **`resubmitted`** ("đã sửa theo phản hồi"), which admins
+> then approve/reject. Admin reviews status changes in the **detail drawer** (no separate tab for this).
+> (d) All status changes notify the counterpart (create/resubmit → admins; approve/reject/inactivate/
+> reactivate → owner) and **clicking a notification deep-links** to the right page + opens the matching UI.
 
 Related: [[department-org-business-rules]] (owner/role model), `admin-srs.md`.
 
@@ -59,11 +64,11 @@ State machine:
 ```
 
 - New business → `status = pending`. Owner CANNOT use business features yet.
-- Admin **approve** (from pending/rejected) → `approved`; `approved_at`, `approved_by` set; owner
-  notified; business becomes usable.
-- Admin **reject** (from pending) → `rejected` + `rejection_reason` (required); `rejected_at`,
-  `rejected_by` set; owner notified with reason.
-- Owner edits in **My Business** and **resubmits** → back to `pending` (reason cleared).
+- Admin **approve** (from `pending`/`resubmitted` only) → `approved`; owner notified; usable.
+- Admin **reject** (from `pending`/`resubmitted`) → `rejected` + `rejection_reason` (required);
+  owner notified. **Approve is hidden** for a rejected business.
+- Owner edits a `rejected` business in **My Business** (`updateBusiness`) → auto `resubmitted`
+  (admins notified). Admin re-reviews in the detail drawer → approve/reject.
 - Admin **inactivate** (only from `approved`) → `inactive` + `inactive_reason`; **reactivate**
   (only from `inactive`) → back to `approved`.
 - Audit metadata columns (`approved_*`, `rejected_*`, `inactivated_*`, `rejection_reason`,
@@ -146,8 +151,11 @@ Wire the existing `notifications` table (entity present, table migrated) into a 
 | Event | Recipient | type |
 |-------|-----------|------|
 | New business submitted (pending) | all platform admins | `business.submitted` |
+| Business resubmitted after fix | all platform admins | `business.resubmitted` |
 | Business approved | owner | `business.approved` |
 | Business rejected (+reason) | owner | `business.rejected` |
+| Business inactivated (+reason) | owner | `business.inactivated` |
+| Business reactivated | owner | `business.reactivated` |
 | Change-request submitted | all platform admins | `business.change_submitted` |
 | Change-request approved/rejected | owner | `business.change_approved` / `business.change_rejected` |
 
