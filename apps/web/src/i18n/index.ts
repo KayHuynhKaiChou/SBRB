@@ -12,7 +12,7 @@ i18n
     supportedLngs: ['vi', 'en'],
     fallbackLng: 'vi',
     defaultNS: 'common',
-    ns: ['common', 'auth', 'dashboard', 'widget', 'datasheet', 'member', 'department', 'profile', 'admin'],
+    ns: ['common', 'auth', 'dashboard', 'widget', 'datasheet', 'member', 'department', 'profile', 'admin', 'business', 'notification'],
     backend: {
       loadPath: '/locales/{{lng}}/{{ns}}.json',
     },
