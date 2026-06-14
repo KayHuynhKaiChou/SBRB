@@ -136,5 +136,17 @@
   "status_rejected": "Rejected",
   "status_resubmitted": "Resubmitted",
   "review_rejected_waiting": "Waiting for the owner to amend per the rejection reason.",
-  "cr_fields": "Fields"
+  "cr_fields": "Fields",
+  "audit_act_create_business": "Create business",
+  "audit_act_update_business": "Update business",
+  "audit_act_approve": "Approve business",
+  "audit_act_reject": "Reject business",
+  "audit_act_inactivate": "Deactivate business",
+  "audit_act_reactivate": "Reactivate business",
+  "audit_act_change_owner": "Change owner",
+  "audit_act_change_approve": "Approve change",
+  "audit_act_change_reject": "Reject change",
+  "audit_act_user_disable": "Disable user",
+  "audit_act_user_enable": "Enable user",
+  "audit_detail_reason": "Reason"
 }

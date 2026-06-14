@@ -136,5 +136,17 @@
   "status_rejected": "Bị từ chối",
   "status_resubmitted": "Đã gửi lại",
   "review_rejected_waiting": "Đang chờ doanh nghiệp chỉnh sửa theo lý do từ chối.",
-  "cr_fields": "Trường thay đổi"
+  "cr_fields": "Trường thay đổi",
+  "audit_act_create_business": "Tạo doanh nghiệp",
+  "audit_act_update_business": "Cập nhật doanh nghiệp",
+  "audit_act_approve": "Duyệt doanh nghiệp",
+  "audit_act_reject": "Từ chối doanh nghiệp",
+  "audit_act_inactivate": "Tạm khóa doanh nghiệp",
+  "audit_act_reactivate": "Mở lại doanh nghiệp",
+  "audit_act_change_owner": "Đổi chủ sở hữu",
+  "audit_act_change_approve": "Duyệt thay đổi",
+  "audit_act_change_reject": "Từ chối thay đổi",
+  "audit_act_user_disable": "Khóa người dùng",
+  "audit_act_user_enable": "Mở khóa người dùng",
+  "audit_detail_reason": "Lý do"
 }
