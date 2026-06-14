@@ -38,19 +38,18 @@ export default function AdminBusinessesPage() {
   const [reviewOpen, setReviewOpen] = useState(false);
 
   // Deep-link from a notification: ?review=<businessId> opens the review drawer; ?tab=changes
-  // selects the change-requests tab. Consume the params once so refresh/close behaves normally.
+  // selects the change-requests tab. Reacts to param changes too (admin may already be on this
+  // page when clicking a notification), then consumes the params so close/refresh behaves normally.
   useEffect(() => {
     const reviewId = searchParams.get('review');
+    const tabParam = searchParams.get('tab');
     if (reviewId) {
       setReviewBizId(reviewId);
       setReviewOpen(true);
     }
-    if (searchParams.get('review') || searchParams.get('tab')) {
-      setSearchParams({}, { replace: true });
-    }
-    // run once on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (tabParam === 'changes') setTab('changes');
+    if (reviewId || tabParam) setSearchParams({}, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   // Debounce search input — avoids query on every keystroke
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);

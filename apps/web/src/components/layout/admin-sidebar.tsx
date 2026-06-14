@@ -21,6 +21,7 @@ import {
 } from '@sbrb/shared-constants';
 import { useAuthStore } from '../../store/auth.store';
 import { useAuth } from '../../hooks/use-auth';
+import { NotificationBell } from '../notification/notification-bell';
 
 const { Sider } = Layout;
 
@@ -115,8 +116,9 @@ export function AdminSidebar() {
         />
       </div>
 
-      {/* Bottom: avatar + logout */}
+      {/* Bottom: bell + avatar + logout */}
       <div className="border-t border-white/[0.08] py-2 flex flex-col items-center gap-1">
+        <NotificationBell />
         <Tooltip title={user?.email ?? 'Admin'} placement="right">
           <div className="w-11 h-11 rounded-[10px] flex items-center justify-center mx-2 my-0.5">
             <Avatar
