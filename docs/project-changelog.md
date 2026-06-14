@@ -4,6 +4,24 @@ All notable changes to the SBRB project are documented here. Format based on [Ke
 
 ---
 
+## [2026-05-31] — Owner signup wizard + business verification/approval
+
+**Plan:** `plans/260531-1742-owner-signup-business-approval/` | **Rules:** `docs/business-approval-rules.md`
+
+### Added
+- **Owner signup wizard** (`/auth/register`) — 3-step antd `Steps`: account → verify email (link, polled via login) → full KYB business form → "chờ duyệt". Replaces old single-form register + onboarding (create/join).
+- **Business verification lifecycle** — `approval_status` (pending/approved/rejected) independent of operational `status`; KYB columns on `businesses` (legal name, tax code, business type, address, contacts, website, description, logo/banner/license, founded year, company size). Existing rows backfilled `approved`.
+- **Admin review** — pending-business filter + detail drawer (owner info + KYB + signed-URL licence) with Approve / Reject(reason); "Change requests" tab with before→after diff. Behind `PlatformAdminGuard`.
+- **Change-request flow** — after approval, KYB edits create a `business_change_requests` shadow diff (one open per business, DB partial-unique); admin approval applies it in a transaction. Live edit only while pending/rejected.
+- **Notification module** — wired `notifications` table (service/resolver/DTO); submit/approve/reject events to owner / all admins. In-app bell (Popover + unread Badge, 45s polling) in business + admin sidebars.
+- **My Business page** (`/my-business`); **BusinessGuard** gates pending/rejected → pending page (except my-business/profile).
+- Storage buckets `banner` (public) + `business-docs` (private licence). Migrations: AddBusinessApprovalAndKyb, CreateBusinessChangeRequests, CreateNotifications. 34 API unit tests.
+
+### Removed
+- Public `register-page.tsx` + onboarding create/join UI; `ACCEPT_INVITATION_MUTATION` no longer a public entry (staff added by owner).
+
+---
+
 ## [2026-05-30] — Fix: API boot crash (admin GraphQL schema)
 
 ### Fixed
