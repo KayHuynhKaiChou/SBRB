@@ -38,6 +38,7 @@ export function NotificationBell() {
     >
       <Tooltip title={t('title')} placement="right">
         <div
+          data-testid="tour-notification-bell"
           style={{ color: SIDEBAR_ICON_COLOR }}
           className="w-11 h-11 rounded-[10px] flex items-center justify-center cursor-pointer mx-2 my-0.5 text-lg"
         >

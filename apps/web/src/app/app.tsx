@@ -4,6 +4,7 @@ import { Spin } from 'antd';
 import { ProtectedRoute } from '../components/auth/protected-route';
 import { AdminRoute } from '../components/auth/admin-route';
 import { AdminLayout } from '../components/layout/admin-layout';
+import { GuideLayout } from '../components/layout/guide-layout';
 import { BusinessGuard } from '../components/auth/business-guard';
 
 // Lazy-loaded pages
@@ -20,6 +21,7 @@ const DataSheetDetailPage = React.lazy(() => import('../pages/datasheet/datashee
 const DepartmentPage = React.lazy(() => import('../pages/department/department-page'));
 const MyBusinessPage = React.lazy(() => import('../pages/my-business/my-business-page'));
 const ProfilePage = React.lazy(() => import('../pages/profile/profile-page'));
+const GuidePage = React.lazy(() => import('../pages/guide/guide-page'));
 const NotFoundPage = React.lazy(() => import('../pages/not-found-page'));
 const AdminBusinessesPage = React.lazy(
   () => import('../pages/admin/admin-businesses-page'),
@@ -75,6 +77,11 @@ export default function App() {
           <Route path="/departments/:deptId" element={<DepartmentPage />} />
           <Route path="/my-business" element={<MyBusinessPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+        </Route>
+
+        {/* User Guide — any authenticated role (admin + business users) */}
+        <Route element={<GuideLayout />}>
+          <Route path="/guide" element={<GuidePage />} />
         </Route>
 
         {/* Admin routes — platform-admin only; persistent AdminLayout (shared sidebar) */}

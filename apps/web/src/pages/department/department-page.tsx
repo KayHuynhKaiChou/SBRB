@@ -26,6 +26,8 @@ import { MY_BUSINESSES_QUERY } from '../../graphql/auth.operations';
 import { useDepartmentTree, type IDepartmentNode } from '../../hooks/use-department-tree';
 import { useAuthStore } from '../../store/auth.store';
 import { computeLayout, DEPT_NODE_H, DEPT_NODE_W, type IOrgChartNodeData } from './org-chart-layout';
+import { FeatureTour } from '../../components/guide/feature-tour';
+import { departmentsTourSteps } from './departments-tour-steps';
 
 const { Title } = Typography;
 
@@ -52,6 +54,7 @@ const REACT_FLOW_PRO_OPTIONS = { hideAttribution: true };
 export default function DepartmentPage() {
   const { currentBusinessId } = useAuthStore();
   const { t } = useTranslation(['department', 'common']);
+  const { t: tg } = useTranslation('guide');
   const navigate = useNavigate();
   const { deptId: urlDeptId } = useParams<{ deptId?: string }>();
 
@@ -173,7 +176,7 @@ export default function DepartmentPage() {
   return (
     <>
       <div className="flex flex-col h-screen">
-          <div className="flex justify-between items-center p-4 border-b bg-white">
+          <div className="flex justify-between items-center p-4 border-b bg-white" data-testid="tour-departments-header">
             <Title level={4} className="!m-0">
               {businessName
                 ? `${businessName} — ${t('department:page_title')}`
@@ -187,7 +190,7 @@ export default function DepartmentPage() {
             />
           </div>
 
-          <div className="flex-1 relative" style={{ background: '#fafafa' }}>
+          <div className="flex-1 relative" style={{ background: '#fafafa' }} data-testid="tour-departments-chart">
             {loading && !tree ? (
               <div className="flex items-center justify-center h-full">
                 <Spin size="large" />
@@ -240,6 +243,8 @@ export default function DepartmentPage() {
           departmentId={addMemberFor}
           onClose={handleCloseAddMember}
         />
+
+        <FeatureTour tourId="departments" steps={departmentsTourSteps(tg)} />
     </>
   );
 }

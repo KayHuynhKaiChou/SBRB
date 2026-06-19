@@ -42,12 +42,15 @@ import type { TableProps, TableColumnsType } from 'antd';
 import { useToggleDataSheetStatus } from '../../hooks/use-datasheet-mutations';
 import { ImportDialog } from './import-dialog';
 import { ReimportDialog } from './reimport-dialog';
+import { FeatureTour } from '../../components/guide/feature-tour';
+import { datasheetsTourSteps } from './datasheet-tour-steps';
 
 const { Title, Text } = Typography;
 
 export default function DataSheetListPage() {
   const { currentBusinessId } = useAuthStore();
   const { t, i18n } = useTranslation(['datasheet', 'common']);
+  const { t: tg } = useTranslation('guide');
   const navigate = useNavigate();
   const notify = useNotify();
   const [search, setSearch] = useState('');
@@ -317,7 +320,7 @@ export default function DataSheetListPage() {
 
   return (
     <div className="p-6 h-full overflow-y-auto">
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-center mb-4" data-testid="tour-datasheets-toolbar">
         <Title level={4} className="!m-0">
           {t('datasheet:manage_title')}
         </Title>
@@ -345,8 +348,10 @@ export default function DataSheetListPage() {
         onChange={(e) => setSearch(e.target.value)}
         className="!mb-3 !w-[300px]"
         allowClear
+        data-testid="tour-datasheets-search"
       />
 
+      <div data-testid="tour-datasheets-table">
       <Table
         dataSource={filtered}
         columns={columns}
@@ -378,6 +383,9 @@ export default function DataSheetListPage() {
           ),
         }}
       />
+      </div>
+
+      <FeatureTour tourId="datasheets" steps={datasheetsTourSteps(tg)} />
 
       <ImportDialog
         open={importOpen}

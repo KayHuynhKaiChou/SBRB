@@ -54,7 +54,10 @@ export function Header({
       <div className="w-px h-6 bg-[#e8e8e8] shrink-0" />
 
       {/* Tab pills row */}
-      <div className="flex-1 flex items-center gap-1 overflow-x-auto [scrollbar-width:none] min-w-0 py-1 pr-2">
+      <div
+        data-testid="tour-dashboard-tabs"
+        className="flex-1 flex items-center gap-1 overflow-x-auto [scrollbar-width:none] min-w-0 py-1 pr-2"
+      >
         {sorted.map((tab) => {
           const isActive = tab.id === activeTabId;
           return (
@@ -86,7 +89,7 @@ export function Header({
       </div>
 
       {/* Right side: add widget + snap grid + zoom select */}
-      <div className="flex items-center gap-1.5 shrink-0">
+      <div data-testid="tour-dashboard-controls" className="flex items-center gap-1.5 shrink-0">
         <IconButton
           icon={<PlusOutlined />}
           tooltip={activeTabId ? t('dashboard:add_widget') : t('dashboard:add_widget_no_tab')}

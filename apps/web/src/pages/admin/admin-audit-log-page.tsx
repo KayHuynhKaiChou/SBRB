@@ -15,6 +15,8 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import { useAdminAudit, type IAdminAuditRow } from '../../hooks/use-admin-audit';
 import { EAdminAuditAction } from '@sbrb/shared-constants';
+import { FeatureTour } from '../../components/guide/feature-tour';
+import { adminAuditTourSteps } from './admin-audit-tour-steps';
 
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
@@ -90,6 +92,7 @@ function renderDetails(meta: string, t: TFunction): React.ReactNode {
 /** Admin audit log page with filter bar + paginated table. SRS §5.16 */
 export default function AdminAuditLogPage() {
   const { t } = useTranslation('admin');
+  const { t: tg } = useTranslation('guide');
   const [actorEmailInput, setActorEmailInput] = useState('');
   const [actorEmailDebounced, setActorEmailDebounced] = useState('');
   const [actionFilter, setActionFilter] = useState<string | undefined>(undefined);
@@ -179,7 +182,7 @@ export default function AdminAuditLogPage() {
       </div>
 
       {/* Filter bar */}
-      <div className="flex flex-wrap gap-3 mb-5">
+      <div className="flex flex-wrap gap-3 mb-5" data-testid="tour-admin-audit-filters">
         <Input
           placeholder={t('ph_search_actor')}
           prefix={<SearchOutlined />}
@@ -209,22 +212,26 @@ export default function AdminAuditLogPage() {
         />
       </div>
 
-      <Table<IAdminAuditRow>
-        rowKey="id"
-        dataSource={rows}
-        columns={columns}
-        loading={loading}
-        pagination={{
-          current: page,
-          pageSize: PAGE_SIZE,
-          total,
-          onChange: (newPage) => setPage(newPage),
-          showTotal: (n) => `${n} entries`,
-          showSizeChanger: false,
-        }}
-        size="middle"
-        scroll={{ x: 900 }}
-      />
+      <div data-testid="tour-admin-audit-table">
+        <Table<IAdminAuditRow>
+          rowKey="id"
+          dataSource={rows}
+          columns={columns}
+          loading={loading}
+          pagination={{
+            current: page,
+            pageSize: PAGE_SIZE,
+            total,
+            onChange: (newPage) => setPage(newPage),
+            showTotal: (n) => `${n} entries`,
+            showSizeChanger: false,
+          }}
+          size="middle"
+          scroll={{ x: 900 }}
+        />
+      </div>
+
+      <FeatureTour tourId="admin-audit" steps={adminAuditTourSteps(tg)} />
     </>
   );
 }

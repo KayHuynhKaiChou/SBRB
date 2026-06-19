@@ -10,6 +10,8 @@ import { AdminBusinessesTable } from './components/admin-businesses-table';
 import { ChangeOwnerModal } from './components/change-owner-modal';
 import { BusinessReviewDrawer } from './components/business-review-drawer';
 import { AdminChangeRequestsPanel } from './components/admin-change-requests-panel';
+import { FeatureTour } from '../../components/guide/feature-tour';
+import { adminBusinessesTourSteps } from './admin-businesses-tour-steps';
 
 const { Title } = Typography;
 const PAGE_SIZE_DEFAULT = 20;
@@ -20,6 +22,7 @@ type TTab = 'businesses' | 'changes';
 /** Admin page for managing all platform businesses. SRS §5.12, §5.14 + approval review. */
 export default function AdminBusinessesPage() {
   const { t } = useTranslation('admin');
+  const { t: tg } = useTranslation('guide');
   const [searchParams, setSearchParams] = useSearchParams();
   const [tab, setTab] = useState<TTab>(searchParams.get('tab') === 'changes' ? 'changes' : 'businesses');
   const [search, setSearch] = useState('');
@@ -119,7 +122,7 @@ export default function AdminBusinessesPage() {
   return (
     <>
       {/* Page header */}
-      <div className="mb-4 flex items-center justify-between flex-wrap gap-4">
+      <div className="mb-4 flex items-center justify-between flex-wrap gap-4" data-testid="tour-admin-businesses-header">
         <Title level={4} className="!mb-0">
           {t('businesses_title')}
         </Title>
@@ -137,7 +140,7 @@ export default function AdminBusinessesPage() {
         <AdminChangeRequestsPanel />
       ) : (
         <>
-          <div className="mb-4 flex items-center justify-end flex-wrap gap-3">
+          <div className="mb-4 flex items-center justify-end flex-wrap gap-3" data-testid="tour-admin-businesses-filters">
             <Input
               placeholder={t('ph_search_business')}
               prefix={<SearchOutlined />}
@@ -165,16 +168,18 @@ export default function AdminBusinessesPage() {
             />
           </div>
 
-          <AdminBusinessesTable
-            rows={rows}
-            total={total}
-            loading={loading}
-            page={page}
-            pageSize={pageSize}
-            onPageChange={handlePageChange}
-            onChangeOwner={handleChangeOwnerClick}
-            onReview={handleReviewClick}
-          />
+          <div data-testid="tour-admin-businesses-table">
+            <AdminBusinessesTable
+              rows={rows}
+              total={total}
+              loading={loading}
+              page={page}
+              pageSize={pageSize}
+              onPageChange={handlePageChange}
+              onChangeOwner={handleChangeOwnerClick}
+              onReview={handleReviewClick}
+            />
+          </div>
         </>
       )}
 
@@ -216,6 +221,8 @@ export default function AdminBusinessesPage() {
           onSubmit={handleChangeOwnerSubmit}
         />
       )}
+
+      <FeatureTour tourId="admin-businesses" steps={adminBusinessesTourSteps(tg)} />
     </>
   );
 }

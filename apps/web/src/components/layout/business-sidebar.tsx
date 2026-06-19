@@ -12,9 +12,11 @@ import {
   ShopOutlined,
   UserOutlined,
   LogoutOutlined,
+  QuestionCircleOutlined,
 } from '@ant-design/icons';
 import { NotificationBell } from '../notification/notification-bell';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useQuery } from '@apollo/client';
 import { useAuth } from '../../hooks/use-auth';
 import {
@@ -83,6 +85,7 @@ function NavIcon({ icon, label, active, onClick, disabled, disabledHint }: INavI
 export function BusinessSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation('guide');
   const { user, currentBusinessId } = useAuthStore();
   const { logout } = useAuth();
 
@@ -150,8 +153,14 @@ export function BusinessSidebar() {
         })}
       </div>
 
-      {/* Bottom icons: settings, bell, avatar */}
+      {/* Bottom icons: guide, settings, bell, avatar */}
       <div className="border-t border-white/[0.08] py-2 flex flex-col items-center gap-1">
+        <NavIcon
+          icon={<QuestionCircleOutlined />}
+          label={t('nav_guide')}
+          active={location.pathname.startsWith('/guide')}
+          onClick={() => navigate('/guide')}
+        />
         <NavIcon icon={<SettingOutlined />} label="Cài đặt" active={false} disabled onClick={() => undefined} />
         <NotificationBell />
         <Tooltip title={user?.fullName ?? user?.email ?? 'Profile'} placement="right">

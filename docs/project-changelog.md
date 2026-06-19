@@ -4,6 +4,21 @@ All notable changes to the SBRB project are documented here. Format based on [Ke
 
 ---
 
+## [2026-06-14] — In-app User Guide / Help hub with antd Tour
+
+**Plan:** `plans/260614-1600-user-guide-tour-hub/` (incl. `feature-catalog.md`)
+
+### Added
+- **User Guide hub** (`/guide`) — accessible to every logged-in role via a dedicated `GuideLayout` (reuses role-aware Sidebar; unlike `ProtectedRoute` it does NOT redirect admins). Sidebar entry (`QuestionCircleOutlined`) added to business + admin sidebars.
+- **Guide UI** — grouped feature cards (`Collapse` + `Card` grid) across 8 areas, **roles & permissions matrix** (`Table`), **business-approval lifecycle** (`Steps`). Built features show a role-gated **Usage** button; unbuilt features show a `(coming soon)` `Tag`. Driven by `guide-catalog.ts`; all text in `guide.json` (en/vi).
+- **Guided tours (antd `Tour`)** — `tour.store` (zustand) + `useFeatureTour` (`?tour=<id>` ∪ store, consumes on close) + `FeatureTour` wrapper. Usage button navigates to the feature page and launches its tour. Page-level tours wired on: dashboard, data-sheets, departments, my-business, profile (+notification bell), onboarding, admin dashboard/businesses/users/audit. Added `data-testid` anchors as tour targets.
+- Shared types in `@sbrb/shared-types` (`guide.types.ts`); `GUIDE` route constant. 16 guide tests (catalog integrity, hook, usage-button gating, en/vi i18n parity).
+
+### Deferred
+- Modal/drawer-level deep tour steps (widget settings, import dialog, dept modals, review drawer, change-owner, user detail drawer) — page-level tours shipped; sub-page steps are a follow-up.
+
+---
+
 ## [2026-05-31] — Owner signup wizard + business verification/approval
 
 **Plan:** `plans/260531-1742-owner-signup-business-approval/` | **Rules:** `docs/business-approval-rules.md`

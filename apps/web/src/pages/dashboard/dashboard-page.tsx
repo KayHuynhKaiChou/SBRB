@@ -12,6 +12,8 @@ import { AddTabModal } from '../../components/tab/add-tab-modal';
 import { EditTabModal } from '../../components/tab/edit-tab-modal';
 import { AddWidgetModal } from '../../components/canvas/add-widget-modal';
 import { DataSelectorModal } from '../../components/data-selector/data-selector-modal';
+import { FeatureTour } from '../../components/guide/feature-tour';
+import { dashboardTourSteps } from './dashboard-tour-steps';
 import {
   CREATE_WIDGET_MUTATION,
   DELETE_WIDGET_MUTATION,
@@ -36,7 +38,7 @@ interface IDeleteWidgetResult {
 }
 
 export default function DashboardPage() {
-  const { t } = useTranslation(['dashboard', 'widget']);
+  const { t } = useTranslation(['dashboard', 'widget', 'guide']);
   const { currentBusinessId } = useAuthStore();
 
   if (!currentBusinessId) {
@@ -203,6 +205,8 @@ export default function DashboardPage() {
         onConfirm={handleDataSelectorConfirm}
         businessId={currentBusinessId}
       />
+
+      <FeatureTour tourId="dashboard" steps={dashboardTourSteps(t)} />
     </AppLayout>
   );
 }

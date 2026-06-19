@@ -8,6 +8,7 @@ import {
   AuditOutlined,
   UserOutlined,
   LogoutOutlined,
+  QuestionCircleOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -71,6 +72,7 @@ export function AdminSidebar() {
   const isBusinesses = location.pathname.startsWith(APP_ROUTES.ADMIN_BUSINESSES);
   const isUsers = location.pathname.startsWith(APP_ROUTES.ADMIN_USERS);
   const isAudit = location.pathname.startsWith(APP_ROUTES.ADMIN_AUDIT);
+  const isGuide = location.pathname.startsWith(APP_ROUTES.GUIDE);
 
   return (
     <Sider
@@ -116,8 +118,14 @@ export function AdminSidebar() {
         />
       </div>
 
-      {/* Bottom: bell + avatar + logout */}
+      {/* Bottom: guide + bell + avatar + logout */}
       <div className="border-t border-white/[0.08] py-2 flex flex-col items-center gap-1">
+        <NavIcon
+          icon={<QuestionCircleOutlined />}
+          label={t('guide:nav_guide')}
+          active={isGuide}
+          onClick={() => navigate(APP_ROUTES.GUIDE)}
+        />
         <NotificationBell />
         <Tooltip title={user?.email ?? 'Admin'} placement="right">
           <div className="w-11 h-11 rounded-[10px] flex items-center justify-center mx-2 my-0.5">

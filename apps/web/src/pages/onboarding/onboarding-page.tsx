@@ -7,6 +7,8 @@ import { APP_ROUTES } from '@sbrb/shared-constants';
 import { useAuthStore } from '../../store/auth.store';
 import { CREATE_BUSINESS_MUTATION } from '../../graphql/business.operations';
 import { BusinessKybFields } from '../../components/business/business-kyb-fields';
+import { FeatureTour } from '../../components/guide/feature-tour';
+import { onboardingTourSteps } from './onboarding-tour-steps';
 import type { IBusinessValues } from '../auth/signup-wizard/steps/step-business';
 
 const { Title, Text } = Typography;
@@ -18,6 +20,7 @@ const { Title, Text } = Typography;
  */
 export default function OnboardingPage() {
   const { t } = useTranslation('business');
+  const { t: tg } = useTranslation('guide');
   const navigate = useNavigate();
   const [form] = Form.useForm<IBusinessValues>();
   const [createBusiness, { loading }] = useMutation(CREATE_BUSINESS_MUTATION);
@@ -49,6 +52,7 @@ export default function OnboardingPage() {
         <Card
           className="!rounded-2xl !border !border-[#e8e8e8]"
           style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}
+          data-testid="tour-onboarding-form"
         >
           <Form
             form={form}
@@ -71,6 +75,7 @@ export default function OnboardingPage() {
           </Form>
         </Card>
       </div>
+      <FeatureTour tourId="onboarding" steps={onboardingTourSteps(tg)} />
     </div>
   );
 }

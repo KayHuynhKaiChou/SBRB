@@ -6,6 +6,7 @@ export * from './business.types';
 export * from './canvas.types';
 export * from './datasheet.types';
 export * from './department.types';
+export * from './guide.types';
 export * from './notification.types';
 export * from './profile.types';
 export * from './user.types';

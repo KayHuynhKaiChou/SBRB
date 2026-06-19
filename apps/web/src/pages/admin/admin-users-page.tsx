@@ -7,6 +7,8 @@ import type { IAdminUserRow } from '../../hooks/use-admin-users';
 import { useAuthStore } from '../../store/auth.store';
 import { AdminUsersTable } from './components/admin-users-table';
 import { UserDetailDrawer } from './components/user-detail-drawer';
+import { FeatureTour } from '../../components/guide/feature-tour';
+import { adminUsersTourSteps } from './admin-users-tour-steps';
 
 const { Title } = Typography;
 const PAGE_SIZE_DEFAULT = 20;
@@ -15,6 +17,7 @@ const SEARCH_DEBOUNCE_MS = 300;
 /** Admin page for managing all platform users. SRS §5.12, §5.15 */
 export default function AdminUsersPage() {
   const { t } = useTranslation('admin');
+  const { t: tg } = useTranslation('guide');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isDisabledFilter, setIsDisabledFilter] = useState<boolean | undefined>(undefined);
@@ -78,12 +81,12 @@ export default function AdminUsersPage() {
   return (
     <>
       {/* Page header */}
-      <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
+      <div className="mb-6 flex items-center justify-between flex-wrap gap-4" data-testid="tour-admin-users-header">
         <Title level={4} className="!mb-0">
           {t('users_title')}
         </Title>
 
-        <div className="flex gap-3">
+        <div className="flex gap-3" data-testid="tour-admin-users-filters">
           <Input
             placeholder={t('ph_search_user')}
             prefix={<SearchOutlined />}
@@ -110,20 +113,22 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Data table */}
-      <AdminUsersTable
-        rows={rows}
-        total={total}
-        loading={loading}
-        page={page}
-        pageSize={pageSize}
-        currentUserId={currentUserId}
-        onPageChange={handlePageChange}
-        onDisable={(id) => void disableUser(id)}
-        onEnable={(id) => void enableUser(id)}
-        onRowClick={handleRowClick}
-        disableLoading={disableLoading}
-        enableLoading={enableLoading}
-      />
+      <div data-testid="tour-admin-users-table">
+        <AdminUsersTable
+          rows={rows}
+          total={total}
+          loading={loading}
+          page={page}
+          pageSize={pageSize}
+          currentUserId={currentUserId}
+          onPageChange={handlePageChange}
+          onDisable={(id) => void disableUser(id)}
+          onEnable={(id) => void enableUser(id)}
+          onRowClick={handleRowClick}
+          disableLoading={disableLoading}
+          enableLoading={enableLoading}
+        />
+      </div>
 
       {/* User detail drawer */}
       <UserDetailDrawer
@@ -136,6 +141,8 @@ export default function AdminUsersPage() {
         disableLoading={disableLoading}
         enableLoading={enableLoading}
       />
+
+      <FeatureTour tourId="admin-users" steps={adminUsersTourSteps(tg)} />
     </>
   );
 }

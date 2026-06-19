@@ -8,11 +8,14 @@ import { PROFILE_QUERY } from '../../graphql/profile.operations';
 import { PersonalInfoCard } from '../../components/profile/personal-info-card';
 // Business info now lives in the dedicated "My Business" page (all changes admin-gated).
 import { SecurityCard } from '../../components/profile/security-card';
+import { FeatureTour } from '../../components/guide/feature-tour';
+import { profileTourSteps } from './profile-tour-steps';
 
 const { Title } = Typography;
 
 export default function ProfilePage() {
   const { t } = useTranslation('profile');
+  const { t: tg } = useTranslation('guide');
   const businessId = useAuthStore((s) => s.currentBusinessId);
 
   const { data, loading } = useQuery<IProfileQueryData, IProfileQueryVars>(PROFILE_QUERY, {
@@ -33,8 +36,13 @@ export default function ProfilePage() {
           <Title level={3} className="!m-0">
             {t('title', 'Profile')}
           </Title>
-          <PersonalInfoCard user={data.me} role={data.myMembership?.role} />
-          <SecurityCard />
+          <div data-testid="tour-profile-personal">
+            <PersonalInfoCard user={data.me} role={data.myMembership?.role} />
+          </div>
+          <div data-testid="tour-profile-security">
+            <SecurityCard />
+          </div>
+          <FeatureTour tourId="profile" steps={profileTourSteps(tg)} />
         </div>
       )}
     </div>

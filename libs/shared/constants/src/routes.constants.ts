@@ -44,6 +44,7 @@ export const APP_ROUTES = {
   DATA_SHEETS: '/data-sheets',
   DEPARTMENTS: '/departments',
   PROFILE: '/profile',
+  GUIDE: '/guide',
   ADMIN: '/admin',
   ADMIN_BUSINESSES: '/admin/businesses',
   ADMIN_USERS: '/admin/users',

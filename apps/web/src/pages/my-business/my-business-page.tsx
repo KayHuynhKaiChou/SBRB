@@ -16,6 +16,8 @@ import {
   REQUEST_BUSINESS_CHANGE_MUTATION,
 } from '../../graphql/business.operations';
 import { BusinessKybFields } from '../../components/business/business-kyb-fields';
+import { FeatureTour } from '../../components/guide/feature-tour';
+import { myBusinessTourSteps } from './my-business-tour-steps';
 
 const { Title, Text } = Typography;
 
@@ -37,6 +39,7 @@ function cleanInput(values: Record<string, unknown>): Record<string, unknown> {
 
 export default function MyBusinessPage() {
   const { t } = useTranslation('business');
+  const { t: tg } = useTranslation('guide');
   const businessId = useAuthStore((s) => s.currentBusinessId);
   const [form] = Form.useForm();
 
@@ -116,7 +119,7 @@ export default function MyBusinessPage() {
             <Title level={3} className="!m-0">{t('my_business_title')}</Title>
             <Text type="secondary">{biz.name}</Text>
           </div>
-          <Tag color={BUSINESS_STATUS_TAG_COLOR[status]} className="!m-0">
+          <Tag color={BUSINESS_STATUS_TAG_COLOR[status]} className="!m-0" data-testid="tour-my-business-status">
             {statusLabel}
           </Tag>
         </div>
@@ -132,7 +135,7 @@ export default function MyBusinessPage() {
         {openChange && <Alert type="warning" showIcon message={t('change_pending_banner')} />}
         {!isOwner && <Alert type="info" showIcon message={t('my_business_view_only')} />}
 
-        <Card title={t('my_business_info')}>
+        <Card title={t('my_business_info')} data-testid="tour-my-business-form">
           <Form
             form={form}
             layout="vertical"
@@ -164,5 +167,10 @@ export default function MyBusinessPage() {
     );
   };
 
-  return <div className="p-6 h-full overflow-y-auto">{renderBody()}</div>;
+  return (
+    <div className="p-6 h-full overflow-y-auto">
+      {renderBody()}
+      <FeatureTour tourId="my-business" steps={myBusinessTourSteps(tg)} />
+    </div>
+  );
 }
