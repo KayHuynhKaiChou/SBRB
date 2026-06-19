@@ -75,7 +75,7 @@ export class MemberService {
 
     const adminIsOwner = admin.role === 'owner';
     const adminIsManagerAndTargetSubordinate =
-      admin.role === 'manager' && ['staff', 'viewer'].includes(target.role);
+      admin.role === 'manager' && ['staff'].includes(target.role);
 
     if (!adminIsOwner && !adminIsManagerAndTargetSubordinate) {
       throw new ForbiddenException('Insufficient permissions to remove this member');

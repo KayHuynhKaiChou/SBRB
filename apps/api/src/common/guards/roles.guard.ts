@@ -4,10 +4,9 @@ import { ROLES_KEY } from '../decorators/roles.decorator';
 import type { BusinessRole } from '@sbrb/shared-types';
 
 const ROLE_HIERARCHY: Record<BusinessRole, number> = {
-  owner: 4,
-  manager: 3,
-  staff: 2,
-  viewer: 1,
+  owner: 3,
+  manager: 2,
+  staff: 1,
 };
 
 /** Guard: checks BusinessRole from JWT claims (requires JwtAuthGuard first) */

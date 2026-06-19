@@ -77,11 +77,11 @@ describe('MemberResolver', () => {
 
   it('changeMemberRole() delegates to memberService.changeMemberRole', async () => {
     const { resolver, ms } = makeResolver();
-    ms.changeMemberRole.mockResolvedValue({ id: 'm1', role: 'viewer' });
-    const dto = { role: 'viewer' as const };
+    ms.changeMemberRole.mockResolvedValue({ id: 'm1', role: 'staff' });
+    const dto = { role: 'staff' as const };
     const result = await resolver.changeMemberRole(BID, 'target-1', dto, USER as any);
-    expect(ms.changeMemberRole).toHaveBeenCalledWith(BID, USER.sub, 'target-1', 'viewer');
-    expect(result).toEqual({ id: 'm1', role: 'viewer' });
+    expect(ms.changeMemberRole).toHaveBeenCalledWith(BID, USER.sub, 'target-1', 'staff');
+    expect(result).toEqual({ id: 'm1', role: 'staff' });
   });
 
   it('removeMember() delegates to memberService.removeMember', async () => {

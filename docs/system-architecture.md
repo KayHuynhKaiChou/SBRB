@@ -306,7 +306,7 @@ Business {
 UserRole {
   userId: UUID
   businessId: UUID
-  role: "owner" | "manager" | "staff" | "viewer"  // 4 permission levels (business-scoped)
+  role: "owner" | "manager" | "staff"  // 3 permission levels (business-scoped)
 }
 
 Tab {

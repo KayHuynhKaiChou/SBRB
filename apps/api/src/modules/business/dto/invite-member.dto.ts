@@ -9,6 +9,6 @@ export class InviteMemberDto {
   email: string;
 
   @Field(() => String)
-  @IsEnum(['manager', 'staff', 'viewer'])
-  role: 'manager' | 'staff' | 'viewer';
+  @IsEnum(['manager', 'staff'])
+  role: 'manager' | 'staff';
 }

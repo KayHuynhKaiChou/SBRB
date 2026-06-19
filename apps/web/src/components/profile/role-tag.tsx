@@ -6,7 +6,6 @@ const COLOR_MAP: Record<TBusinessRole, string> = {
   [EBusinessRole.OWNER]: 'red',
   [EBusinessRole.MANAGER]: 'blue',
   [EBusinessRole.STAFF]: 'default',
-  [EBusinessRole.VIEWER]: 'gold',
 };
 
 interface IRoleTagProps {

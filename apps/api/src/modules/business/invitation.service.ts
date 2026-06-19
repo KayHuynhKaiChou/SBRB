@@ -34,7 +34,7 @@ export class InvitationService {
     if (!inviter) throw new ForbiddenException('Not a member of this business');
 
     const canInviteAny = inviter.role === 'owner';
-    const canInviteSubordinate = inviter.role === 'manager' && ['staff', 'viewer'].includes(dto.role);
+    const canInviteSubordinate = inviter.role === 'manager' && ['staff'].includes(dto.role);
     if (!canInviteAny && !canInviteSubordinate) {
       throw new ForbiddenException('Insufficient role to invite this member role');
     }

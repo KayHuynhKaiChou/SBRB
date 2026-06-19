@@ -173,8 +173,8 @@ describe('DepartmentMemberService', () => {
   });
 
   describe('setManager', () => {
-    it('rejects user with viewer role (B3/B7)', async () => {
-      const { service } = makeService({ targetRole: 'viewer' });
+    it('rejects user with staff role (B3/B7)', async () => {
+      const { service } = makeService({ targetRole: 'staff' });
       await expect(service.setManager(DEPT_ID, 'user-9', ACTOR_ID)).rejects.toThrow(
         BadRequestException,
       );

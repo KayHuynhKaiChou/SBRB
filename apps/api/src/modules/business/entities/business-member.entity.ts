@@ -34,7 +34,7 @@ export class BusinessMember {
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @Column({ type: 'varchar', length: 20, default: EBusinessRole.VIEWER })
+  @Column({ type: 'varchar', length: 20, default: EBusinessRole.STAFF })
   role: TBusinessRole;
 
   @Column({ name: 'invited_by', type: 'uuid', nullable: true })

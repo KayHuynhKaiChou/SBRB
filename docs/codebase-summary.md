@@ -266,7 +266,7 @@ interface DataSeriesDto {
 interface UserPayload {
   userId: string;
   businessId: string;
-  role: 'owner' | 'manager' | 'staff' | 'viewer';
+  role: 'owner' | 'manager' | 'staff';
   email: string;
 }
 

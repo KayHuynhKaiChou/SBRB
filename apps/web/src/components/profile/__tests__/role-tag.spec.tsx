@@ -37,12 +37,6 @@ describe('RoleTag', () => {
     expect(screen.getByText('role_staff')).toBeInTheDocument();
   });
 
-  it('renders viewer role with gold color', () => {
-    render(<RoleTag role="viewer" />);
-    expect(screen.getByTestId('tag-gold')).toBeInTheDocument();
-    expect(screen.getByText('role_viewer')).toBeInTheDocument();
-  });
-
   it('handles uppercase role and converts to lowercase', () => {
     render(<RoleTag role="OWNER" />);
     expect(screen.getByTestId('tag-red')).toBeInTheDocument();
@@ -72,7 +66,6 @@ describe('RoleTag', () => {
       { role: 'owner', color: 'red' },
       { role: 'manager', color: 'blue' },
       { role: 'staff', color: 'default' },
-      { role: 'viewer', color: 'gold' },
     ];
 
     roles.forEach(({ role, color }) => {

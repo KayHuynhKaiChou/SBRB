@@ -33,17 +33,17 @@ describe('MemberService', () => {
       memberRepo.findOne
         .mockResolvedValueOnce({ role: 'owner' })
         .mockResolvedValueOnce({ id: 'm2', role: 'staff' });
-      memberRepo.save.mockResolvedValue({ id: 'm2', role: 'viewer' });
+      memberRepo.save.mockResolvedValue({ id: 'm2', role: 'staff' });
 
-      const result = await service.changeMemberRole(BID, ADMIN, TARGET, 'viewer');
-      expect(result.role).toBe('viewer');
+      const result = await service.changeMemberRole(BID, ADMIN, TARGET, 'staff');
+      expect(result.role).toBe('staff');
       expect(audit.log).toHaveBeenCalledWith(expect.objectContaining({ action: 'change_member_role' }));
     });
 
     it('throws ForbiddenException when non-owner tries to change role', async () => {
       const { service, memberRepo } = makeMemberService();
       memberRepo.findOne.mockResolvedValueOnce({ role: 'manager' });
-      await expect(service.changeMemberRole(BID, ADMIN, TARGET, 'viewer')).rejects.toThrow(ForbiddenException);
+      await expect(service.changeMemberRole(BID, ADMIN, TARGET, 'staff')).rejects.toThrow(ForbiddenException);
     });
 
     it('throws BadRequestException when attempting to change owner role', async () => {
@@ -119,13 +119,13 @@ describe('MemberService', () => {
       const { service, memberRepo } = makeMemberService();
       memberRepo.findOne
         .mockResolvedValueOnce({ role: 'manager' })
-        .mockResolvedValueOnce({ id: 'm2', role: 'viewer' });
+        .mockResolvedValueOnce({ id: 'm2', role: 'manager' });
       await expect(service.assignWidgets(BID, ADMIN, TARGET, [])).rejects.toThrow(BadRequestException);
     });
 
-    it('throws ForbiddenException for viewer trying to assign', async () => {
+    it('throws ForbiddenException for staff trying to assign', async () => {
       const { service, memberRepo } = makeMemberService();
-      memberRepo.findOne.mockResolvedValueOnce({ role: 'viewer' });
+      memberRepo.findOne.mockResolvedValueOnce({ role: 'staff' });
       await expect(service.assignWidgets(BID, ADMIN, TARGET, [])).rejects.toThrow(ForbiddenException);
     });
   });

@@ -5,6 +5,6 @@ import { IsEnum } from 'class-validator';
 @InputType()
 export class UpdateMemberRoleDto {
   @Field()
-  @IsEnum(['manager', 'staff', 'viewer'])
-  role: 'manager' | 'staff' | 'viewer';
+  @IsEnum(['manager', 'staff'])
+  role: 'manager' | 'staff';
 }

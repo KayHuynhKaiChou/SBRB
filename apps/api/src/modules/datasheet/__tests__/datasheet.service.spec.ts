@@ -33,7 +33,7 @@ const makeRepos = () => ({
 });
 
 const managerMember = { businessId: 'biz1', userId: 'user1', role: 'manager', status: 'active' };
-const viewerMember = { businessId: 'biz1', userId: 'user2', role: 'viewer', status: 'active' };
+const staffMember = { businessId: 'biz1', userId: 'user2', role: 'staff', status: 'active' };
 
 const xlsxFile = {
   originalname: 'test.xlsx',
@@ -176,7 +176,7 @@ describe('DatasheetService — facade delegation', () => {
       const { service, sheetRepo, authService } = makeService();
       const mockSheet = { id: 'sheet1', businessId: 'biz1' };
       sheetRepo.findOne.mockResolvedValue(mockSheet);
-      authService.requireMember.mockResolvedValue(viewerMember);
+      authService.requireMember.mockResolvedValue(staffMember);
       const result = await service.findById('sheet1', 'user2');
       expect(result).toEqual(mockSheet);
     });

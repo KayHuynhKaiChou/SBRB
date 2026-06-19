@@ -20,11 +20,11 @@ describe('BusinessMember entity', () => {
     expect(unique?.columns).toEqual(expect.arrayContaining(['businessId', 'userId']));
   });
 
-  it('has role column with default viewer', () => {
+  it('has role column with default staff', () => {
     const col = storage.columns.find(
       (c) => c.target === BusinessMember && c.propertyName === 'role',
     );
-    expect((col?.options as { default?: unknown })?.default).toBe('viewer');
+    expect((col?.options as { default?: unknown })?.default).toBe('staff');
   });
 
   it('has status column with default active', () => {
