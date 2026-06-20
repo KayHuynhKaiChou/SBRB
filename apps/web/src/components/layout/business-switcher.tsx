@@ -2,11 +2,12 @@ import React from 'react';
 import { Avatar } from 'antd';
 import { useQuery } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
+import type { IMyBusinessSummary } from '@sbrb/shared-types';
 import { useAuthStore } from '../../store/auth.store';
 import { MY_BUSINESSES_QUERY } from '../../graphql/auth.operations';
 
 interface IMyBusinessesData {
-  myBusinesses: Array<{ id: string; name: string; status: string; logoUrl: string | null }>;
+  myBusinesses: IMyBusinessSummary[];
 }
 
 /**

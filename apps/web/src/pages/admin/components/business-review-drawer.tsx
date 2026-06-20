@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { FormModal } from '@sbrb/ui';
 import { EBusinessStatus } from '@sbrb/shared-constants';
 import { useAdminBusinessDetail } from '../../../hooks/use-admin-business-review';
-import { BusinessStatusTag } from './business-status-tag';
+import { BusinessStatusTag } from '../../../components/business/business-status-tag';
 
 interface IBusinessReviewDrawerProps {
   businessId: string | null;
@@ -147,7 +147,7 @@ export function BusinessReviewDrawer({
                 <Descriptions.Item label="SĐT">{detail.contactPhone || '—'}</Descriptions.Item>
                 <Descriptions.Item label="Email DN">{detail.contactEmail || '—'}</Descriptions.Item>
                 <Descriptions.Item label="Website">{detail.website || '—'}</Descriptions.Item>
-                <Descriptions.Item label="Quy mô">{detail.companySize || '—'}</Descriptions.Item>
+                <Descriptions.Item label="Quy mô">{detail.companySize ?? '—'}</Descriptions.Item>
                 <Descriptions.Item label="Mô tả">{detail.description || '—'}</Descriptions.Item>
               </Descriptions>
             </div>

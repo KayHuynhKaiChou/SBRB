@@ -125,5 +125,13 @@
   "status_col": "Status",
   "status_active": "Active",
   "status_inactive": "Inactive",
-  "toggle_status_tooltip": "Toggle active/inactive — inactive sheets are hidden from widget pickers"
+  "toggle_status_tooltip": "Toggle active/inactive — inactive sheets are hidden from widget pickers",
+  "preview_button": "View example",
+  "preview_modal_title": "Sample data example",
+  "preview_col_item": "Item",
+  "preview_month": "Month {{n}}",
+  "preview_disclaimer": "Illustrative sample data only — to show how each template looks.",
+  "preview_simple_hint": "Flat table: one row per metric, columns are periods. No department grouping.",
+  "preview_department_hint": "Group rows hold a department name (values left blank); metric rows sit underneath each group.",
+  "preview_pnl_hint": "Indented tree: parent totals (bold, values blank) with indented child lines underneath."
 }

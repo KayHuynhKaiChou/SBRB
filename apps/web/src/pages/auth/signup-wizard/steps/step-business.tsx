@@ -16,7 +16,7 @@ export interface IBusinessValues {
   website?: string;
   description?: string;
   foundedYear?: number;
-  companySize?: string;
+  companySize?: number;
   logoUrl?: string;
   bannerUrl?: string;
   licenseFileUrl: string;
@@ -37,7 +37,6 @@ export function StepBusiness({ loading, onSubmit }: IStepBusinessProps) {
       form={form}
       layout="vertical"
       size="large"
-      requiredMark={false}
       onFinish={onSubmit}
       initialValues={{ currency: 'VND' }}
     >

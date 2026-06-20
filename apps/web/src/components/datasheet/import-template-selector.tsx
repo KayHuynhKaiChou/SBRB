@@ -1,11 +1,27 @@
+import { useState, type CSSProperties } from 'react';
 import { Button, Alert, Tag } from 'antd';
-import { DownloadOutlined, FileExcelOutlined, ApartmentOutlined, AlignLeftOutlined, CheckCircleFilled } from '@ant-design/icons';
+import {
+  DownloadOutlined,
+  FileExcelOutlined,
+  ApartmentOutlined,
+  AlignLeftOutlined,
+  CheckCircleFilled,
+  EyeOutlined,
+} from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { apiClient } from '../../lib/api-client';
 import { useNotify } from '@sbrb/shared-apollo-client';
 import { API_ROUTES } from '@sbrb/shared-constants';
+import { ImportTemplatePreviewModal } from './import-template-preview-modal';
 
 type TemplateType = 'simple' | 'department' | 'pnl';
+
+/** Selected-card look per template colour (inline because dynamic Tailwind classes don't JIT). */
+const SELECTED_CARD_STYLE: Record<string, CSSProperties> = {
+  blue: { borderColor: '#3b82f6', backgroundColor: '#eff6ff', boxShadow: '0 0 0 1px #3b82f6' },
+  purple: { borderColor: '#8b5cf6', backgroundColor: '#f5f3ff', boxShadow: '0 0 0 1px #8b5cf6' },
+  green: { borderColor: '#10b981', backgroundColor: '#ecfdf5', boxShadow: '0 0 0 1px #10b981' },
+};
 
 interface IImportTemplateSelectorProps {
   templateType: TemplateType;
@@ -20,6 +36,7 @@ export function ImportTemplateSelector({
 }: IImportTemplateSelectorProps) {
   const { t } = useTranslation('datasheet');
   const notify = useNotify();
+  const [previewType, setPreviewType] = useState<TemplateType | null>(null);
 
   const templates = [
     {
@@ -28,12 +45,6 @@ export function ImportTemplateSelector({
       tagColor: 'blue',
       title: 'A. Thống kê chung (Simple)',
       desc: 'Dùng cho các file báo cáo tổng hợp không chia phòng ban (Ví dụ: Doanh số toàn công ty).',
-      layoutPreview: (
-        <div className="flex flex-col gap-1 text-[11px] font-mono mt-2 bg-white/50 p-2 rounded border border-dashed border-gray-300">
-          <div className="flex gap-2"><span className="w-16 font-semibold">Row 1:</span><span className="text-gray-500">(Trống)</span><span>Tháng 1 | Tháng 2...</span></div>
-          <div className="flex gap-2"><span className="w-16 font-semibold">Row 2:</span><span className="text-blue-600 font-medium">Lợi nhuận</span><span>1000 | 1500...</span></div>
-        </div>
-      )
     },
     {
       id: 'department' as TemplateType,
@@ -41,12 +52,6 @@ export function ImportTemplateSelector({
       tagColor: 'purple',
       title: 'B. Phân rã Phòng ban (Departmental)',
       desc: 'Dùng để nhập dữ liệu của nhiều phòng ban cùng lúc trong 1 file Excel (Nhóm theo phòng).',
-      layoutPreview: (
-        <div className="flex flex-col gap-1 text-[11px] font-mono mt-2 bg-white/50 p-2 rounded border border-dashed border-gray-300">
-          <div className="flex gap-2"><span className="w-16 font-semibold">Row 2:</span><span className="text-purple-600 font-bold">Phòng ban A</span><span className="text-gray-400 italic">(Dòng này để trống số liệu)</span></div>
-          <div className="flex gap-2"><span className="w-16 font-semibold">Row 3:</span><span className="ml-2 text-gray-700">Doanh thu</span><span>500 | 600...</span></div>
-        </div>
-      )
     },
     {
       id: 'pnl' as TemplateType,
@@ -54,12 +59,6 @@ export function ImportTemplateSelector({
       tagColor: 'green',
       title: 'C. Cấu trúc P&L (Profit & Loss)',
       desc: 'Dùng cho báo cáo tài chính Thụt lề thụt dòng. Quan hệ Cha con được tự động nhận dạng bằng Dấu cách (Khỏang trắng lùi lề).',
-      layoutPreview: (
-        <div className="flex flex-col gap-1 text-[11px] font-mono mt-2 bg-white/50 p-2 rounded border border-dashed border-gray-300">
-          <div className="flex gap-2"><span className="w-16 font-semibold">Row 2:</span><span className="text-green-600 font-bold">Tổng doanh thu</span><span className="text-gray-400 italic">(Để trống)</span></div>
-          <div className="flex gap-2"><span className="w-16 font-semibold">Row 3:</span><span className="ml-4 text-gray-700">↳ Bán lẻ</span><span>800 | 900</span></div>
-        </div>
-      )
     },
   ];
 
@@ -82,10 +81,13 @@ export function ImportTemplateSelector({
   return (
     <div className="mb-6 flex flex-col gap-3">
       <div className="mb-1 text-sm font-semibold text-gray-700">1. Chọn mẫu cấu trúc Excel (Mẫu sẽ quy định cách hệ thống đọc file của bạn)</div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+
+      {/* px-0.5 keeps the left/right card borders off the modal body's overflow-x clip edge. */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 px-0.5">
         {templates.map(tpl => {
           const isSelected = templateType === tpl.id;
+          // Dynamic Tailwind colour classes (border-${color}-500) can't be JIT-generated,
+          // so the selected look is driven entirely by inline style here.
           return (
             <div
               key={tpl.id}
@@ -93,11 +95,9 @@ export function ImportTemplateSelector({
               className={`
                 relative cursor-pointer transition-all duration-200 border rounded-xl p-3 flex flex-col gap-2 hover:shadow-md
                 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                ${isSelected ? `border-${tpl.tagColor}-500 bg-${tpl.tagColor}-50/30 ring-1 ring-${tpl.tagColor}-500` : 'border-gray-200 bg-white hover:border-gray-300'}
+                ${isSelected ? '' : 'border-gray-200 bg-white hover:border-gray-300'}
               `}
-              style={isSelected && tpl.tagColor === 'purple' ? { borderColor: '#8b5cf6', backgroundColor: '#f5f3ff' } : 
-                     isSelected && tpl.tagColor === 'blue' ? { borderColor: '#3b82f6', backgroundColor: '#eff6ff' } : 
-                     isSelected && tpl.tagColor === 'green' ? { borderColor: '#10b981', backgroundColor: '#ecfdf5' } : {}}
+              style={isSelected ? SELECTED_CARD_STYLE[tpl.tagColor] : {}}
             >
               {isSelected && (
                 <div className="absolute top-2 right-2 flex">
@@ -110,18 +110,29 @@ export function ImportTemplateSelector({
                 </Tag>
                 <div className="font-semibold text-13 text-slate-800">{tpl.title}</div>
               </div>
-              <div className="text-[12px] text-gray-500 leading-relaxed min-h-[40px]">
+              <div className="text-[12px] text-gray-500 leading-relaxed flex-1">
                 {tpl.desc}
               </div>
-              {tpl.layoutPreview}
+              <Button
+                size="small"
+                type="link"
+                icon={<EyeOutlined />}
+                className="!px-0 self-start"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPreviewType(tpl.id);
+                }}
+              >
+                {t('preview_button')}
+              </Button>
             </div>
           );
         })}
       </div>
 
-      <Alert 
-        type="info" 
-        showIcon 
+      <Alert
+        type="info"
+        showIcon
         message={<span className="font-medium">Chưa rõ? Bạn hãy tải tệp Mẫu trắng về máy</span>}
         description={
           <div className="flex flex-col sm:flex-row gap-2 mt-2 items-start sm:items-center justify-between">
@@ -132,6 +143,11 @@ export function ImportTemplateSelector({
           </div>
         }
         className="mt-2 bg-slate-50 border-slate-200"
+      />
+
+      <ImportTemplatePreviewModal
+        templateType={previewType}
+        onClose={() => setPreviewType(null)}
       />
     </div>
   );

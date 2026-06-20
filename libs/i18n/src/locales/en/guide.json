@@ -75,7 +75,7 @@
   "role_action_access_admin": "Access admin panel",
   "role_action_approve_business": "Approve / reject / inactivate business",
   "role_action_disable_user": "Disable / enable users",
-  "role_action_create_business": "Create business (max 3 / owner)",
+  "role_action_create_business": "Create a business (up to 3 per owner)",
   "role_action_edit_business": "Edit business / submit change request",
   "role_action_invite_members": "Invite members",
   "role_action_manage_roles": "Change member roles",
@@ -111,7 +111,7 @@
   "feat_login_title": "Login & password",
   "feat_login_desc": "Email/password or Google sign-in; forgot/reset password. Disabled accounts cannot log in.",
   "feat_onboarding_title": "Create a business",
-  "feat_onboarding_desc": "Owners create a business with the KYB form (legal name, tax code, license). Up to 3 businesses per owner.",
+  "feat_onboarding_desc": "Owners create a business with the KYB form (legal name, tax code, license). Up to 3 businesses per owner. Contact phone & email must be unique across all businesses.",
 
   "feat_tabs_title": "Tabs (dashboards)",
   "feat_tabs_desc": "Organize widgets into named tabs: create, rename, delete (cascades), reorder, colors & pin. Manager+ only.",
@@ -142,9 +142,11 @@
   "feat_security_desc": "Change password and review active sessions (log out one or all devices).",
   "feat_notifications_title": "Notifications",
   "feat_notifications_desc": "The bell shows unread count and business/approval events; mark one or all as read.",
+  "feat_switch_business_title": "Switch & manage businesses",
+  "feat_switch_business_desc": "Own or belong to up to 3 businesses. After login you pick which one to work in; open \"Manage businesses\" from Profile anytime to switch or register a new one (hidden once you reach 3).",
 
   "feat_my_business_title": "My business",
-  "feat_my_business_desc": "View/edit business KYB. Editing an approved business creates a change request; a rejected one can be resubmitted. Owner only.",
+  "feat_my_business_desc": "View/edit business KYB. Editing an approved business creates a change request; a rejected one can be resubmitted. Contact phone & email stay unique across businesses. Owner only.",
   "feat_approval_lifecycle_title": "Approval flow",
   "feat_approval_lifecycle_desc": "Understand the Pending → Approved → Inactive states and what each means for access (see lifecycle above).",
 

@@ -49,6 +49,14 @@ export interface IBusinessSwitcherItem {
   myRole: BusinessRole;
 }
 
+/** Summary row returned by the `myBusinesses` query — used by the header badge and business chooser. */
+export interface IMyBusinessSummary {
+  id: string;
+  name: string;
+  status: string;
+  logoUrl: string | null;
+}
+
 export interface ITabDto {
   id: string;
   businessId: string;

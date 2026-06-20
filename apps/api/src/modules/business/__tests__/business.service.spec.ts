@@ -7,12 +7,19 @@ const mockBusiness = { id: 'biz-1', name: 'My Shop', ownerId: 'user-1' };
 const mockMember = { id: 'm-1', businessId: 'biz-1', userId: 'user-1', role: 'owner', status: 'active' };
 
 function makeCrudService() {
+  // Chainable query-builder mock for the contact-uniqueness check (defaults: no dup).
+  const qb = {
+    where: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    getCount: jest.fn().mockResolvedValue(0),
+    getMany: jest.fn().mockResolvedValue([]),
+  };
   const businessRepo = {
     create: jest.fn(),
     save: jest.fn(),
     findOne: jest.fn(),
     delete: jest.fn(),
-    createQueryBuilder: jest.fn(),
+    createQueryBuilder: jest.fn(() => qb),
   };
   const memberRepo = {
     count: jest.fn(),
@@ -28,14 +35,16 @@ function makeCrudService() {
     save: jest.fn().mockResolvedValue(undefined),
   };
   const auditService = { log: jest.fn().mockResolvedValue(undefined) };
+  const notificationService = { notifyAdmins: jest.fn().mockResolvedValue(undefined) };
   const service = new BusinessCrudService(
     businessRepo as any,
     memberRepo as any,
     deptRepo as any,
     deptMemberRepo as any,
     auditService as any,
+    notificationService as any,
   );
-  return { service, businessRepo, memberRepo, deptRepo, deptMemberRepo, auditService };
+  return { service, businessRepo, memberRepo, deptRepo, deptMemberRepo, auditService, qb };
 }
 
 function makeOwnershipService() {
@@ -96,6 +105,40 @@ describe('BusinessCrudService', () => {
       await expect(service.create('user-1', { name: 'Shop 4' } as any)).rejects.toThrow(
         BadRequestException,
       );
+    });
+
+    it('throws BadRequestException when contact phone duplicates another business', async () => {
+      const { service, memberRepo, qb } = makeCrudService();
+      memberRepo.count.mockResolvedValue(0);
+      qb.getCount.mockResolvedValue(1); // an existing business already uses this phone
+      await expect(
+        service.create('user-1', { name: 'Shop', contactPhone: '0900000000' } as any),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws BadRequestException when contact email duplicates another business', async () => {
+      const { service, memberRepo, qb } = makeCrudService();
+      memberRepo.count.mockResolvedValue(0);
+      qb.getCount.mockResolvedValue(1);
+      await expect(
+        service.create('user-1', { name: 'Shop', contactEmail: 'dup@example.com' } as any),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('creates when contact phone/email are unique', async () => {
+      const { service, memberRepo, businessRepo, qb } = makeCrudService();
+      memberRepo.count.mockResolvedValue(0);
+      qb.getCount.mockResolvedValue(0); // no collision
+      businessRepo.create.mockReturnValue(mockBusiness);
+      businessRepo.save.mockResolvedValue(mockBusiness);
+      memberRepo.create.mockReturnValue(mockMember);
+      memberRepo.save.mockResolvedValue(mockMember);
+      const result = await service.create('user-1', {
+        name: 'Shop',
+        contactPhone: '0901234567',
+        contactEmail: 'unique@example.com',
+      } as any);
+      expect(result).toEqual(mockBusiness);
     });
   });
 
@@ -203,8 +246,12 @@ describe('BusinessService (facade)', () => {
       delete: jest.fn(),
     };
     const ownership = { transferOwnership: jest.fn() };
-    const service = new BusinessService(crud as any, ownership as any);
-    return { service, crud, ownership };
+    const changeRequest = {
+      requestChange: jest.fn(),
+      getOpenChangeRequest: jest.fn(),
+    };
+    const service = new BusinessService(crud as any, ownership as any, changeRequest as any);
+    return { service, crud, ownership, changeRequest };
   }
 
   it('delegates create to crudService', async () => {

@@ -125,5 +125,13 @@
   "status_col": "Trạng thái",
   "status_active": "Hoạt động",
   "status_inactive": "Lưu trữ",
-  "toggle_status_tooltip": "Bật/tắt — datasheet lưu trữ sẽ ẩn khỏi danh sách chọn khi tạo widget"
+  "toggle_status_tooltip": "Bật/tắt — datasheet lưu trữ sẽ ẩn khỏi danh sách chọn khi tạo widget",
+  "preview_button": "Xem ví dụ",
+  "preview_modal_title": "Ví dụ dữ liệu mẫu",
+  "preview_col_item": "Chỉ tiêu",
+  "preview_month": "Tháng {{n}}",
+  "preview_disclaimer": "Chỉ là dữ liệu ví dụ minh hoạ — để bạn hình dung từng loại mẫu.",
+  "preview_simple_hint": "Bảng phẳng: mỗi chỉ tiêu 1 dòng, các cột là kỳ thời gian. Không chia phòng ban.",
+  "preview_department_hint": "Dòng nhóm là tên phòng ban (để trống số liệu); các dòng chỉ tiêu nằm dưới mỗi nhóm.",
+  "preview_pnl_hint": "Cây thụt lề: dòng cha là tổng (in đậm, để trống số liệu), các dòng con thụt vào bên dưới."
 }

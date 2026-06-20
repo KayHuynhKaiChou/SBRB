@@ -18,6 +18,9 @@ export enum EBusinessStatus {
 /** String-literal union — matches the DB varchar value exactly. */
 export type TBusinessStatus = `${EBusinessStatus}`;
 
+/** Max businesses a single owner may create (SRS — enforced on create + gates the register UI). */
+export const MAX_BUSINESSES_PER_OWNER = 3;
+
 /** Ant Design Tag color per status — single source of truth (mirrors ROLE_TAG_COLOR pattern). */
 export const BUSINESS_STATUS_TAG_COLOR: Record<TBusinessStatus, string> = {
   [EBusinessStatus.PENDING]: 'gold',
@@ -88,7 +91,11 @@ export const BUSINESS_TYPE_OPTIONS: ReadonlyArray<{ value: TBusinessType; label:
   { value: EBusinessType.KHAC, label: 'Khác' },
 ];
 
-/** Company size buckets. Stored in businesses.company_size. */
+/**
+ * Company-size display buckets for the admin chart. NOTE: businesses.company_size now
+ * stores a raw headcount integer — these ranges are computed from it at query time,
+ * not stored. Kept here as the canonical bucket order + labels.
+ */
 export const COMPANY_SIZE_OPTIONS = [
   { value: '1-9', label: '1–9 người' },
   { value: '10-49', label: '10–49 người' },

@@ -5,7 +5,7 @@ import { UserSwitchOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { IconButton } from '@sbrb/ui';
 import type { IAdminBusinessRow } from '../../../hooks/use-admin-businesses';
-import { BusinessStatusTag } from './business-status-tag';
+import { BusinessStatusTag } from '../../../components/business/business-status-tag';
 
 const { Text } = Typography;
 

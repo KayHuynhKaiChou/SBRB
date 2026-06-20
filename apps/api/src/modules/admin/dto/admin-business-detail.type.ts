@@ -81,8 +81,8 @@ export class AdminBusinessDetailType {
   @Field(() => Int, { nullable: true })
   foundedYear?: number | null;
 
-  @Field(() => String, { nullable: true })
-  companySize?: string | null;
+  @Field(() => Int, { nullable: true })
+  companySize?: number | null;
 
   @Field(() => Date)
   createdAt: Date;

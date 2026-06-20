@@ -1,4 +1,3 @@
-import React from 'react';
 import { Tag } from 'antd';
 import { useTranslation } from 'react-i18next';
 import {
@@ -11,7 +10,7 @@ interface IBusinessStatusTagProps {
   status: string;
 }
 
-/** i18n key per unified status value. */
+/** i18n key per unified status value (keys live in both `business` and `admin` namespaces). */
 const STATUS_LABEL_KEY: Record<TBusinessStatus, string> = {
   [EBusinessStatus.PENDING]: 'status_pending',
   [EBusinessStatus.APPROVED]: 'status_approved',
@@ -22,10 +21,10 @@ const STATUS_LABEL_KEY: Record<TBusinessStatus, string> = {
 
 /** Unified status badge — pending=gold, approved=green, rejected=red, inactive=gray. */
 export function BusinessStatusTag({ status }: IBusinessStatusTagProps) {
-  const { t } = useTranslation('admin');
+  const { t } = useTranslation('business');
   const s = status as TBusinessStatus;
   return (
-    <Tag color={BUSINESS_STATUS_TAG_COLOR[s] ?? 'default'}>
+    <Tag color={BUSINESS_STATUS_TAG_COLOR[s] ?? 'default'} className="!mr-0">
       {t(STATUS_LABEL_KEY[s] ?? 'status_pending')}
     </Tag>
   );

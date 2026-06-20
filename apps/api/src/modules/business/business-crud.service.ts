@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { EBusinessStatus } from '@sbrb/shared-constants';
+import { EBusinessStatus, MAX_BUSINESSES_PER_OWNER } from '@sbrb/shared-constants';
 import { AuditService } from '../audit/audit.service';
 import { NotificationService } from '../notification/notification.service';
 import {
@@ -18,6 +18,7 @@ import { DepartmentMember } from '../department/entities/department-member.entit
 import { CreateBusinessDto } from './dto/create-business.dto';
 import { UpdateBusinessDto } from './dto/update-business.dto';
 import { Business } from './entities/business.entity';
+import { assertBusinessContactUnique } from './business-contact-uniqueness';
 import { BusinessMember } from './entities/business-member.entity';
 
 const BOD_DEFAULT_NAME = 'Ban giám đốc';
@@ -79,9 +80,17 @@ export class BusinessCrudService {
     const ownerCount = await this.memberRepo.count({
       where: { userId, role: 'owner' },
     });
-    if (ownerCount >= 3) {
-      throw new BadRequestException('You can own at most 3 businesses');
+    if (ownerCount >= MAX_BUSINESSES_PER_OWNER) {
+      throw new BadRequestException(
+        `You can own at most ${MAX_BUSINESSES_PER_OWNER} businesses`,
+      );
     }
+
+    // Contact phone/email must be globally unique across businesses.
+    await assertBusinessContactUnique(this.businessRepo, {
+      contactPhone: dto.contactPhone,
+      contactEmail: dto.contactEmail,
+    });
 
     // New businesses start in PENDING — an admin must approve before features unlock.
     // (Migration backfills existing rows to 'approved'; only fresh creates are pending.)
@@ -184,6 +193,13 @@ export class BusinessCrudService {
         );
       }
     }
+
+    // Contact phone/email stay globally unique (exclude this business' own row).
+    await assertBusinessContactUnique(
+      this.businessRepo,
+      { contactPhone: dto.contactPhone, contactEmail: dto.contactEmail },
+      id,
+    );
 
     // Owner editing a REJECTED business = "fixed the admin's reason" → moves to RESUBMITTED
     // (awaits re-review). Other statuses keep their value (live edit while pending/resubmitted).

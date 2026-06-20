@@ -1,13 +1,13 @@
 import React from 'react';
-import { Card, Form, Button, Tag, Typography, Spin, Empty, Alert, message } from 'antd';
+import { Card, Form, Button, Typography, Spin, Empty, Alert, message } from 'antd';
 import { useQuery, useMutation } from '@apollo/client';
 import { useTranslation } from 'react-i18next';
 import {
   EBusinessStatus,
   EBusinessRole,
-  BUSINESS_STATUS_TAG_COLOR,
   type TBusinessStatus,
 } from '@sbrb/shared-constants';
+import { BusinessStatusTag } from '../../components/business/business-status-tag';
 import { useAuthStore } from '../../store/auth.store';
 import {
   MY_BUSINESS_DETAIL_QUERY,
@@ -15,6 +15,7 @@ import {
   UPDATE_BUSINESS_MUTATION,
   REQUEST_BUSINESS_CHANGE_MUTATION,
 } from '../../graphql/business.operations';
+import { getGraphQLErrorMessage } from '../../apollo/get-error-message';
 import { BusinessKybFields } from '../../components/business/business-kyb-fields';
 import { FeatureTour } from '../../components/guide/feature-tour';
 import { myBusinessTourSteps } from './my-business-tour-steps';
@@ -80,15 +81,6 @@ export default function MyBusinessPage() {
     const canEdit = isOwner && !openChange;
     const saving = updating || requesting;
 
-    const STATUS_LABEL_KEY: Record<TBusinessStatus, string> = {
-      [EBusinessStatus.PENDING]: 'status_pending',
-      [EBusinessStatus.APPROVED]: 'status_approved',
-      [EBusinessStatus.REJECTED]: 'status_rejected',
-      [EBusinessStatus.RESUBMITTED]: 'status_resubmitted',
-      [EBusinessStatus.INACTIVE]: 'status_inactive',
-    };
-    const statusLabel = t(STATUS_LABEL_KEY[status] ?? 'status_pending');
-
     // Rejected → saving counts as "fix & resubmit" (BE flips it to resubmitted).
     const submitLabel = isRejected ? t('my_business_resubmit') : t('my_business_save');
 
@@ -107,7 +99,7 @@ export default function MyBusinessPage() {
           await refetch();
         }
       } catch (err) {
-        void message.error(err instanceof Error ? err.message : 'Error');
+        void message.error(getGraphQLErrorMessage(err, t('my_business_save_error')));
       }
     };
 
@@ -119,9 +111,9 @@ export default function MyBusinessPage() {
             <Title level={3} className="!m-0">{t('my_business_title')}</Title>
             <Text type="secondary">{biz.name}</Text>
           </div>
-          <Tag color={BUSINESS_STATUS_TAG_COLOR[status]} className="!m-0" data-testid="tour-my-business-status">
-            {statusLabel}
-          </Tag>
+          <span data-testid="tour-my-business-status">
+            <BusinessStatusTag status={status} />
+          </span>
         </div>
 
         {isRejected && biz.rejectionReason && (

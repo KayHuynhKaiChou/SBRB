@@ -39,6 +39,7 @@ export const APP_ROUTES = {
   AUTH_CALLBACK: '/auth/callback',
   DASHBOARD: '/dashboard',
   ONBOARDING: '/onboarding',
+  SELECT_BUSINESS: '/select-business',
   MY_BUSINESS: '/my-business',
   BUSINESS_PENDING: '/business-pending',
   DATA_SHEETS: '/data-sheets',

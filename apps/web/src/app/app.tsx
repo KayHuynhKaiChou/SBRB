@@ -15,6 +15,9 @@ const SignupWizardPage = React.lazy(
 const ForgotPasswordPage = React.lazy(() => import('../pages/auth/forgot-password-page'));
 const ResetPasswordPage = React.lazy(() => import('../pages/auth/reset-password-page'));
 const OnboardingPage = React.lazy(() => import('../pages/onboarding/onboarding-page'));
+const SelectBusinessPage = React.lazy(
+  () => import('../pages/select-business/select-business-page'),
+);
 const DashboardPage = React.lazy(() => import('../pages/dashboard/dashboard-page'));
 const DataSheetListPage = React.lazy(() => import('../pages/datasheet/datasheet-list-page'));
 const DataSheetDetailPage = React.lazy(() => import('../pages/datasheet/datasheet-detail-page'));
@@ -58,6 +61,16 @@ export default function App() {
           element={
             <ProtectedRoute>
               <OnboardingPage />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Business chooser — protected, outside business gate (no business picked yet) */}
+        <Route
+          path="/select-business"
+          element={
+            <ProtectedRoute>
+              <SelectBusinessPage />
             </ProtectedRoute>
           }
         />

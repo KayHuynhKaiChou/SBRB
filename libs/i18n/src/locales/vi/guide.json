@@ -75,7 +75,7 @@
   "role_action_access_admin": "Truy cập trang admin",
   "role_action_approve_business": "Duyệt / từ chối / khóa doanh nghiệp",
   "role_action_disable_user": "Khóa / mở khóa người dùng",
-  "role_action_create_business": "Tạo doanh nghiệp (tối đa 3 / chủ)",
+  "role_action_create_business": "Tạo doanh nghiệp (mỗi chủ sở hữu tối đa 3)",
   "role_action_edit_business": "Sửa DN / gửi yêu cầu thay đổi",
   "role_action_invite_members": "Mời thành viên",
   "role_action_manage_roles": "Đổi vai trò thành viên",
@@ -111,7 +111,7 @@
   "feat_login_title": "Đăng nhập & mật khẩu",
   "feat_login_desc": "Email/mật khẩu hoặc Google; quên/đặt lại mật khẩu. Tài khoản bị khóa không đăng nhập được.",
   "feat_onboarding_title": "Tạo doanh nghiệp",
-  "feat_onboarding_desc": "Chủ DN tạo doanh nghiệp bằng form KYB (tên pháp lý, MST, giấy phép). Tối đa 3 DN mỗi chủ.",
+  "feat_onboarding_desc": "Chủ DN tạo doanh nghiệp bằng form KYB (tên pháp lý, MST, giấy phép). Tối đa 3 DN mỗi chủ. SĐT & email liên hệ phải duy nhất, không trùng giữa các DN.",
 
   "feat_tabs_title": "Tab (dashboard)",
   "feat_tabs_desc": "Gom widget vào các tab: tạo, đổi tên, xóa (xóa kèm widget), sắp xếp, màu & ghim. Chỉ Quản lý trở lên.",
@@ -142,9 +142,11 @@
   "feat_security_desc": "Đổi mật khẩu và xem phiên đăng nhập (đăng xuất 1 hoặc tất cả thiết bị).",
   "feat_notifications_title": "Thông báo",
   "feat_notifications_desc": "Chuông hiện số chưa đọc và sự kiện DN/duyệt; đánh dấu đã đọc 1 hoặc tất cả.",
+  "feat_switch_business_title": "Đổi & quản lý doanh nghiệp",
+  "feat_switch_business_desc": "Sở hữu hoặc thuộc tối đa 3 doanh nghiệp. Sau khi đăng nhập bạn chọn DN muốn làm việc; mở \"Quản lý doanh nghiệp\" ở Hồ sơ bất cứ lúc nào để đổi hoặc đăng ký DN mới (ẩn khi đã đủ 3).",
 
   "feat_my_business_title": "Doanh nghiệp của tôi",
-  "feat_my_business_desc": "Xem/sửa KYB. Sửa DN đã duyệt sẽ tạo yêu cầu thay đổi; DN bị từ chối có thể gửi lại. Chỉ chủ DN.",
+  "feat_my_business_desc": "Xem/sửa KYB. Sửa DN đã duyệt sẽ tạo yêu cầu thay đổi; DN bị từ chối có thể gửi lại. SĐT & email liên hệ luôn duy nhất giữa các DN. Chỉ chủ DN.",
   "feat_approval_lifecycle_title": "Luồng duyệt",
   "feat_approval_lifecycle_desc": "Hiểu các trạng thái Chờ duyệt → Đã duyệt → Tạm khóa và ý nghĩa truy cập (xem vòng đời ở trên).",
 

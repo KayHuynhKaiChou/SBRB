@@ -113,8 +113,8 @@ export class Business {
   @Column({ name: 'founded_year', type: 'smallint', nullable: true })
   foundedYear: number | null;
 
-  @Column({ name: 'company_size', type: 'varchar', length: 20, nullable: true })
-  companySize: string | null;
+  @Column({ name: 'company_size', type: 'integer', nullable: true })
+  companySize: number | null;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;

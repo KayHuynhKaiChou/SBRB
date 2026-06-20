@@ -14,6 +14,7 @@ import {
   VERIFY_OTP_MUTATION,
 } from '../../../graphql/auth.operations';
 import { CREATE_BUSINESS_MUTATION } from '../../../graphql/business.operations';
+import { getGraphQLErrorMessage } from '../../../apollo/get-error-message';
 import { StepAccount, type IAccountValues } from './steps/step-account';
 import { StepVerifyEmail } from './steps/step-verify-email';
 import { StepBusiness, type IBusinessValues } from './steps/step-business';
@@ -84,10 +85,14 @@ export default function SignupWizardPage() {
 
   // Step 3 — create the business (pending), set as current, advance to done.
   const handleBusiness = async (values: IBusinessValues) => {
-    const { data } = await createBusiness({ variables: { input: values } });
-    const businessId: string = data.createBusiness.id;
-    useAuthStore.getState().setCurrentBusiness(businessId);
-    setCurrent(3);
+    try {
+      const { data } = await createBusiness({ variables: { input: values } });
+      const businessId: string = data.createBusiness.id;
+      useAuthStore.getState().setCurrentBusiness(businessId);
+      setCurrent(3);
+    } catch (err) {
+      void message.error(getGraphQLErrorMessage(err, t('wizard_register_failed')));
+    }
   };
 
   const stepItems = [

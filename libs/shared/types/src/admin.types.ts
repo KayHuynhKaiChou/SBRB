@@ -116,7 +116,7 @@ export interface IAdminBusinessDetail {
   bannerUrl?: string | null;
   licenseSignedUrl?: string | null;
   foundedYear?: number | null;
-  companySize?: string | null;
+  companySize?: number | null;
   createdAt: string;
   owner: {
     id: string;

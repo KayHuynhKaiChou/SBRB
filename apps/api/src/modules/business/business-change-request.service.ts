@@ -22,6 +22,7 @@ import { Business } from './entities/business.entity';
 import { BusinessMember } from './entities/business-member.entity';
 import { BusinessChangeRequest } from './entities/business-change-request.entity';
 import { UpdateBusinessDto } from './dto/update-business.dto';
+import { assertBusinessContactUnique } from './business-contact-uniqueness';
 
 /** Business KYB/profile fields an owner may request to change after approval. */
 const CHANGEABLE_FIELDS: (keyof Business)[] = [
@@ -116,6 +117,14 @@ export class BusinessChangeRequestService {
     if (Object.keys(diff).length === 0) {
       throw new BadRequestException('No changes detected');
     }
+
+    // Reject the request up-front if the new contact phone/email collides with
+    // another business (exclude this one — re-submitting its own value is fine).
+    await assertBusinessContactUnique(
+      this.businessRepo,
+      { contactPhone: dto.contactPhone, contactEmail: dto.contactEmail },
+      businessId,
+    );
 
     // Upsert the single open request (KISS — at most one pending per business).
     let request = await this.changeRepo.findOne({
@@ -220,6 +229,17 @@ export class BusinessChangeRequestService {
 
     const business = await this.businessRepo.findOne({ where: { id: request.businessId } });
     if (!business) throw new NotFoundException('Business not found');
+
+    // Re-check contact uniqueness at apply time — another business may have taken the
+    // phone/email since the request was submitted (exclude this business' own row).
+    await assertBusinessContactUnique(
+      this.businessRepo,
+      {
+        contactPhone: request.changes.contactPhone?.new as string | undefined,
+        contactEmail: request.changes.contactEmail?.new as string | undefined,
+      },
+      request.businessId,
+    );
 
     await this.dataSource.transaction(async (manager) => {
       const bizRepo = manager.getRepository(Business);

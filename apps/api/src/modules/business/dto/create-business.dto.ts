@@ -90,11 +90,12 @@ export class CreateBusinessDto {
   @Max(2200)
   foundedYear?: number;
 
-  @Field(() => String, { nullable: true })
+  @Field(() => Int, { nullable: true })
   @IsOptional()
-  @IsString()
-  @MaxLength(20)
-  companySize?: string;
+  @IsInt()
+  @Min(0)
+  @Max(1500)
+  companySize?: number;
 
   // ===== Assets (URLs returned by the signed-upload flow) =====
   @Field(() => String, { nullable: true })

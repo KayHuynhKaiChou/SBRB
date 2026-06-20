@@ -8,6 +8,7 @@ import { PROFILE_QUERY } from '../../graphql/profile.operations';
 import { PersonalInfoCard } from '../../components/profile/personal-info-card';
 // Business info now lives in the dedicated "My Business" page (all changes admin-gated).
 import { SecurityCard } from '../../components/profile/security-card';
+import { SwitchBusinessButton } from '../../components/profile/switch-business-button';
 import { FeatureTour } from '../../components/guide/feature-tour';
 import { profileTourSteps } from './profile-tour-steps';
 
@@ -33,9 +34,12 @@ export default function ProfilePage() {
         </div>
       ) : (
         <div className="max-w-3xl mx-auto flex flex-col gap-6">
-          <Title level={3} className="!m-0">
-            {t('title', 'Profile')}
-          </Title>
+          <div className="flex items-center justify-between gap-3">
+            <Title level={3} className="!m-0">
+              {t('title', 'Profile')}
+            </Title>
+            <SwitchBusinessButton />
+          </div>
           <div data-testid="tour-profile-personal">
             <PersonalInfoCard user={data.me} role={data.myMembership?.role} />
           </div>

@@ -101,14 +101,16 @@ export function useAuth() {
       return;
     }
 
-    const currentBusinessId = useAuthStore.getState().currentBusinessId;
-    const targetBiz = authSession.resolveCurrentBusiness(businesses, currentBusinessId);
-    if (targetBiz) {
-      useAuthStore.getState().setCurrentBusiness(targetBiz.id);
-      navigate(APP_ROUTES.DASHBOARD);
-    } else {
+    // No business → onboarding. Exactly one → straight to dashboard.
+    // Multiple → let the user pick which business to work in (SELECT_BUSINESS).
+    if (businesses.length === 0) {
       useAuthStore.getState().setCurrentBusiness(null);
       navigate(APP_ROUTES.ONBOARDING);
+    } else if (businesses.length === 1) {
+      useAuthStore.getState().setCurrentBusiness(businesses[0].id);
+      navigate(APP_ROUTES.DASHBOARD);
+    } else {
+      navigate(APP_ROUTES.SELECT_BUSINESS);
     }
   };
 

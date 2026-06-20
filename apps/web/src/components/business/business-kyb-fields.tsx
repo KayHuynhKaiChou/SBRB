@@ -1,11 +1,11 @@
 import React from 'react';
-import { Form, Input, Select, InputNumber } from 'antd';
+import { Form, Input, Select, InputNumber, DatePicker } from 'antd';
+import dayjs, { type Dayjs } from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import {
   INDUSTRY_OPTIONS,
   CURRENCIES,
   BUSINESS_TYPE_OPTIONS,
-  COMPANY_SIZE_OPTIONS,
   EBusinessAssetKind,
 } from '@sbrb/shared-constants';
 import { BusinessAssetUpload } from './business-asset-upload';
@@ -46,25 +46,34 @@ export function BusinessKybFields({
         <Form.Item
           name="name"
           label={t('field_name')}
-          rules={[{ required: true, message: t('field_name_required') }]}
+          rules={[
+            { required: true, message: t('field_name_required') },
+            { min: 2, message: t('validation_min_chars', { count: 2 }) },
+          ]}
         >
-          <Input placeholder={t('field_name_ph')} disabled={readOnly} />
+          <Input placeholder={t('field_name_ph')} maxLength={100} disabled={readOnly} />
         </Form.Item>
 
         <Form.Item
           name="legalName"
           label={t('field_legal_name')}
-          rules={[{ required: true, message: t('field_legal_name_required') }]}
+          rules={[
+            { required: true, message: t('field_legal_name_required') },
+            { min: 2, message: t('validation_min_chars', { count: 2 }) },
+          ]}
         >
-          <Input placeholder={t('field_legal_name_ph')} disabled={readOnly} />
+          <Input placeholder={t('field_legal_name_ph')} maxLength={150} disabled={readOnly} />
         </Form.Item>
 
         <Form.Item
           name="taxCode"
           label={t('field_tax_code')}
-          rules={[{ required: true, message: t('field_tax_code_required') }]}
+          rules={[
+            { required: true, message: t('field_tax_code_required') },
+            { min: 8, message: t('validation_min_chars', { count: 8 }) },
+          ]}
         >
-          <Input placeholder={t('field_tax_code_ph')} disabled={readOnly} />
+          <Input placeholder={t('field_tax_code_ph')} maxLength={20} disabled={readOnly} />
         </Form.Item>
 
         <Form.Item name="businessType" label={t('field_business_type')}>
@@ -76,19 +85,16 @@ export function BusinessKybFields({
           />
         </Form.Item>
 
-        <Form.Item
-          name="industry"
-          label={t('field_industry')}
-          rules={[{ required: true, message: t('field_industry_required') }]}
-        >
+        <Form.Item name="industry" label={t('field_industry')}>
           <Select
             placeholder={t('field_industry_ph')}
             options={[...INDUSTRY_OPTIONS]}
+            allowClear
             disabled={readOnly}
           />
         </Form.Item>
 
-        <Form.Item name="currency" label={t('field_currency')} rules={[{ required: true }]}>
+        <Form.Item name="currency" label={t('field_currency')}>
           <Select
             options={CURRENCIES.map((c) => ({ value: c.value, label: c.label }))}
             disabled={readOnly}
@@ -98,9 +104,12 @@ export function BusinessKybFields({
         <Form.Item
           name="address"
           label={t('field_address')}
-          rules={[{ required: true, message: t('field_address_required') }]}
+          rules={[
+            { required: true, message: t('field_address_required') },
+            { min: 3, message: t('validation_min_chars', { count: 3 }) },
+          ]}
         >
-          <Input placeholder={t('field_address_ph')} disabled={readOnly} />
+          <Input placeholder={t('field_address_ph')} maxLength={255} disabled={readOnly} />
         </Form.Item>
 
         <Form.Item
@@ -108,7 +117,7 @@ export function BusinessKybFields({
           label={t('field_contact_phone')}
           rules={[{ required: true, message: t('field_contact_phone_required') }]}
         >
-          <Input placeholder={t('field_contact_phone_ph')} disabled={readOnly} />
+          <Input placeholder={t('field_contact_phone_ph')} maxLength={30} disabled={readOnly} />
         </Form.Item>
 
         <Form.Item
@@ -116,28 +125,44 @@ export function BusinessKybFields({
           label={t('field_contact_email')}
           rules={[{ type: 'email', message: t('field_contact_email_invalid') }]}
         >
-          <Input placeholder={t('field_contact_email_ph')} disabled={readOnly} />
+          <Input placeholder={t('field_contact_email_ph')} maxLength={255} disabled={readOnly} />
         </Form.Item>
 
         <Form.Item name="website" label={t('field_website')}>
-          <Input placeholder="https://" disabled={readOnly} />
+          <Input placeholder="https://" maxLength={255} disabled={readOnly} />
         </Form.Item>
 
-        <Form.Item name="foundedYear" label={t('field_founded_year')}>
-          <InputNumber
+        {/* Year-only picker; form value stays a plain year number (BE expects Int). */}
+        <Form.Item
+          name="foundedYear"
+          label={t('field_founded_year')}
+          getValueProps={(value: number | null) => ({
+            value: value ? dayjs().year(value) : null,
+          })}
+          normalize={(value: Dayjs | null) => (value ? value.year() : null)}
+        >
+          <DatePicker
+            picker="year"
             className="!w-full"
-            min={1900}
-            max={2200}
             placeholder="2020"
             disabled={readOnly}
+            disabledDate={(d) => d.year() > dayjs().year() || d.year() < 1900}
           />
         </Form.Item>
 
+        {/* Headcount as a whole number (0–1500). precision=0 + min=0 reject decimals
+            and negatives; onKeyDown blocks typing a sign / decimal point outright. */}
         <Form.Item name="companySize" label={t('field_company_size')}>
-          <Select
+          <InputNumber<number>
+            className="!w-full"
+            min={0}
+            max={1500}
+            step={1}
+            precision={0}
+            onKeyDown={(e) => {
+              if (['-', '+', 'e', 'E', '.', ','].includes(e.key)) e.preventDefault();
+            }}
             placeholder={t('field_company_size_ph')}
-            options={[...COMPANY_SIZE_OPTIONS]}
-            allowClear
             disabled={readOnly}
           />
         </Form.Item>

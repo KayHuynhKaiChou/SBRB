@@ -26,6 +26,16 @@
   --sbrb-card-shadow: 0 2px 12px rgba(0,0,0,0.06);
   --sbrb-tab-active: #D72A44;
   --sbrb-tab-inactive-bg: #F0F0F5;
+
+  /* ===== Color palette — reference these tokens, never hardcode hex in components.
+     Naming: <hue><NN> (red05, gray08, ...). Map to Tailwind in tailwind.config.js. ===== */
+  --red00: #FFF5F6; /* lightest red tint — selected / hover background */
+  --red05: #D72A44; /* brand red */
+  --red06: #B71E36; /* brand red — hover/active */
+  --gray02: #E5E5E5; /* borders */
+  --gray03: #D4D4D4; /* muted icons / disabled */
+  --gray09: #171717; /* primary text */
+  --shadow-red: 0 4px 12px rgba(215, 42, 68, 0.12);
 }
 
 *,

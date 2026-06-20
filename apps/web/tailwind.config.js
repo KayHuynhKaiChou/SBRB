@@ -37,6 +37,14 @@ module.exports = {
           800: '#262626',
           900: '#171717',
         },
+        // Palette tokens (single source of truth in globals.css :root).
+        // Naming: <hue><NN>. Use these instead of hardcoding hex.
+        red00: 'var(--red00)',
+        red05: 'var(--red05)',
+        red06: 'var(--red06)',
+        gray02: 'var(--gray02)',
+        gray03: 'var(--gray03)',
+        gray09: 'var(--gray09)',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],

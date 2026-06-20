@@ -48,6 +48,7 @@ export const GUIDE_AREAS: IGuideArea[] = [
       { key: 'profile', status: 'done', route: APP_ROUTES.PROFILE, tourId: 'profile', audience: ['all'] },
       { key: 'security', status: 'done', route: APP_ROUTES.PROFILE, tourId: 'profile', audience: ['all'] },
       { key: 'notifications', status: 'done', route: APP_ROUTES.PROFILE, tourId: 'profile', audience: ['all'] },
+      { key: 'switch_business', status: 'done' }, // info card — switch + register businesses via the hub
     ],
   },
   {

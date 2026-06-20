@@ -104,8 +104,15 @@ export class AdminChartsService {
 
   /** Business count per company-size bucket, in canonical order, "unknown" last. */
   private async getCompanySizes(): Promise<CompanySizeCountPointType[]> {
+    // company_size is now a raw headcount (integer) — bucket it into the canonical ranges.
     const rows: Array<{ size: string; count: number }> = await this.businessRepo.query(
-      `SELECT COALESCE(NULLIF(TRIM(company_size), ''), '${UNKNOWN_SIZE}') AS size,
+      `SELECT CASE
+                WHEN company_size BETWEEN 1 AND 9 THEN '1-9'
+                WHEN company_size BETWEEN 10 AND 49 THEN '10-49'
+                WHEN company_size BETWEEN 50 AND 199 THEN '50-199'
+                WHEN company_size >= 200 THEN '200+'
+                ELSE '${UNKNOWN_SIZE}'
+              END AS size,
               COUNT(*)::int AS count
        FROM businesses
        GROUP BY 1`,
