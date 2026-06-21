@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, FindOptionsWhere, In, Repository } from 'typeorm';
+import { EBusinessRole, isManagerRole, type TBusinessRole } from '@sbrb/shared-constants';
 import { User } from '../auth/entities/user.entity';
 import { BusinessMember } from '../business/entities/business-member.entity';
 import { AuditService } from '../audit/audit.service';
@@ -143,11 +144,13 @@ export class DepartmentMemberService {
       throw new BadRequestException({ message: { vi: 'Đã là thành viên Phòng ban', en: 'User is already a member of this department' } });
     }
 
-    return this.memberRepo.save({
+    const saved = await this.memberRepo.save({
       departmentId,
       userId,
       isManager: false,
     });
+    // Reload with the user relation — GraphQL DepartmentMember.user is non-nullable.
+    return this.requireMemberWithUser(saved.id);
   }
 
   /**
@@ -178,9 +181,9 @@ export class DepartmentMemberService {
     });
     const businessDeptIds = businessDepts.map((d) => d.id);
 
-    return this.dataSource.transaction(async (mgr) => {
+    const createdIds = await this.dataSource.transaction(async (mgr) => {
       const repo = mgr.getRepository(DepartmentMember);
-      const created: DepartmentMember[] = [];
+      const ids: string[] = [];
       for (const userId of uniqueUserIds) {
         // Transfer out of any current (non-manager) department within this business.
         await repo.delete({
@@ -188,10 +191,14 @@ export class DepartmentMemberService {
           departmentId: In(businessDeptIds),
           isManager: false,
         });
-        created.push(await repo.save({ departmentId, userId, isManager: false }));
+        const saved = await repo.save({ departmentId, userId, isManager: false });
+        ids.push(saved.id);
       }
-      return created;
+      return ids;
     });
+
+    // Reload with the user relation — GraphQL DepartmentMember.user is non-nullable.
+    return this.memberRepo.find({ where: { id: In(createdIds) }, relations: ['user'] });
   }
 
   async removeMember(
@@ -204,6 +211,7 @@ export class DepartmentMemberService {
 
     const member = await this.memberRepo.findOne({
       where: { departmentId, userId },
+      relations: ['user'], // returned to GraphQL where DepartmentMember.user is non-nullable
     });
     if (!member) throw new NotFoundException({ message: { vi: 'Không tìm thấy thành viên Phòng ban', en: 'Member not found in this department' } });
 
@@ -242,7 +250,7 @@ export class DepartmentMemberService {
       throw new BadRequestException({ message: { vi: 'Chỉ Chủ hoặc Quản lý mới có thể làm Trưởng phòng', en: 'User must have business role of owner or manager to be department manager' } });
     }
 
-    return this.dataSource.transaction(async (mgr) => {
+    const managerId = await this.dataSource.transaction(async (mgr) => {
       const repo = mgr.getRepository(DepartmentMember);
 
       await repo
@@ -255,20 +263,21 @@ export class DepartmentMemberService {
       const existing = await repo.findOne({ where: { departmentId, userId } });
       if (existing) {
         existing.isManager = true;
-        return repo.save(existing);
+        return (await repo.save(existing)).id;
       }
 
-      return repo.save({
-        departmentId,
-        userId,
-        isManager: true,
-      });
+      const saved = await repo.save({ departmentId, userId, isManager: true });
+      return saved.id;
     });
+
+    // Reload with the user relation — GraphQL DepartmentMember.user is non-nullable.
+    return this.requireMemberWithUser(managerId);
   }
 
   /**
-   * Owner-gated: update a business member's fullName / phone.
-   * Audited; audit failure does NOT fail the mutation (SRS §5.18 pattern).
+   * Owner/manager update of a business member's fullName / phone.
+   * Role rule (mirrors account-lifecycle): owner → manager|staff; manager → staff only;
+   * nobody edits the owner here. Audited; audit failure does NOT fail the mutation (SRS §5.18).
    */
   async updateMemberInfo(
     businessId: string,
@@ -279,13 +288,16 @@ export class DepartmentMemberService {
     // Actor must be a business member.
     await this.departmentService.assertBusinessMember(businessId, actorId);
 
-    // Actor must be owner.
-    const role = await this.departmentService.findMyRole(businessId, actorId);
-    if (role !== 'owner') {
+    // Actor must be owner or manager.
+    const actorRole = (await this.departmentService.findMyRole(
+      businessId,
+      actorId,
+    )) as TBusinessRole | null;
+    if (!isManagerRole(actorRole)) {
       throw new ForbiddenException({
         message: {
-          vi: 'Chỉ Chủ Doanh nghiệp mới được chỉnh sửa thông tin thành viên',
-          en: 'Only the business owner can edit member information',
+          vi: 'Chỉ Chủ hoặc Quản lý mới được chỉnh sửa thông tin thành viên',
+          en: 'Only owner or manager can edit member information',
         },
       });
     }
@@ -299,6 +311,24 @@ export class DepartmentMemberService {
         message: {
           vi: 'Không tìm thấy thành viên trong Doanh nghiệp',
           en: 'User is not a member of this business',
+        },
+      });
+    }
+
+    // Cannot edit the owner here; managers may only edit staff.
+    if (targetBizMember.role === EBusinessRole.OWNER) {
+      throw new ForbiddenException({
+        message: {
+          vi: 'Không thể chỉnh sửa thông tin Chủ Doanh nghiệp',
+          en: 'Cannot edit the business owner',
+        },
+      });
+    }
+    if (actorRole === EBusinessRole.MANAGER && targetBizMember.role !== EBusinessRole.STAFF) {
+      throw new ForbiddenException({
+        message: {
+          vi: 'Quản lý chỉ được chỉnh sửa nhân viên',
+          en: 'Managers can only edit staff',
         },
       });
     }
@@ -341,6 +371,16 @@ export class DepartmentMemberService {
     }
 
     return updated;
+  }
+
+  /** Reload a member with its `user` relation (GraphQL DepartmentMember.user is non-nullable). */
+  private async requireMemberWithUser(memberId: string): Promise<DepartmentMember> {
+    const member = await this.memberRepo.findOne({
+      where: { id: memberId },
+      relations: ['user'],
+    });
+    if (!member) throw new NotFoundException({ message: { vi: 'Không tìm thấy thành viên Phòng ban', en: 'Member not found in this department' } });
+    return member;
   }
 
   private async requireDept(departmentId: string): Promise<Department> {

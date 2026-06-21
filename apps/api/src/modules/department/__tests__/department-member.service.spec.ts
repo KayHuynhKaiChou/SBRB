@@ -80,7 +80,14 @@ describe('DepartmentMemberService', () => {
   describe('addMember', () => {
     it('inserts non-manager row when user is business member', async () => {
       const { service, memberRepo } = makeService();
-      memberRepo.findOne.mockResolvedValue(null); // no existing dept membership
+      // null for the existing-membership check; reloaded row (with user) for the post-save fetch.
+      memberRepo.findOne.mockImplementation(({ where }: any) =>
+        Promise.resolve(
+          where?.id
+            ? { id: 'dm-1', departmentId: DEPT_ID, userId: 'user-9', isManager: false, user: { id: 'user-9' } }
+            : null,
+        ),
+      );
       const result = await service.addMember(DEPT_ID, 'user-9', ACTOR_ID);
       expect(memberRepo.save).toHaveBeenCalledWith({
         departmentId: DEPT_ID,
@@ -120,6 +127,11 @@ describe('DepartmentMemberService', () => {
       (deptRepo as any).find = jest
         .fn()
         .mockResolvedValue([{ id: DEPT_ID }, { id: 'other-dept' }]);
+      // Post-save reload returns the created rows with their user relation.
+      memberRepo.find.mockResolvedValue([
+        { id: 'dm-1', userId: 'u1', user: { id: 'u1' } },
+        { id: 'dm-2', userId: 'u2', user: { id: 'u2' } },
+      ]);
 
       const result = await service.addMembers(DEPT_ID, ['u1', 'u2'], ACTOR_ID);
 
@@ -182,7 +194,14 @@ describe('DepartmentMemberService', () => {
 
     it('atomic swap: demotes old manager + promotes new', async () => {
       const { service, memberRepo, dataSource } = makeService({ targetRole: 'manager' });
-      memberRepo.findOne.mockResolvedValue(null); // not a member yet
+      // null inside the txn (not a member yet); reloaded row (with user) for the post-save fetch.
+      memberRepo.findOne.mockImplementation(({ where }: any) =>
+        Promise.resolve(
+          where?.id
+            ? { id: 'dm-1', departmentId: DEPT_ID, userId: 'user-9', isManager: true, user: { id: 'user-9' } }
+            : null,
+        ),
+      );
       const result = await service.setManager(DEPT_ID, 'user-9', ACTOR_ID);
       expect(dataSource.transaction).toHaveBeenCalled();
       expect(memberRepo.save).toHaveBeenCalledWith(
@@ -337,8 +356,38 @@ describe('DepartmentMemberService', () => {
       );
     });
 
-    it('throws ForbiddenException when actor is not owner', async () => {
-      const { service } = makeService({ actorRole: 'manager' });
+    it('manager can edit a staff member', async () => {
+      const { service, userRepo } = makeService({ actorRole: 'manager', targetRole: 'staff' });
+      const input: UpdateMemberInfoDto = { fullName: 'New Staff Name' };
+
+      const result = await service.updateMemberInfo(BIZ_ID, TARGET_USER_ID, input, ACTOR_ID);
+
+      expect(userRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ fullName: 'New Staff Name' }),
+      );
+      expect(result.fullName).toBe('New Staff Name');
+    });
+
+    it('manager cannot edit a non-staff member', async () => {
+      const { service } = makeService({ actorRole: 'manager', targetRole: 'manager' });
+      const input: UpdateMemberInfoDto = { fullName: 'New Name' };
+
+      await expect(
+        service.updateMemberInfo(BIZ_ID, TARGET_USER_ID, input, ACTOR_ID),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('nobody can edit the owner via this mutation', async () => {
+      const { service } = makeService({ actorRole: 'owner', targetRole: 'owner' });
+      const input: UpdateMemberInfoDto = { fullName: 'New Name' };
+
+      await expect(
+        service.updateMemberInfo(BIZ_ID, TARGET_USER_ID, input, ACTOR_ID),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('throws ForbiddenException when actor is a plain staff', async () => {
+      const { service } = makeService({ actorRole: 'staff' });
       const input: UpdateMemberInfoDto = { fullName: 'New Name' };
 
       await expect(

@@ -167,7 +167,6 @@ export function AddMemberModal({ open, businessId, departmentId, onClose }: IPro
             selectedRowKeys: selectedKeys,
             onChange: (keys) => setSelectedKeys(keys as string[]),
           }}
-          scroll={{ y: 360 }}
           pagination={{ pageSize: 8, size: 'small' }}
           locale={{
             emptyText: (
