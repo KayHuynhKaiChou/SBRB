@@ -186,7 +186,7 @@ export function BusinessReviewDrawer({
           open={rejectOpen}
           onClose={() => setRejectOpen(false)}
           onSubmit={async (v) => {
-            onReject(detail.id, v.reason);
+            await onReject(detail.id, v.reason);
             setRejectOpen(false);
           }}
           okText={t('reject_modal_ok')}
@@ -208,7 +208,7 @@ export function BusinessReviewDrawer({
           open={inactivateOpen}
           onClose={() => setInactivateOpen(false)}
           onSubmit={async (v) => {
-            onInactivate(detail.id, v.reason);
+            await onInactivate(detail.id, v.reason);
             setInactivateOpen(false);
           }}
           okText={t('inactivate_modal_ok')}

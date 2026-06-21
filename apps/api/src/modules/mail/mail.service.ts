@@ -44,6 +44,27 @@ export class MailService {
     });
   }
 
+  /**
+   * Account creation invite — owner/manager created an account; recipient sets their
+   * first password via a 24h link (`/set-password?token=&email=`) to activate it.
+   */
+  async sendAccountInvite(
+    to: string,
+    fullName: string,
+    inviterName: string,
+    businessName: string,
+    role: string,
+    setPasswordUrl: string,
+  ) {
+    await this.mailer.sendMail({
+      to,
+      subject: `Kích hoạt tài khoản của bạn tại ${businessName} — SBRB`,
+      template: 'account-invite',
+      context: { fullName, inviterName, businessName, role, setPasswordUrl },
+    });
+    this.logger.log(`Account invite sent to ${to}`);
+  }
+
   /** SRS 4.10 — Alert threshold triggered */
   async sendAlertNotification(
     to: string,

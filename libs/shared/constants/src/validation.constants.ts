@@ -8,6 +8,13 @@ export const LOGIN_MAX_ATTEMPTS = 5;
 export const LOGIN_LOCKOUT_MINUTES = 15;
 export const EMAIL_VERIFY_LINK_EXPIRY_HOURS = 24;
 export const PASSWORD_RESET_EXPIRY_HOURS = 1;
+/** Invited-account set-password link TTL — owner/manager creates account → email link. */
+export const ACCOUNT_INVITE_EXPIRY_HOURS = 24;
+/**
+ * Password policy regex — min 8 handled separately by length; this enforces ≥1 uppercase + ≥1 digit.
+ * Single source of truth for FE form rules + BE DTO @Matches (mirror of register/reset DTOs).
+ */
+export const PASSWORD_RULE_REGEX = /(?=.*[A-Z])(?=.*\d)/;
 /** Email verification via 6-digit OTP code (entered in the signup wizard). */
 export const EMAIL_VERIFY_OTP_LENGTH = 6;
 export const EMAIL_VERIFY_OTP_EXPIRY_MINUTES = 15;

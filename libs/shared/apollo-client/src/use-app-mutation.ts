@@ -1,6 +1,6 @@
 import {
+  ApolloError,
   useMutation,
-  type ApolloError,
   type DocumentNode,
   type MutationHookOptions,
   type MutationTuple,
@@ -141,9 +141,38 @@ export function useAppMutation<
     [notify, notifyOnError, errorMessage, fallbackError, onError],
   );
 
-  return useMutation<TData, TVariables>(mutation, {
+  // NOTE: `onError` is intentionally NOT passed to useMutation. When an onError handler is
+  // set, Apollo swallows the rejection and resolves the promise (and the errors are not even
+  // placed on `result.errors`), so callers can't tell success from failure → a FormModal would
+  // close on error. Instead we catch in `safeMutate`, show the toast ourselves, then RE-THROW
+  // so awaiters (e.g. FormModal) stay open on failure. Success notifications stay on onCompleted.
+  const [mutate, state] = useMutation<TData, TVariables>(mutation, {
     ...apolloOptions,
     onCompleted: handleCompleted,
-    onError: handleError,
   });
+
+  const safeMutate = useCallback<typeof mutate>(
+    async (options) => {
+      let result: Awaited<ReturnType<typeof mutate>>;
+      try {
+        result = await mutate(options);
+      } catch (err) {
+        // Default errorPolicy ('none'): GraphQL + network errors reject here.
+        handleError(err as ApolloError);
+        throw err;
+      }
+      // errorPolicy 'all': errors resolve onto the result instead of rejecting.
+      if (result?.errors && result.errors.length > 0) {
+        const apolloError = new ApolloError({
+          errorMessage: result.errors[0]?.message ?? 'Mutation failed',
+        });
+        handleError(apolloError);
+        throw apolloError;
+      }
+      return result;
+    },
+    [mutate, handleError],
+  );
+
+  return [safeMutate, state];
 }

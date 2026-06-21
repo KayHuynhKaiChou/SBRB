@@ -14,6 +14,7 @@ const SignupWizardPage = React.lazy(
 );
 const ForgotPasswordPage = React.lazy(() => import('../pages/auth/forgot-password-page'));
 const ResetPasswordPage = React.lazy(() => import('../pages/auth/reset-password-page'));
+const SetPasswordPage = React.lazy(() => import('../pages/auth/set-password-page'));
 const OnboardingPage = React.lazy(() => import('../pages/onboarding/onboarding-page'));
 const SelectBusinessPage = React.lazy(
   () => import('../pages/select-business/select-business-page'),
@@ -22,6 +23,7 @@ const DashboardPage = React.lazy(() => import('../pages/dashboard/dashboard-page
 const DataSheetListPage = React.lazy(() => import('../pages/datasheet/datasheet-list-page'));
 const DataSheetDetailPage = React.lazy(() => import('../pages/datasheet/datasheet-detail-page'));
 const DepartmentPage = React.lazy(() => import('../pages/department/department-page'));
+const MembersPage = React.lazy(() => import('../pages/members/members-page'));
 const MyBusinessPage = React.lazy(() => import('../pages/my-business/my-business-page'));
 const ProfilePage = React.lazy(() => import('../pages/profile/profile-page'));
 const GuidePage = React.lazy(() => import('../pages/guide/guide-page'));
@@ -53,7 +55,10 @@ export default function App() {
         <Route path="/auth/login" element={<LoginPage />} />
         <Route path="/auth/register" element={<SignupWizardPage />} />
         <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+        {/* Back-compat: old path-param reset links still resolve (page reads query param too) */}
         <Route path="/auth/reset-password/:token" element={<ResetPasswordPage />} />
+        <Route path="/set-password" element={<SetPasswordPage />} />
 
         {/* Onboarding — protected but outside business gate */}
         <Route
@@ -88,6 +93,7 @@ export default function App() {
           <Route path="/data-sheets/:id" element={<DataSheetDetailPage />} />
           <Route path="/departments" element={<DepartmentPage />} />
           <Route path="/departments/:deptId" element={<DepartmentPage />} />
+          <Route path="/members" element={<MembersPage />} />
           <Route path="/my-business" element={<MyBusinessPage />} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>

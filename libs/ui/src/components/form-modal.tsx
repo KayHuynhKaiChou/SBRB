@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Modal, Form, Typography } from 'antd';
 import { CloseOutlined, CheckOutlined } from '@ant-design/icons';
 import { IconButton } from './icon-button';
@@ -44,19 +44,32 @@ export function FormModal<T>({
 }: IFormModalProps<T>) {
   const [internalForm] = Form.useForm();
   const form = externalForm ?? internalForm;
+  // Guards double-submit: while the async onSubmit is in flight the save button
+  // shows a spinner and re-entrant clicks are ignored (prevents duplicate API calls).
+  const [submitting, setSubmitting] = useState(false);
 
   const handleOk = async () => {
+    if (submitting) return;
+    let values: T;
     try {
-      const values = (await form.validateFields()) as T;
+      values = (await form.validateFields()) as T;
+    } catch {
+      return; // validation errors shown inline by Ant Design Form
+    }
+    setSubmitting(true);
+    try {
       await onSubmit(values);
       form.resetFields();
       onClose();
     } catch {
-      // validation errors shown inline by Ant Design Form
+      // submit error surfaced by caller (e.g. notification) — keep modal open to retry
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleCancel = () => {
+    if (submitting) return;
     form.resetFields();
     onClose();
   };
@@ -83,12 +96,14 @@ export function FormModal<T>({
             icon={<CheckOutlined />}
             tooltip={okText}
             size="small"
+            loading={submitting}
             onClick={handleOk}
           />
           <IconButton
             icon={<CloseOutlined />}
             tooltip={cancelText}
             size="small"
+            disabled={submitting}
             onClick={handleCancel}
           />
         </div>

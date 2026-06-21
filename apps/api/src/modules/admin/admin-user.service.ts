@@ -6,7 +6,11 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { EAdminUserSortBy, EAdminAuditAction } from '@sbrb/shared-constants';
+import {
+  EAdminUserSortBy,
+  EAdminAuditAction,
+  EUserAccountStatus,
+} from '@sbrb/shared-constants';
 import { User } from '../auth/entities/user.entity';
 import { BusinessMember } from '../business/entities/business-member.entity';
 import { Business } from '../business/entities/business.entity';
@@ -23,7 +27,7 @@ interface IRawUserRow {
   u_email: string;
   u_full_name: string;
   u_platform_role: string | null;
-  u_is_disabled: boolean;
+  u_status: string;
   u_last_login_at: Date | null;
   u_created_at: Date;
   business_count: string;
@@ -36,7 +40,8 @@ function toAdminUserRow(raw: IRawUserRow): AdminUserRowType {
     email: raw.u_email,
     fullName: raw.u_full_name,
     platformRole: raw.u_platform_role ?? null,
-    isDisabled: raw.u_is_disabled,
+    // Admin UI contract keeps the boolean — "disabled" === account inactive.
+    isDisabled: raw.u_status === EUserAccountStatus.INACTIVE,
     businessCount: parseInt(raw.business_count ?? '0', 10),
     businessNames: raw.business_names ?? null,
     lastLoginAt: raw.u_last_login_at ?? null,
@@ -79,7 +84,11 @@ export class AdminUserService {
         });
       }
       if (filter?.isDisabled !== undefined) {
-        qb.andWhere('u.is_disabled = :isDisabled', { isDisabled: filter.isDisabled });
+        // true → inactive accounts; false → everything else (active + pending).
+        qb.andWhere(
+          filter.isDisabled ? 'u.status = :inactive' : 'u.status != :inactive',
+          { inactive: EUserAccountStatus.INACTIVE },
+        );
       }
       // Hide the requesting admin from their own user-management list.
       if (excludeUserId) {
@@ -113,7 +122,7 @@ export class AdminUserService {
         'u.email AS u_email',
         'u.full_name AS u_full_name',
         'u.platform_role AS u_platform_role',
-        'u.is_disabled AS u_is_disabled',
+        'u.status AS u_status',
         'u.last_login_at AS u_last_login_at',
         'u.created_at AS u_created_at',
         'COALESCE(bc.cnt, 0) AS business_count',
@@ -175,7 +184,7 @@ export class AdminUserService {
       language: user.language,
       bio: user.bio ?? null,
       emailVerified: user.emailVerified,
-      isDisabled: user.isDisabled,
+      isDisabled: user.status === EUserAccountStatus.INACTIVE,
       platformRole: user.platformRole ?? null,
       createdAt: user.createdAt,
       lastLoginAt: user.lastLoginAt ?? null,
@@ -193,8 +202,8 @@ export class AdminUserService {
     if (!user) throw new NotFoundException(`User ${id} not found`);
 
     await this.userRepo.update(id, {
-      isDisabled: true,
-      disabledAt: new Date(),
+      status: EUserAccountStatus.INACTIVE,
+      statusChangedAt: new Date(),
     });
 
     // Invalidate all refresh tokens immediately — SRS §11
@@ -225,8 +234,8 @@ export class AdminUserService {
     if (!user) throw new NotFoundException(`User ${id} not found`);
 
     await this.userRepo.update(id, {
-      isDisabled: false,
-      disabledAt: null,
+      status: EUserAccountStatus.ACTIVE,
+      statusChangedAt: new Date(),
     });
 
     // No token revoke needed on enable — tokens were revoked at disable time
@@ -270,7 +279,7 @@ export class AdminUserService {
         'u.email AS u_email',
         'u.full_name AS u_full_name',
         'u.platform_role AS u_platform_role',
-        'u.is_disabled AS u_is_disabled',
+        'u.status AS u_status',
         'u.last_login_at AS u_last_login_at',
         'u.created_at AS u_created_at',
         'COALESCE(bc.cnt, 0) AS business_count',

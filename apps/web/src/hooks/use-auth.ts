@@ -12,6 +12,7 @@ import {
   REGISTER_MUTATION,
   FORGOT_PASSWORD_MUTATION,
   RESET_PASSWORD_MUTATION,
+  SET_ACCOUNT_PASSWORD_MUTATION,
 } from '../graphql/auth.operations';
 
 export type { TAuthStatus, AuthStatus };
@@ -50,7 +51,15 @@ export function useAuth() {
         vi: 'Mật khẩu đã được đặt lại thành công',
         en: 'Password has been reset successfully',
       },
-      onSuccess: () => navigate(APP_ROUTES.LOGIN),
+    },
+  );
+  const [setAccountPasswordMutation, { loading: setPasswordLoading }] = useAppMutation(
+    SET_ACCOUNT_PASSWORD_MUTATION,
+    {
+      fallbackSuccess: {
+        vi: 'Kích hoạt tài khoản thành công',
+        en: 'Account activated successfully',
+      },
     },
   );
 
@@ -126,6 +135,9 @@ export function useAuth() {
     await resetPasswordMutation({ variables: { token, password } });
   };
 
+  const setAccountPassword = async (input: { token: string; email: string; password: string }) => {
+    await setAccountPasswordMutation({ variables: { input } });
+  };
 
   const logout = () => authSession.logout();
 
@@ -143,11 +155,13 @@ export function useAuth() {
     logout,
     forgotPassword,
     resetPassword,
+    setAccountPassword,
 
     // Loading flags
     loginLoading,
     registerLoading,
     forgotLoading,
     resetLoading,
+    setPasswordLoading,
   };
 }

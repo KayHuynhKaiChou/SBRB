@@ -13,6 +13,7 @@ import { Response } from 'express';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import {
+  EUserAccountStatus,
   LOGIN_MAX_ATTEMPTS,
   LOGIN_LOCKOUT_MINUTES,
   REFRESH_COOKIE_NAME,
@@ -49,7 +50,7 @@ export class AuthLoginService {
   ): Promise<IAuthTokens> {
     const user = await this.userRepo.findOne({ where: { email: dto.email } });
     if (!user) throw new UnauthorizedException('Invalid credentials');
-    if (user.isDisabled) throw new UnauthorizedException('Account disabled');
+    this.assertLoginAllowed(user);
     if (!user.emailVerified) throw new ForbiddenException('Email not verified');
 
     const attempts = await this.redis.get(ATTEMPT_KEY(dto.email));
@@ -86,9 +87,22 @@ export class AuthLoginService {
       });
       await this.userRepo.save(user);
     }
-    if (user.isDisabled) throw new UnauthorizedException('Account disabled');
+    this.assertLoginAllowed(user);
     await this.userRepo.update(user.id, { lastLoginAt: new Date() });
     return this.issueTokens(user, ip, userAgent, res);
+  }
+
+  /**
+   * Gate login/refresh on account status. Only `active` accounts may authenticate.
+   * `pending` = invited but hasn't set a password yet; `inactive` = deactivated.
+   */
+  private assertLoginAllowed(user: User): void {
+    if (user.status === EUserAccountStatus.INACTIVE) {
+      throw new UnauthorizedException('Account inactive');
+    }
+    if (user.status === EUserAccountStatus.PENDING) {
+      throw new UnauthorizedException('Account not activated');
+    }
   }
 
   async refresh(rawToken: string, ip: string, userAgent: string, res: Response): Promise<IAuthTokens> {
@@ -143,10 +157,10 @@ export class AuthLoginService {
     // SRS §11: disabled users must not be able to refresh tokens indefinitely.
     // Phase 4 will additionally revoke all refresh tokens on disable, but this per-refresh
     // check provides immediate enforcement even if revoke hasn't run yet.
-    if (matched.user.isDisabled) {
+    if (matched.user.status !== EUserAccountStatus.ACTIVE) {
       await this.revokeFamily(matched.userId);
       res.clearCookie(REFRESH_COOKIE_NAME);
-      throw new UnauthorizedException('Account disabled');
+      throw new UnauthorizedException('Account inactive');
     }
 
     return this.issueTokens(matched.user, ip, userAgent, res);

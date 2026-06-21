@@ -131,8 +131,8 @@ export class AdminChartsService {
 
     const [row]: Array<{ active: number; disabled: number; active_last_30d: number }> =
       await this.userRepo.query(
-        `SELECT COUNT(*) FILTER (WHERE is_disabled = false)::int AS active,
-                COUNT(*) FILTER (WHERE is_disabled = true)::int AS disabled,
+        `SELECT COUNT(*) FILTER (WHERE status = 'active')::int AS active,
+                COUNT(*) FILTER (WHERE status != 'active')::int AS disabled,
                 COUNT(*) FILTER (WHERE last_login_at >= $1)::int AS active_last_30d
          FROM users`,
         [thirtyDaysAgo],

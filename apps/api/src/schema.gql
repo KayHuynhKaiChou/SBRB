@@ -221,6 +221,29 @@ type BusinessChangeRequestType {
   updatedAt: DateTime!
 }
 
+type BusinessMemberRowType {
+  email: String!
+  fullName: String!
+  joinedAt: DateTime!
+  lastLoginAt: DateTime
+  role: String!
+  status: String!
+  userId: ID!
+}
+
+input BusinessMembersFilterInput {
+  limit: Int
+  offset: Int
+  role: String
+  search: String
+  status: String
+}
+
+type BusinessMembersResultType {
+  rows: [BusinessMemberRowType!]!
+  total: Int!
+}
+
 type BusinessType {
   address: String
   approvedAt: DateTime
@@ -313,6 +336,12 @@ input CreateDepartmentDto {
   businessId: ID!
   name: String!
   parentId: ID
+}
+
+input CreateStaffAccountDto {
+  email: String!
+  fullName: String!
+  role: String!
 }
 
 input CreateTabInput {
@@ -564,6 +593,7 @@ type Mutation {
   changePassword(input: ChangePasswordDto!): Boolean!
   createBusiness(input: CreateBusinessDto!): BusinessType!
   createDepartment(input: CreateDepartmentDto!): DepartmentResponse!
+  createStaffAccount(businessId: ID!, input: CreateStaffAccountDto!): BusinessMemberRowType!
   createTab(input: CreateTabInput!): TabResponse!
   createWidget(input: CreateWidgetInput!): WidgetResponse!
   declineInvitation(token: String!): Boolean!
@@ -572,6 +602,7 @@ type Mutation {
   deleteDataSheet(id: ID!): Boolean!
   deleteDepartment(id: ID!): DepartmentResponse!
   deleteDepartmentFromDatasheet(datasheetId: ID!, departmentId: ID!): Boolean!
+  deletePendingAccount(businessId: ID!, userId: ID!): Boolean!
   deletePeriod(datasheetId: ID!, periodName: String!): DataSheetType!
   deleteSeries(seriesId: ID!): Boolean!
   deleteSeriesByName(datasheetId: ID!, name: String!): Boolean!
@@ -624,8 +655,11 @@ type Mutation {
 
   """Owner requests a change to an approved business (admin must approve)."""
   requestBusinessChange(id: ID!, input: UpdateBusinessDto!): BusinessChangeRequestType!
+  resendAccountInvite(businessId: ID!, userId: ID!): Boolean!
   resetPassword(input: ResetPasswordDto!): Boolean!
+  setAccountPassword(input: SetAccountPasswordDto!): Boolean!
   setDepartmentManager(departmentId: ID!, userId: ID!): DepartmentMemberResponse!
+  setMemberAccountStatus(active: Boolean!, businessId: ID!, userId: ID!): BusinessMemberRowType!
 
   """Owner resubmits a rejected/pending business for admin review."""
   submitBusinessForReview(id: ID!): BusinessType!
@@ -694,6 +728,7 @@ type Query {
   adminUsers(filter: AdminUserFilterInput, page: PageInput): AdminUserListResultType!
   availableSeries(widgetId: ID!): [AvailableSeriesType!]!
   business(id: ID!): BusinessType!
+  businessMembers(businessId: ID!, filter: BusinessMembersFilterInput): BusinessMembersResultType!
   dataSeries(datasheetId: ID!, search: String): [DataSeriesType!]!
   dataSheet(id: ID!): DataSheetType!
   dataSheets(businessId: ID!, filter: ListDataSheetsInput): [DataSheetType!]!
@@ -735,6 +770,12 @@ type Session {
   ipAddress: String
   isCurrent: Boolean!
   lastActiveAt: DateTime!
+}
+
+input SetAccountPasswordDto {
+  email: String!
+  password: String!
+  token: String!
 }
 
 enum SortOrder {

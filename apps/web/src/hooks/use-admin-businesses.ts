@@ -12,6 +12,21 @@ import type { IAdminBusinessRow } from '@sbrb/shared-types';
 
 export type { IAdminBusinessRow };
 
+/**
+ * Apollo resolves (not rejects) the mutate promise when an `onError` handler is set, so
+ * GraphQL errors surface only via `result.errors`. Re-throw them so awaiters (FormModals)
+ * can keep the modal open on failure instead of closing. The error toast already fired.
+ */
+async function throwOnGqlError<T extends { errors?: readonly { message?: string }[] }>(
+  p: Promise<T>,
+): Promise<T> {
+  const res = await p;
+  if (res?.errors && res.errors.length > 0) {
+    throw new Error(res.errors[0]?.message ?? 'Mutation failed');
+  }
+  return res;
+}
+
 interface IAdminBusinessesQueryResult {
   adminBusinesses: {
     rows: IAdminBusinessRow[];
@@ -83,13 +98,13 @@ export function useAdminBusinesses({ filter, page }: IUseAdminBusinessesOptions 
   );
 
   const inactivateBusiness = (id: string, reason: string) =>
-    inactivateMutation({ variables: { id, reason } });
+    throwOnGqlError(inactivateMutation({ variables: { id, reason } }));
 
   const reactivateBusiness = (id: string) =>
-    reactivateMutation({ variables: { id } });
+    throwOnGqlError(reactivateMutation({ variables: { id } }));
 
   const changeOwner = (businessId: string, newOwnerUserId: string) =>
-    changeOwnerMutation({ variables: { businessId, newOwnerUserId } });
+    throwOnGqlError(changeOwnerMutation({ variables: { businessId, newOwnerUserId } }));
 
   const [approveMutation, { loading: approveLoading }] = useMutation(
     APPROVE_BUSINESS_MUTATION,
@@ -113,9 +128,10 @@ export function useAdminBusinesses({ filter, page }: IUseAdminBusinessesOptions 
     },
   );
 
-  const approveBusiness = (id: string) => approveMutation({ variables: { id } });
+  const approveBusiness = (id: string) =>
+    throwOnGqlError(approveMutation({ variables: { id } }));
   const rejectBusiness = (id: string, reason: string) =>
-    rejectMutation({ variables: { id, reason } });
+    throwOnGqlError(rejectMutation({ variables: { id, reason } }));
 
   return {
     rows: data?.adminBusinesses?.rows ?? [],

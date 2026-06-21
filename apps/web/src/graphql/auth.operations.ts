@@ -49,6 +49,12 @@ export const RESET_PASSWORD_MUTATION = gql`
   }
 `;
 
+export const SET_ACCOUNT_PASSWORD_MUTATION = gql`
+  mutation SetAccountPassword($input: SetAccountPasswordDto!) {
+    setAccountPassword(input: $input)
+  }
+`;
+
 export const VERIFY_OTP_MUTATION = gql`
   mutation VerifyEmailOtp($email: String!, $code: String!) {
     verifyEmailOtp(email: $email, code: $code)

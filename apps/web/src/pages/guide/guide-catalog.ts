@@ -40,6 +40,7 @@ export const GUIDE_AREAS: IGuideArea[] = [
       { key: 'org_chart', status: 'done', route: APP_ROUTES.DEPARTMENTS, tourId: 'departments', audience: ['all'] },
       { key: 'department_manage', status: 'done', route: APP_ROUTES.DEPARTMENTS, tourId: 'departments', audience: ['owner'] },
       { key: 'members', status: 'done', route: APP_ROUTES.DEPARTMENTS, tourId: 'departments', audience: ['owner', 'manager'] },
+      { key: 'personnel_management', status: 'done', route: APP_ROUTES.MEMBERS, tourId: 'members', audience: ['owner', 'manager'] },
     ],
   },
   {

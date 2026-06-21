@@ -10,6 +10,20 @@ import type { IAdminBusinessDetail, IAdminChangeRequest } from '@sbrb/shared-typ
 
 export type { IAdminBusinessDetail, IAdminChangeRequest };
 
+/**
+ * Re-throw GraphQL errors that Apollo resolves into `result.errors` (because an onError
+ * handler is set) so awaiting callers (FormModals) stay open on failure. Toast already shown.
+ */
+async function throwOnGqlError<T extends { errors?: readonly { message?: string }[] }>(
+  p: Promise<T>,
+): Promise<T> {
+  const res = await p;
+  if (res?.errors && res.errors.length > 0) {
+    throw new Error(res.errors[0]?.message ?? 'Mutation failed');
+  }
+  return res;
+}
+
 /** Fetch full business detail for the review drawer (skipped until an id is set). */
 export function useAdminBusinessDetail(id: string | null) {
   const { data, loading } = useQuery<{ adminBusinessDetail: IAdminBusinessDetail }>(
@@ -52,8 +66,9 @@ export function useAdminChangeRequests() {
     rows: data?.adminChangeRequests ?? [],
     loading,
     refetch,
-    approveChange: (id: string) => approveMutation({ variables: { id } }),
-    rejectChange: (id: string, reason: string) => rejectMutation({ variables: { id, reason } }),
+    approveChange: (id: string) => throwOnGqlError(approveMutation({ variables: { id } })),
+    rejectChange: (id: string, reason: string) =>
+      throwOnGqlError(rejectMutation({ variables: { id, reason } })),
     approveLoading,
     rejectLoading,
   };

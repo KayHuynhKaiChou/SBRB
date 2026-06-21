@@ -65,6 +65,6 @@ import { RefreshTokenService } from './refresh-token.service';
     GoogleStrategy,
   ],
   controllers: [AuthController],
-  exports: [AuthService, JwtModule, RefreshTokenService],
+  exports: [AuthService, JwtModule, RefreshTokenService, RedisRateLimitService],
 })
 export class AuthModule {}

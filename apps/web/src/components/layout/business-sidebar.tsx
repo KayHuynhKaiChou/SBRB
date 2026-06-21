@@ -7,9 +7,9 @@ import {
   ApartmentOutlined,
   BarChartOutlined,
   MessageOutlined,
-  DatabaseOutlined,
   SettingOutlined,
   ShopOutlined,
+  TeamOutlined,
   UserOutlined,
   LogoutOutlined,
   QuestionCircleOutlined,
@@ -26,9 +26,11 @@ import {
   SIDEBAR_ICON_COLOR,
   SIDEBAR_ICON_HOVER_BG,
   EBusinessStatus,
+  isManagerRole,
 } from '@sbrb/shared-constants';
 import { useAuthStore } from '../../store/auth.store';
 import { BUSINESS_QUERY } from '../../graphql/business.operations';
+import { useMyBusinessRole } from '../../hooks/use-members';
 
 const { Sider } = Layout;
 
@@ -100,6 +102,10 @@ export function BusinessSidebar() {
     !!bizData?.business &&
     bizData.business.status !== EBusinessStatus.APPROVED;
 
+  // Personnel menu is owner/manager only — staff never sees it.
+  const { role } = useMyBusinessRole(currentBusinessId ?? null);
+  const canManageMembers = isManagerRole(role);
+
   // Data-driven nav config — thêm menu mới chỉ cần thêm 1 entry vào mảng này.
   const navItems: INavItem[] = [
     {
@@ -111,10 +117,12 @@ export function BusinessSidebar() {
     },
     { key: 'data-sheets', icon: <TableOutlined />, label: 'Dữ liệu', path: '/data-sheets' },
     { key: 'departments', icon: <ApartmentOutlined />, label: 'Phòng ban', path: '/departments' },
+    ...(canManageMembers
+      ? [{ key: 'members', icon: <TeamOutlined />, label: t('nav_members'), path: '/members' }]
+      : []),
     { key: 'my-business', icon: <ShopOutlined />, label: 'Doanh nghiệp', path: '/my-business' },
     { key: 'benchmark', icon: <BarChartOutlined />, label: 'Benchmark', disabled: true },
     { key: 'talk-room', icon: <MessageOutlined />, label: 'Talk Room', disabled: true },
-    { key: 'data-box', icon: <DatabaseOutlined />, label: 'Data Box', disabled: true },
   ];
 
   return (

@@ -15,7 +15,11 @@ import { BusinessController } from './business.controller';
 import { MemberService } from './member.service';
 import { MemberResolver } from './member.resolver';
 import { InvitationService } from './invitation.service';
+import { AccountLifecycleService } from './account-lifecycle.service';
+import { BusinessMembersService } from './business-members.service';
+import { AccountResolver } from './account.resolver';
 import { User } from '../auth/entities/user.entity';
+import { AuthModule } from '../auth/auth.module';
 import { MailModule } from '../mail/mail.module';
 import { MinioModule } from '../minio/minio.module';
 import { AuditModule } from '../audit/audit.module';
@@ -38,6 +42,7 @@ import { NotificationModule } from '../notification/notification.module';
       Department,
       DepartmentMember,
     ]),
+    AuthModule,
     MailModule,
     MinioModule,
     AuditModule,
@@ -53,6 +58,9 @@ import { NotificationModule } from '../notification/notification.module';
     MemberService,
     MemberResolver,
     InvitationService,
+    AccountLifecycleService,
+    BusinessMembersService,
+    AccountResolver,
   ],
   controllers: [BusinessController],
   exports: [

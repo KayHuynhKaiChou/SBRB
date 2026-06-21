@@ -94,7 +94,7 @@ export function ChangeRequestDiff({
           open={rejectOpen}
           onClose={() => setRejectOpen(false)}
           onSubmit={async (v) => {
-            onReject(request.id, v.reason);
+            await onReject(request.id, v.reason);
             setRejectOpen(false);
           }}
           okText={t('reject_modal_ok')}

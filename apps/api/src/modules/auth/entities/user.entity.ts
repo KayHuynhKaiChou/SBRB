@@ -5,7 +5,11 @@ import {
   Index,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import type { TPlatformRole } from '@sbrb/shared-constants';
+import {
+  EUserAccountStatus,
+  type TPlatformRole,
+  type TUserAccountStatus,
+} from '@sbrb/shared-constants';
 
 @Entity('users')
 export class User {
@@ -49,9 +53,15 @@ export class User {
   @Column({ name: 'platform_role', type: 'varchar', length: 20, nullable: true })
   platformRole: TPlatformRole;
 
-  @Column({ name: 'is_disabled', type: 'boolean', default: false })
-  isDisabled: boolean;
+  /**
+   * Global account lifecycle status — replaces the former is_disabled flag.
+   * pending → active (set password) ↔ inactive (deactivate). Indexed for /members filtering.
+   */
+  @Index('idx_users_status')
+  @Column({ type: 'varchar', length: 20, default: EUserAccountStatus.ACTIVE })
+  status: TUserAccountStatus;
 
-  @Column({ name: 'disabled_at', type: 'timestamptz', nullable: true })
-  disabledAt: Date | null;
+  /** Audit timestamp — set whenever status changes (parity with former disabled_at). */
+  @Column({ name: 'status_changed_at', type: 'timestamptz', nullable: true })
+  statusChangedAt: Date | null;
 }

@@ -41,6 +41,26 @@ export interface IBusinessMember {
   };
 }
 
+/**
+ * Personnel (/members) table row — flat shape returned by the `businessMembers` query.
+ * `status` = account lifecycle (pending|active|inactive, from User). `role` = business role.
+ */
+export interface IBusinessMemberRow {
+  userId: string;
+  fullName: string;
+  email: string;
+  role: TBusinessRole;
+  status: string;
+  joinedAt: string;
+  lastLoginAt: string | null;
+}
+
+/** Paginated result of the `businessMembers` query. */
+export interface IBusinessMembersResult {
+  rows: IBusinessMemberRow[];
+  total: number;
+}
+
 /** Business switcher item (header dropdown) */
 export interface IBusinessSwitcherItem {
   businessId: string;

@@ -2,7 +2,7 @@
 
 ## Project Timeline & Phases
 
-**Current Date:** 2026-04-27 | **Phase 1 Status:** ✅ COMPLETE | **Phase 2 Status:** Phase 2A-2F ✅ COMPLETE, Phase 3 Next
+**Current Date:** 2026-06-21 | **Phase 1 Status:** ✅ COMPLETE | **Phase 2 Status:** Phase 2A-2F ✅ COMPLETE | **Personnel Mgmt Status:** ✅ COMPLETE | **Phase 3:** Next
 
 ---
 
@@ -184,6 +184,41 @@
 
 ---
 
+## Personnel Management & Account Lifecycle ✅ COMPLETE (2026-06-21)
+
+**Status:** ✅ COMPLETE — All account lifecycle features implemented, migrations applied, tests passing.
+
+**Features:**
+- ✅ User.status enum (pending|active|inactive) replaces is_disabled/disabled_at paradigm
+- ✅ Owner/manager create staff/manager accounts via `createStaffAccount(email, role)` → invite email with 24h token link
+- ✅ Invitee sets password via `/set-password?token=&email=` (public) → status → active
+- ✅ `/members` page (Personnel Management): Ant Table, paginated, search + role + status filters, row actions
+  - Pending accounts: resend invite, delete account
+  - Active/inactive accounts: deactivate/reactivate (reactivate revokes refresh tokens)
+- ✅ GraphQL mutations: createStaffAccount, setAccountPassword (public), resendAccountInvite, deletePendingAccount (pending only), setMemberAccountStatus
+- ✅ GraphQL query: businessMembers(first, after, role?, status?) — paginated, owner/manager gated
+- ✅ Shared PasswordForm component — reused in set-password / reset-password / change-password flows
+- ✅ Shared types: IBusinessMemberRow, IBusinessMembersResult in @sbrb/shared-types
+- ✅ Shared constants: EUserAccountStatus, ACCOUNT_STATUS_TAG_COLOR, ACCOUNT_INVITE_EXPIRY_HOURS, PASSWORD_RULE_REGEX
+- ✅ i18n: member.json, auth.json, guide.json extended (vi + en); guide hub gained personnel_management tour
+- ✅ Admin compatibility: admin disable/enable writes status='inactive'; isDisabled field kept as derived value
+- ✅ Tests: account-lifecycle.service.spec, admin-user.service.spec updated; frontend: password-form, members-table, set-password-page, change-password-modal specs
+
+**Verification:**
+- ✅ Owner creates staff account → email invite sent (token + email params)
+- ✅ Invitee clicks link → /set-password?token=... page loads
+- ✅ Set password → account status='active', can now login
+- ✅ Owner navigates /members → table shows pending/active/inactive with correct row actions
+- ✅ Deactivate member → status='inactive', refresh token revoked, next login blocked
+- ✅ Resend invite → new token generated, email resent
+- ✅ Delete pending → only works for status='pending'
+- ✅ Admin disable/enable → status field updated, admin UI unchanged (isDisabled derived)
+
+**Database Migration:**
+- `1777500012000-AddUserAccountStatus` — adds status varchar(20), migrates is_disabled → status, adds invite token fields
+
+---
+
 ## Platform Admin Role (v1) ✅ COMPLETE (2026-04-29)
 
 **Status:** ✅ COMPLETE — All 6 phases (Phase 1-6) delivered. Plan: `plans/260428-2028-admin-role/`. SRS: `docs/admin-srs.md`.
@@ -328,6 +363,7 @@
 | Phase 2E Data Import | 2026-03-28 | ✅ COMPLETE | Excel import, BullMQ, 15+ tests |
 | Phase 2F Profile | 2026-04-27 | ✅ COMPLETE | /profile route, avatar upload, sessions, ProfileForm |
 | Phase 2 Complete | 2026-04-27 | ✅ DONE | Full user profile + widget flow, 250+ tests total |
+| Personnel Mgmt | 2026-06-21 | ✅ DONE | Account lifecycle, /members page, staff creation |
 | Phase 3 Export | 2026-07-29 | NEXT | PNG/PDF download, chart display |
 | Phase 4 Complete | 2026-08-26 | PENDING | Audit logs, notifications |
 | Phase 5 Desktop | 2026-10-28 | PENDING | Electron .exe release |
@@ -365,4 +401,4 @@
 
 ---
 
-**Document Version:** 2.5 | **Last Updated:** 2026-04-27 | **Product Manager:** Tech Lead
+**Document Version:** 2.6 | **Last Updated:** 2026-06-21 | **Product Manager:** Tech Lead

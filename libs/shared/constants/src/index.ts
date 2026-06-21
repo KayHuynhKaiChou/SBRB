@@ -6,5 +6,6 @@ export * from './regex.constant';
 export * from './role.constants';
 export * from './routes.constants';
 export * from './theme.constants';
+export * from './user.constants';
 export * from './validation.constants';
 export * from './widget.constants';

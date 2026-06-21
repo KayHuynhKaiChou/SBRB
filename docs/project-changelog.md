@@ -4,6 +4,42 @@ All notable changes to the SBRB project are documented here. Format based on [Ke
 
 ---
 
+## [2026-06-21] — Personnel Management & Account Lifecycle
+
+**Plan:** `plans/260621-xxxx-personnel-management/` | **Rules:** Integrated into `docs/business-approval-rules.md` + new `docs/account-lifecycle-rules.md` (pending)
+
+### Added
+- **Account Lifecycle** — User.status enum (pending|active|inactive) replaces `is_disabled`/`disabled_at`. Migration `1777500012000-AddUserAccountStatus`: backup old columns as view, set status accordingly. pending & inactive blocked from login + refresh token endpoint.
+- **Staff/Manager Account Creation** — Owner/manager invoke `createStaffAccount(email, role)` → email invite sent with `/set-password?token=&email=` link (24h TTL). Invitee clicks link → `setAccountPassword(token, newPassword)` → status flips to `active`.
+- **Personnel Page** (`/members`) — Ant Table + search/role/status filters (pending/active/inactive). Row actions: pending = resend/delete, others = deactivate/reactivate. Owner/manager only. Navigation: sidebar `TeamOutlined` button. Paginated via `businessMembers` query.
+- **Mutations** — `createStaffAccount`, `setAccountPassword` (public), `resendAccountInvite`, `deletePendingAccount` (pending only), `setMemberAccountStatus` (deactivate revokes refresh tokens via RefreshTokenService).
+- **Query** — `businessMembers(businessId, filter: { search?, role?, status?, offset?, limit? })` → `{ rows, total }` — offset paginated, owner/manager gated.
+- **Shared Components & Types:**
+  - New `<PasswordForm/>` in `apps/web/src/components/auth/password-form.tsx` — reused across set-password / reset-password / change-password pages. Shared validation: `PASSWORD_RULE_REGEX` from constants.
+  - New shared types: `IBusinessMemberRow`, `IBusinessMembersResult` in `@sbrb/shared-types`.
+  - New shared constants: `EUserAccountStatus`, `ACCOUNT_STATUS_TAG_COLOR`, `ACCOUNT_INVITE_EXPIRY_HOURS`, `PASSWORD_RULE_REGEX`.
+  - New shared auth success screen (AntD Result component for common use).
+- **i18n** — Extended `member.json`, `auth.json`, `guide.json` (vi+en). Guide hub gained `personnel_management` feature entry + Tour.
+- **Admin Compatibility** — Admin disable/enable now writes `status='inactive'`. GraphQL `isDisabled` field kept as derived `status==='inactive'` for backward-compatible admin UI.
+- **Tests** — account-lifecycle.service.spec + admin-user.service.spec updated. Frontend: password-form / members-table / set-password-page / change-password-modal specs.
+
+### Changed
+- User entity: `status` (varchar) added; `is_disabled`/`disabled_at` retained (view-only for migration safety)
+- Auth login: blocks `status IN ('pending', 'inactive')` (stricter than `is_disabled`)
+- RefreshTokenService: `revokeAllForUser` extracted for reuse in deactivation flow
+- reset-password route: moved to query param `?token=` (consistent with set-password route style)
+
+### Migration Required
+```
+npx nx run api:migration:run
+```
+Migration: `1777500012000-AddUserAccountStatus`
+- Adds `status` varchar(20) NOT NULL, backed by enum check constraint
+- Populates: owner → 'active', others with is_disabled=false → 'active', is_disabled=true → 'inactive'
+- Existing staff created via invite (old flow) → 'active' (no pending in old system)
+
+---
+
 ## [2026-06-14] — In-app User Guide / Help hub with antd Tour
 
 **Plan:** `plans/260614-1600-user-guide-tour-hub/` (incl. `feature-catalog.md`)
@@ -281,4 +317,4 @@ SUPABASE_AVATAR_BUCKET=avatar
 
 ---
 
-**Document Version:** 1.0 | **Last Updated:** 2026-04-27
+**Document Version:** 1.1 | **Last Updated:** 2026-06-21

@@ -39,8 +39,8 @@ const mockUser = (overrides: Partial<User> = {}): User =>
     email: 'test@example.com',
     fullName: 'Test User',
     platformRole: null,
-    isDisabled: false,
-    disabledAt: null,
+    status: 'active',
+    statusChangedAt: null,
     lastLoginAt: null,
     createdAt: new Date('2024-01-01'),
     phone: null,
@@ -92,7 +92,7 @@ describe('AdminUserService', () => {
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('updates isDisabled and disabledAt', async () => {
+    it('sets status to inactive with statusChangedAt', async () => {
       const { service, userRepo } = buildService();
       userRepo.findOne.mockResolvedValue(mockUser());
       userRepo.createQueryBuilder.mockReturnValue(buildQbChain());
@@ -101,7 +101,7 @@ describe('AdminUserService', () => {
 
       expect(userRepo.update).toHaveBeenCalledWith(
         'user-1',
-        expect.objectContaining({ isDisabled: true, disabledAt: expect.any(Date) }),
+        expect.objectContaining({ status: 'inactive', statusChangedAt: expect.any(Date) }),
       );
     });
 
@@ -125,22 +125,22 @@ describe('AdminUserService', () => {
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('clears isDisabled and disabledAt', async () => {
+    it('sets status to active with statusChangedAt', async () => {
       const { service, userRepo } = buildService();
-      userRepo.findOne.mockResolvedValue(mockUser({ isDisabled: true, disabledAt: new Date() }));
-      userRepo.createQueryBuilder.mockReturnValue(buildQbChain({ ...{}, u_is_disabled: false }));
+      userRepo.findOne.mockResolvedValue(mockUser({ status: 'inactive', statusChangedAt: new Date() }));
+      userRepo.createQueryBuilder.mockReturnValue(buildQbChain({ ...{}, u_status: 'active' }));
 
       await service.enableUser('user-1', 'admin-1');
 
       expect(userRepo.update).toHaveBeenCalledWith(
         'user-1',
-        expect.objectContaining({ isDisabled: false, disabledAt: null }),
+        expect.objectContaining({ status: 'active', statusChangedAt: expect.any(Date) }),
       );
     });
 
     it('does NOT revoke tokens on enable', async () => {
       const { service, userRepo, refreshTokenService } = buildService();
-      userRepo.findOne.mockResolvedValue(mockUser({ isDisabled: true }));
+      userRepo.findOne.mockResolvedValue(mockUser({ status: 'inactive' }));
       userRepo.createQueryBuilder.mockReturnValue(buildQbChain());
 
       await service.enableUser('user-1', 'admin-1');

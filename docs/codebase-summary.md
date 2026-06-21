@@ -1,14 +1,14 @@
 # SBRB Codebase Summary
 
-**Generated:** 2026-04-29 | **Repomix Output:** `./repomix-output.xml` | **Phase Status:** Phase 1-2F ✅ Complete + Platform Admin Role ✅ Complete
+**Generated:** 2026-06-21 | **Repomix Output:** `./repomix-output.xml` | **Phase Status:** Phase 1-2F ✅ Complete + Platform Admin Role ✅ Complete + Personnel Management ✅ Complete
 
 ---
 
 ## Codebase Overview
 
-SBRB is a NX monorepo containing a modern full-stack dashboard builder. All Phase 2 (MVP) phases complete: Auth, Business, Tabs, Canvas & DnD, Data Import/Excel, User Profile. Platform Admin Role (v1) also complete.
+SBRB is a NX monorepo containing a modern full-stack dashboard builder. All Phase 2 (MVP) phases complete: Auth, Business, Tabs, Canvas & DnD, Data Import/Excel, User Profile. Platform Admin Role (v1) and Personnel Management & Account Lifecycle also complete.
 
-### Implementation Status (Authoritative: 2026-04-27)
+### Implementation Status (Authoritative: 2026-06-21)
 - **Phase 1 (Scaffold):** ✅ COMPLETE
 - **Phase 2A (Auth):** ✅ COMPLETE — 80+ tests passing, JWT+OAuth+email verify fully implemented
 - **Phase 2B (Business):** ✅ COMPLETE — 78+ tests passing, multi-tenant with roles + invites fully implemented
@@ -16,6 +16,7 @@ SBRB is a NX monorepo containing a modern full-stack dashboard builder. All Phas
 - **Phase 2D (Canvas & DnD):** ✅ COMPLETE — Canvas 3200×4800px, widget drag/resize, snap grid, collision detection
 - **Phase 2E (Data Import):** ✅ COMPLETE — DataSheet CRUD, Excel import via BullMQ, data series management
 - **Phase 2F (Profile):** ✅ COMPLETE — /profile route, avatar upload, change password, sessions, ProfileForm component
+- **Personnel Management & Account Lifecycle:** ✅ COMPLETE — Account status enum, staff creation, set-password flow, /members page with role/status filters
 
 ### Repository Statistics
 - **Total Files:** 440+ (including config, tests)
@@ -69,7 +70,7 @@ apps/web/
 - Chart.js 4.4+ (bar, line, area, doughnut)
 - react-i18next 13.x (i18n)
 
-**Key Features (Phase 2F Complete):**
+**Key Features (Phase 2F + Personnel Management Complete):**
 - ✅ Canvas-based dashboard (3200×4800px, snap grid, zoom)
 - ✅ Widget drag-and-drop with collision detection
 - ✅ Chart configuration modal (Settings + Chart panels)
@@ -77,6 +78,8 @@ apps/web/
 - ✅ Excel file upload & import
 - ✅ User authentication (Email + OAuth)
 - ✅ User profile page (/profile with avatar, personal info, membership, security)
+- ✅ Personnel Management page (/members with role/status filters, row actions for pending/active/inactive accounts)
+- ✅ Account creation & set-password flow (24h token-based invite)
 - ✅ Multi-language support (vi, en)
 - ✅ 4 chart types (Line, Bar, Area, Doughnut)
 
@@ -103,7 +106,7 @@ apps/api/
 │   │   └── decorators/         # @CurrentUser(), @Roles()
 │   └── modules/                # Feature modules (10 implemented)
 │       ├── auth/               # ✅ Authentication (JWT + OAuth)
-│       ├── business/           # ✅ Business CRUD, multi-tenancy
+│       ├── business/           # ✅ Business CRUD, multi-tenancy, account lifecycle, staff creation
 │       ├── user/               # ✅ User management
 │       ├── profile/            # ✅ User profile, avatar upload, sessions
 │       ├── tab/                # ✅ Tab CRUD, reorder
@@ -112,7 +115,7 @@ apps/api/
 │       ├── notification/       # 🔲 Scaffolded (Phase 4)
 │       ├── audit/              # ✅ Audit logging
 │       ├── admin/              # ✅ Platform Admin: business mgmt, user mgmt, metrics, audit log (guarded by PlatformAdminGuard)
-│       └── mail/               # ✅ Email service (Gmail)
+│       └── mail/               # ✅ Email service (Gmail, account invites)
 ├── jest.config.ts              # Jest test configuration
 └── package.json                # Dependencies
 ```
@@ -133,7 +136,7 @@ apps/api/
 - **REST:** POST /files/import, PATCH /widgets/:id/position, GET /files/export/:id, POST /auth/google/callback
 
 **Database (TypeORM + PostgreSQL):**
-- User (id, email, passwordHash, businessRoles, platform_role, is_disabled, disabled_at)
+- User (id, email, passwordHash, businessRoles, platform_role, status, is_disabled, disabled_at, passwordResetToken, accountInviteToken, accountInviteExpiresAt)
 - Business (id, name, ownerId, status, inactivated_at, inactivated_by, inactive_reason)
 - UserRole (userId, businessId, role) — junction table, 4 roles (owner/manager/staff/viewer)
 - Tab (id, businessId, name, order, widgets)
@@ -268,6 +271,23 @@ interface UserPayload {
   businessId: string;
   role: 'owner' | 'manager' | 'staff';
   email: string;
+  status: 'pending' | 'active' | 'inactive';  // Account lifecycle status
+}
+
+// Business Members (Personnel page)
+interface IBusinessMemberRow {
+  id: string;
+  email: string;
+  fullName: string;
+  role: TBusinessRole;
+  status: TUserAccountStatus;
+  createdAt: Date;
+}
+
+interface IBusinessMembersResult {
+  edges: IBusinessMemberRow[];
+  pageInfo: { hasNextPage: boolean; endCursor?: string };
+  totalCount: number;
 }
 
 // Business & multi-tenancy
@@ -311,6 +331,20 @@ export const CHART_TYPES = ['line', 'bar', 'pie', 'area'];
 
 // File upload
 export const MAX_FILE_SIZE = 10 * 1024 * 1024;  // 10MB
+
+// Account lifecycle
+export enum EUserAccountStatus {
+  PENDING = 'pending',    // Invited staff/manager awaiting password set
+  ACTIVE = 'active',      // Active member
+  INACTIVE = 'inactive',  // Deactivated member
+}
+export const ACCOUNT_STATUS_TAG_COLOR: Record<TUserAccountStatus, string> = {
+  pending: 'gold',
+  active: 'green',
+  inactive: 'default',
+};
+export const ACCOUNT_INVITE_EXPIRY_HOURS = 24;
+export const PASSWORD_RULE_REGEX = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 ```
 
 **Import Usage:** Both web and API import these constants to avoid duplication.
@@ -378,10 +412,11 @@ libs/ui/
 │   ├── tooltip.tsx          # Hover tooltips
 │   ├── loading-spinner.tsx  # Loading indicator
 │   ├── toast.tsx            # Success/error/warning notifications
-│   ├── IconButton.tsx       # ✅ Ghost-variant icon buttons (NEW)
-│   ├── ModalActions.tsx     # ✅ DRY footer (save/cancel actions) (NEW)
-│   ├── FormModal.tsx        # ✅ Ant Modal + Form wrapper (NEW)
-│   └── ProfileForm.tsx      # ✅ Reusable profile form (avatar, fullName, phone, language, bio, departmentId) (NEW)
+│   ├── IconButton.tsx       # ✅ Ghost-variant icon buttons
+│   ├── ModalActions.tsx     # ✅ DRY footer (save/cancel actions)
+│   ├── FormModal.tsx        # ✅ Ant Modal + Form wrapper
+│   ├── ProfileForm.tsx      # ✅ Reusable profile form (avatar, fullName, phone, language, bio, departmentId)
+│   (PasswordForm lives in apps/web/src/components/auth/password-form.tsx — app-side for direct i18n)
 ├── hooks/
 │   └── use-toast.ts         # Toast notifications hook
 └── index.ts                 # Barrel export
@@ -663,6 +698,6 @@ libs/ui
 
 ---
 
-**Document Version:** 2.4 | **Last Updated:** 2026-03-28
-**Test Count:** 237 tests, 32 test suites, all passing, 0 failures
+**Document Version:** 2.5 | **Last Updated:** 2026-06-21
+**Test Count:** 260+ tests, 35+ test suites, all passing, 0 failures (includes personnel-mgmt, password-form, members-table specs)
 **Maintainer:** Documentation Team
