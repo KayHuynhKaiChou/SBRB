@@ -10,6 +10,7 @@ import {
   RESEND_ACCOUNT_INVITE_MUTATION,
   SET_MEMBER_ACCOUNT_STATUS_MUTATION,
 } from '../graphql/members.operations';
+import { UPDATE_MEMBER_INFO_MUTATION } from '../graphql/department.operations';
 
 export type { IBusinessMemberRow };
 
@@ -25,6 +26,11 @@ export interface ICreateStaffInput {
   email: string;
   fullName: string;
   role: TBusinessRole;
+}
+
+export interface IUpdateMemberInfoInput {
+  fullName: string;
+  phone?: string | null;
 }
 
 /** Current user's role in the active business — used to gate the page + actions. */
@@ -72,6 +78,10 @@ export function useMembers({ businessId, filter, enabled = true }: IUseMembersOp
     fallbackSuccess: { vi: 'Đã cập nhật trạng thái tài khoản', en: 'Account status updated' },
     onSuccess: refresh,
   });
+  const [updateInfoMutation, { loading: updateInfoLoading }] = useAppMutation(UPDATE_MEMBER_INFO_MUTATION, {
+    fallbackSuccess: { vi: 'Đã cập nhật thông tin', en: 'Member info updated' },
+    onSuccess: refresh,
+  });
 
   const create = (input: ICreateStaffInput) =>
     createMutation({ variables: { businessId, input } });
@@ -81,6 +91,8 @@ export function useMembers({ businessId, filter, enabled = true }: IUseMembersOp
     removeMutation({ variables: { businessId, userId } });
   const setStatus = (userId: string, active: boolean) =>
     setStatusMutation({ variables: { businessId, userId, active } });
+  const updateInfo = (userId: string, input: IUpdateMemberInfoInput) =>
+    updateInfoMutation({ variables: { businessId, userId, input } });
 
   return {
     rows: data?.businessMembers?.rows ?? [],
@@ -91,9 +103,11 @@ export function useMembers({ businessId, filter, enabled = true }: IUseMembersOp
     resend,
     remove,
     setStatus,
+    updateInfo,
     createLoading,
     resendLoading,
     removeLoading,
     setStatusLoading,
+    updateInfoLoading,
   };
 }

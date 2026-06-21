@@ -5,6 +5,7 @@ import {
   DeleteOutlined,
   StopOutlined,
   CheckCircleOutlined,
+  EditOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { IconButton } from '@sbrb/ui';
@@ -27,7 +28,10 @@ interface IMembersTableProps {
   pageSize: number;
   currentUserId: string | null;
   currentRole: TBusinessRole | null;
+  /** Owner-only: edit member info (name/phone) reusing the profile form. */
+  canEdit: boolean;
   onPageChange: (page: number, pageSize: number) => void;
+  onEdit: (row: IBusinessMemberRow) => void;
   onResend: (userId: string) => void;
   onDelete: (userId: string) => void;
   onSetStatus: (userId: string, active: boolean) => void;
@@ -49,7 +53,9 @@ export function MembersTable({
   pageSize,
   currentUserId,
   currentRole,
+  canEdit,
   onPageChange,
+  onEdit,
   onResend,
   onDelete,
   onSetStatus,
@@ -68,12 +74,10 @@ export function MembersTable({
     return false;
   };
 
-  const renderActions = (row: IBusinessMemberRow) => {
-    if (!canManage(row)) return <span className="text-gray-400">—</span>;
-
+  const renderStatusAction = (row: IBusinessMemberRow) => {
     if (row.status === EUserAccountStatus.PENDING) {
       return (
-        <div className="flex gap-1 justify-center">
+        <>
           <IconButton
             icon={<RedoOutlined />}
             tooltip={t('action_resend')}
@@ -90,7 +94,7 @@ export function MembersTable({
           >
             <IconButton icon={<DeleteOutlined />} tooltip={t('action_delete')} size="small" loading={removeLoading} />
           </Popconfirm>
-        </div>
+        </>
       );
     }
 
@@ -116,6 +120,23 @@ export function MembersTable({
         loading={setStatusLoading}
         onClick={() => onSetStatus(row.userId, true)}
       />
+    );
+  };
+
+  const renderActions = (row: IBusinessMemberRow) => {
+    if (!canManage(row)) return <span className="text-gray-400">—</span>;
+    return (
+      <div className="flex gap-1 justify-center">
+        {canEdit && (
+          <IconButton
+            icon={<EditOutlined />}
+            tooltip={t('action_edit')}
+            size="small"
+            onClick={() => onEdit(row)}
+          />
+        )}
+        {renderStatusAction(row)}
+      </div>
     );
   };
 
@@ -175,7 +196,7 @@ export function MembersTable({
     {
       title: t('col_actions'),
       key: 'actions',
-      width: 110,
+      width: 150,
       align: 'center',
       fixed: 'right' as const,
       render: (_, row) => renderActions(row),

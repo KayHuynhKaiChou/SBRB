@@ -14,6 +14,8 @@ interface IRawMemberRow {
   user_id: string;
   full_name: string;
   email: string;
+  phone: string | null;
+  avatar_url: string | null;
   role: string;
   status: string;
   joined_at: Date;
@@ -25,6 +27,8 @@ function toRow(raw: IRawMemberRow): BusinessMemberRowType {
     userId: raw.user_id,
     fullName: raw.full_name,
     email: raw.email,
+    phone: raw.phone ?? null,
+    avatarUrl: raw.avatar_url ?? null,
     role: raw.role,
     status: raw.status,
     joinedAt: raw.joined_at,
@@ -77,6 +81,8 @@ export class BusinessMembersService {
           'bm.user_id AS user_id',
           'u.full_name AS full_name',
           'u.email AS email',
+          'u.phone AS phone',
+          'u.avatar_url AS avatar_url',
           'bm.role AS role',
           'u.status AS status',
           'bm.joined_at AS joined_at',

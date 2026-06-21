@@ -6,11 +6,17 @@ import { useTranslation } from 'react-i18next';
 import { IconButton } from '@sbrb/ui';
 import { APP_ROUTES, isManagerRole } from '@sbrb/shared-constants';
 import { useAuthStore } from '../../store/auth.store';
-import { useMembers, useMyBusinessRole, type ICreateStaffInput } from '../../hooks/use-members';
+import {
+  useMembers,
+  useMyBusinessRole,
+  type IBusinessMemberRow,
+  type ICreateStaffInput,
+} from '../../hooks/use-members';
 import { FeatureTour } from '../../components/guide/feature-tour';
 import { MembersFilters } from './components/members-filters';
 import { MembersTable } from './components/members-table';
 import { CreateAccountModal } from './components/create-account-modal';
+import { MembersEditDrawer } from './components/members-edit-drawer';
 import { membersTourSteps } from './members-tour-steps';
 
 const { Title } = Typography;
@@ -34,6 +40,7 @@ export default function MembersPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE_DEFAULT);
   const [createOpen, setCreateOpen] = useState(false);
+  const [editRow, setEditRow] = useState<IBusinessMemberRow | null>(null);
 
   // Debounce the search box → query variable.
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -56,9 +63,11 @@ export default function MembersPage() {
     resend,
     remove,
     setStatus,
+    updateInfo,
     resendLoading,
     removeLoading,
     setStatusLoading,
+    updateInfoLoading,
   } = useMembers({
     businessId,
     enabled: canManage,
@@ -125,10 +134,12 @@ export default function MembersPage() {
         pageSize={pageSize}
         currentUserId={currentUserId}
         currentRole={role}
+        canEdit={canManage}
         onPageChange={(p, ps) => {
           setPage(p);
           setPageSize(ps);
         }}
+        onEdit={(row) => setEditRow(row)}
         onResend={(id) => void resend(id)}
         onDelete={(id) => void remove(id)}
         onSetStatus={(id, active) => void setStatus(id, active)}
@@ -142,6 +153,14 @@ export default function MembersPage() {
         onClose={() => setCreateOpen(false)}
         currentRole={role}
         onSubmit={handleCreate}
+      />
+
+      <MembersEditDrawer
+        open={!!editRow}
+        member={editRow}
+        loading={updateInfoLoading}
+        onClose={() => setEditRow(null)}
+        onSubmit={updateInfo}
       />
 
       <FeatureTour tourId="members" steps={membersTourSteps(tg)} />

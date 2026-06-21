@@ -49,6 +49,8 @@ export interface IBusinessMemberRow {
   userId: string;
   fullName: string;
   email: string;
+  phone: string | null;
+  avatarUrl: string | null;
   role: TBusinessRole;
   status: string;
   joinedAt: string;

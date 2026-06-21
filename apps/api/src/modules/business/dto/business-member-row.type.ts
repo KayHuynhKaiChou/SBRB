@@ -12,6 +12,12 @@ export class BusinessMemberRowType {
   @Field(() => String)
   email: string;
 
+  @Field(() => String, { nullable: true })
+  phone?: string | null;
+
+  @Field(() => String, { nullable: true })
+  avatarUrl?: string | null;
+
   @Field(() => String)
   role: string;
 

@@ -34,6 +34,8 @@
   "col_joined": "Ngày tham gia",
   "col_actions": "Thao tác",
   "showing_total": "{{total}} nhân sự",
+  "action_edit": "Chỉnh sửa thông tin",
+  "edit_member_title": "Chỉnh sửa nhân sự",
   "action_resend": "Gửi lại email mời",
   "action_delete": "Xoá",
   "action_deactivate": "Ngừng hoạt động",

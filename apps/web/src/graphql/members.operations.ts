@@ -8,6 +8,8 @@ export const BUSINESS_MEMBERS_LIST_QUERY = gql`
         userId
         fullName
         email
+        phone
+        avatarUrl
         role
         status
         joinedAt

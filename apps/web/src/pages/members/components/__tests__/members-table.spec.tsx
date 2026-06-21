@@ -29,6 +29,8 @@ const row = (over: Partial<IBusinessMemberRow>): IBusinessMemberRow => ({
   userId: 'u',
   fullName: 'Name',
   email: 'e@x.com',
+  phone: null,
+  avatarUrl: null,
   role: EBusinessRole.STAFF,
   status: EUserAccountStatus.ACTIVE,
   joinedAt: '2026-01-01',
@@ -37,7 +39,12 @@ const row = (over: Partial<IBusinessMemberRow>): IBusinessMemberRow => ({
   ...over,
 });
 
-function renderTable(rows: IBusinessMemberRow[], currentRole = EBusinessRole.OWNER, currentUserId = 'me') {
+function renderTable(
+  rows: IBusinessMemberRow[],
+  currentRole = EBusinessRole.OWNER,
+  currentUserId = 'me',
+  canEdit = false,
+) {
   return render(
     <MembersTable
       rows={rows}
@@ -47,7 +54,9 @@ function renderTable(rows: IBusinessMemberRow[], currentRole = EBusinessRole.OWN
       pageSize={20}
       currentUserId={currentUserId}
       currentRole={currentRole}
+      canEdit={canEdit}
       onPageChange={vi.fn()}
+      onEdit={vi.fn()}
       onResend={vi.fn()}
       onDelete={vi.fn()}
       onSetStatus={vi.fn()}
@@ -91,5 +100,21 @@ describe('MembersTable action gating', () => {
   it('manager viewing a manager row → dash', () => {
     renderTable([row({ userId: 'm2', role: EBusinessRole.MANAGER })], EBusinessRole.MANAGER, 'me');
     expect(screen.queryAllByText('—').length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('owner with canEdit → edit icon alongside the status action', () => {
+    const { container } = renderTable(
+      [row({ userId: 's4', status: EUserAccountStatus.ACTIVE })],
+      EBusinessRole.OWNER,
+      'me',
+      true,
+    );
+    expect(container.querySelector('[data-icon="edit"]')).toBeTruthy();
+    expect(container.querySelector('[data-icon="stop"]')).toBeTruthy();
+  });
+
+  it('no edit icon when canEdit is false', () => {
+    const { container } = renderTable([row({ userId: 's5', status: EUserAccountStatus.ACTIVE })]);
+    expect(container.querySelector('[data-icon="edit"]')).toBeNull();
   });
 });

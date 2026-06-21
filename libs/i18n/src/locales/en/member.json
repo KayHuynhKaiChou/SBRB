@@ -34,6 +34,8 @@
   "col_joined": "Joined",
   "col_actions": "Actions",
   "showing_total": "{{total}} people",
+  "action_edit": "Edit info",
+  "edit_member_title": "Edit personnel",
   "action_resend": "Resend invite email",
   "action_delete": "Delete",
   "action_deactivate": "Deactivate",

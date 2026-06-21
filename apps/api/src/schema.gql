@@ -222,10 +222,12 @@ type BusinessChangeRequestType {
 }
 
 type BusinessMemberRowType {
+  avatarUrl: String
   email: String!
   fullName: String!
   joinedAt: DateTime!
   lastLoginAt: DateTime
+  phone: String
   role: String!
   status: String!
   userId: ID!
